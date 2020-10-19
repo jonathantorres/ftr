@@ -11,8 +11,10 @@ import (
 
 var statusCodes = map[uint16]string{
 	220: "Service Ready",
-	331: "User name okay, need password.",
+	230: "User logged in, proceed.",
+	331: "Username okay, need password.",
 	500: "Unknown error",
+	502: "Command not implemented",
 }
 
 func GetStatusCodeMessage(statusCode uint16) (string, error) {

@@ -62,15 +62,6 @@ func handleClient(conn net.Conn) {
 			sendResponse(conn, 500)
 			continue
 		}
-		// TODO: parse the command in clientCmd
-		// Do the operation and respond accordingly
-		_, err = conn.Write([]byte(fmt.Sprintf("You requested: %s. Done!\n", clientCmd)))
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "error writing to connection %s\n", err)
-			sendResponse(conn, 500)
-			continue
-		}
-		sendResponse(conn, 331)
 	}
 }
 
@@ -94,25 +85,52 @@ func sendResponse(conn net.Conn, statusCode uint16) error {
 }
 
 func handleCommand(clientCmd []byte, conn net.Conn) error {
-	cmdStr := string(clientCmd)
-	cmdParts := strings.Split(cmdStr, " ")
+	clientCmdStr := trimCommandLine(clientCmd)
+	cmdParts := strings.Split(clientCmdStr, " ")
+	cmd := strings.TrimSpace(cmdParts[0])
 
 	if len(cmdParts) == 1 {
-		execCommand(cmdParts[0], conn, "")
+		return execCommand(cmd, conn, "")
 	} else if len(cmdParts) > 1 {
-		execCommand(cmdParts[0], conn, cmdParts[1:]...)
-	} else {
-		sendResponse(conn, 500)
+		return execCommand(cmd, conn, cmdParts[1:]...)
 	}
-	return nil
+	return sendResponse(conn, 500)
+}
+
+func runCommandUser(conn net.Conn, username string) error {
+	// TODO: logic to check for the username
+	return sendResponse(conn, 331)
+}
+
+func runCommandPassword(conn net.Conn, pass string) error {
+	// TODO: logic to check for the password
+	return sendResponse(conn, 230)
+}
+
+func runUninmplemented(conn net.Conn) error {
+	return sendResponse(conn, 502)
 }
 
 func execCommand(cmd string, conn net.Conn, cmdArgs...string) error {
-	fmt.Fprintf(os.Stderr, "trying to exec %s, ", cmd)
-	if len(cmdArgs) > 0 {
-		fmt.Fprintf(os.Stderr, "with args: %s\n", cmdArgs)
-	} else {
-		fmt.Fprintf(os.Stderr, "\n")
+	var err error = nil
+
+	switch cmd {
+	case CommandUser:
+		err = runCommandUser(conn, cmdArgs[0])
+	case CommandPassword:
+		err = runCommandPassword(conn, cmdArgs[0])
+	default:
+		err = runUninmplemented(conn)
 	}
-	return nil
+	return err
+}
+
+func trimCommandLine(clientCmd []byte) string {
+	trimmedCommand := ""
+	for _, b := range clientCmd {
+		if rune(b) != 0x00 && rune(b) != '\r' && rune(b) != '\n' {
+			trimmedCommand += string(b)
+		}
+	}
+	return trimmedCommand
 }
