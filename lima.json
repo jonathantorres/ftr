@@ -1,0 +1,15 @@
+{
+    "root": "/Users/jonathantorres/lima_test_server",
+    "users": [
+        {
+            "username": "jt",
+            "password": "test",
+            "root": "/jt"
+        },
+        {
+            "username": "test",
+            "password": "test",
+            "root": "/test"
+        }
+    ]
+}

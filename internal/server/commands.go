@@ -1,5 +1,10 @@
 package server
 
+import (
+	"os"
+	"path"
+)
+
 const (
 	CommandAbort             = "ABOR"
 	CommandAccount           = "ACCT"
@@ -70,3 +75,76 @@ const (
 	CommandSendMail          = "XSEM"
 	CommandSendTerm          = "XSEN"
 )
+
+func runCommandUser(session *Session, username string) error {
+	userFound := false
+	for _, u := range session.server.Conf.Users {
+		if u.Username == username {
+			userFound = true
+			session.user = u
+			break
+		}
+	}
+	if userFound {
+		return sendResponse(session.controlConn, 331, "")
+	}
+	return sendResponse(session.controlConn, 430, "")
+}
+
+func runCommandPassword(session *Session, pass string) error {
+	passFound := false
+	for _, u := range session.server.Conf.Users {
+		if u.Username == session.user.Username && u.Password == pass {
+			passFound = true
+			session.user = u
+			break
+		}
+	}
+	if passFound {
+		return sendResponse(session.controlConn, 230, "")
+	}
+	return sendResponse(session.controlConn, 430, "")
+}
+
+func runCommandPrintDir(session *Session) error {
+	basename := path.Base(session.cwd)
+	err := os.Chdir(session.server.Conf.Root + session.user.Root + session.cwd)
+	if err != nil {
+		return sendResponse(session.controlConn, 550, "")
+	}
+	return sendResponse(session.controlConn, 257, "\"/"+basename+"\" is current directory\n")
+}
+
+func runCommandChangeDir(session *Session, dir string) error {
+	basename := path.Base(session.cwd + dir)
+	err := os.Chdir(session.server.Conf.Root + session.user.Root + dir)
+	if err != nil {
+		return sendResponse(session.controlConn, 550, "")
+	}
+	session.cwd = dir
+	return sendResponse(session.controlConn, 250, "CWD successful. \"/"+basename+"\" is current directory\n")
+}
+
+func runCommandType(session *Session, typ string) error {
+	// TODO: logic to set the transfer type
+	return sendResponse(session.controlConn, 200, "")
+}
+
+func runCommandPasv(session *Session) error {
+	// TODO: logic to set passive mode
+	return sendResponse(session.controlConn, 200, "")
+}
+
+func runCommandPort(session *Session, port string) error {
+	// TODO: logic open data conn with the port
+	return sendResponse(session.controlConn, 200, "")
+}
+
+func runCommandList(session *Session) error {
+	// TODO: logic to list the current working directory
+	return sendResponse(session.controlConn, 200, "")
+}
+
+func runUninmplemented(session *Session) error {
+	return sendResponse(session.controlConn, 502, "")
+}

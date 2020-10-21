@@ -1,9 +1,11 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"github.com/jonathantorres/lima/internal/server"
+	"io/ioutil"
 	"os"
 )
 
@@ -24,13 +26,32 @@ var portFlag = flag.Int("port", server.ControlPort, "The port number for the con
 
 func main() {
 	flag.Parse()
+	conf, err := loadConf()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "server conf error: %s\n", err)
+		os.Exit(1)
+	}
 	s := &server.Server{
 		Host: *hostFlag,
 		Port: *portFlag,
+		Conf: conf,
 	}
-	err := s.Start()
+	err = s.Start()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "server error: %s\n", err)
 		os.Exit(1)
 	}
+}
+
+func loadConf() (*server.ServerConf, error) {
+	file, err := ioutil.ReadFile("./lima.json") // Add this as a cmd line option?
+	if err != nil {
+		return nil, err
+	}
+	conf := &server.ServerConf{}
+	err = json.Unmarshal(file, conf)
+	if err != nil {
+		return nil, err
+	}
+	return conf, nil
 }
