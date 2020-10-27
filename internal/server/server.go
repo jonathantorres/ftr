@@ -1,6 +1,7 @@
 package server
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"os"
@@ -74,6 +75,23 @@ func sendResponse(conn net.Conn, statusCode uint16, respMsg string) error {
 		return err
 	}
 	return nil
+}
+
+func findOpenAddr() (*net.TCPAddr, error) {
+	addr, err := net.ResolveTCPAddr("tcp", "localhost:0")
+	if err != nil {
+		return nil, err
+	}
+	l, err := net.ListenTCP("tcp", addr)
+	if err != nil {
+		return nil, err
+	}
+	addr, ok := l.Addr().(*net.TCPAddr)
+	if !ok {
+		return nil, errors.New("tcp address could not be resolved")
+	}
+	defer l.Close()
+	return addr, nil
 }
 
 func trimCommandLine(clientCmd []byte) string {

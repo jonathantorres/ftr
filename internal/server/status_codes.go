@@ -44,8 +44,17 @@ var statusCodes = map[uint16]string{
 	452: "Requested action not taken. Insufficient storage space in system. File unavailable",
 
 	500: "Unknown error",
+	501: "Syntax error in parameters or arguments. ",
 	502: "Command not implemented",
+	503: "Bad sequence of commands",
+	504: "Command not implemented for that parameter.",
+	530: "Not logged in.",
+	532: "Need account for storing files.",
+	534: "Could Not Connect to Server - Policy Requires SSL",
 	550: "File not found, error encountered",
+	551: "Requested action aborted. Page type unknown.",
+	552: "Requested file action aborted. Exceeded storage allocation",
+	553: "equested action not taken. File name not allowed.",
 }
 
 func GetStatusCodeMessage(statusCode uint16) (string, error) {

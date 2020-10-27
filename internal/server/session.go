@@ -10,13 +10,15 @@ import (
 
 // the current active session
 type Session struct {
-	user        *User
-	server      *Server
-	tType       TransferType
-	passMode    bool
-	controlConn net.Conn
-	dataConn    net.Conn
-	cwd         string
+	user         *User
+	server       *Server
+	tType        TransferType
+	passMode     bool
+	controlConn  net.Conn
+	dataConn     net.Conn
+	dataConnPort uint16
+	dataConnChan chan struct{}
+	cwd          string
 }
 
 // the current user logged in for this session
@@ -48,6 +50,41 @@ func (s *Session) start() {
 	}
 }
 
+func (s *Session) openDataConn(port uint16) error {
+	if s.dataConn != nil {
+		return nil
+	}
+	l, err := net.Listen("tcp", fmt.Sprintf("%s:%d", s.server.Host, port))
+	if err != nil {
+		return err
+	}
+	s.dataConnPort = port
+	s.dataConnChan = make(chan struct{})
+	go func() {
+		for {
+			conn, err := l.Accept()
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "data conn: accept error:  %s\n", err)
+				continue
+			}
+			go s.handleDataTransfer(conn)
+		}
+	}()
+	return nil
+}
+
+func (s *Session) handleDataTransfer(conn net.Conn) {
+	s.dataConn = conn
+
+	var sig struct{}
+	// send signal to command that the connection is ready
+	s.dataConnChan <- sig
+
+	// wait until the command finishes, then close the connection
+	<-s.dataConnChan
+	defer conn.Close()
+}
+
 func (s *Session) handleCommand(clientCmd []byte) error {
 	clientCmdStr := trimCommandLine(clientCmd)
 	cmdParts := strings.Split(clientCmdStr, " ")
@@ -63,6 +100,7 @@ func (s *Session) handleCommand(clientCmd []byte) error {
 
 func (s *Session) execCommand(cmd string, cmdArgs ...string) error {
 	var err error = nil
+	fmt.Fprintf(os.Stdout, "cmd: %s\n", cmd)
 	switch cmd {
 	case CommandUser:
 		err = runCommandUser(s, cmdArgs[0])
@@ -72,14 +110,12 @@ func (s *Session) execCommand(cmd string, cmdArgs ...string) error {
 		err = runCommandPrintDir(s)
 	case CommandChangeDir:
 		err = runCommandChangeDir(s, cmdArgs[0])
-	// case CommandType:
-	// 	err = runCommandType(s, cmdArgs[0])
-	// case CommandPassive:
-	// 	err = runCommandPasv(s)
-	// case CommandPort:
-	// 	err = runCommandPort(s, cmdArgs[0])
-	// case CommandList:
-	// 	err = runCommandList(s)
+	case CommandType:
+		err = runCommandType(s, cmdArgs[0])
+	case CommandPassive:
+		err = runCommandPasv(s)
+	case CommandList:
+		err = runCommandList(s, cmdArgs[0])
 	default:
 		err = runUninmplemented(s)
 	}
