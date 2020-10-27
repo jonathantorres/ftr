@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"github.com/jonathantorres/lima/internal/server"
+	"github.com/jonathantorres/gftp/internal/server"
 	"io/ioutil"
 	"os"
 )
@@ -44,7 +44,7 @@ func main() {
 }
 
 func loadConf() (*server.ServerConf, error) {
-	file, err := ioutil.ReadFile("./lima.json") // Add this as a cmd line option?
+	file, err := ioutil.ReadFile("./gftp.json") // Add this as a cmd line option?
 	if err != nil {
 		return nil, err
 	}

@@ -1,3 +1,3 @@
-module github.com/jonathantorres/lima
+module github.com/jonathantorres/gftp
 
 go 1.14
