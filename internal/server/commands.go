@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path"
 	"strconv"
 	"strings"
 )
@@ -260,9 +261,11 @@ func runCommandChangeParent(session *Session) error {
 		return sendResponse(session.controlConn, 550, "")
 	}
 	session.cwd = cwd
-	// base := path.Base(cwd)
-	return runCommandList(session, "")
-	// return sendResponse(session.controlConn, 250, "CDUP successful. \"/"+base+"\" is current directory\n")
+	base := path.Base(cwd)
+
+	runCommandPasv(session)
+	runCommandList(session, "")
+	return sendResponse(session.controlConn, 250, "CDUP successful. \"/"+base+"\" is current directory\n")
 }
 
 func runUninmplemented(session *Session) error {
