@@ -105,6 +105,11 @@ func runCommandPassword(session *Session, pass string) error {
 		}
 	}
 	if passFound {
+		// change to home directory
+		err := os.Chdir(session.server.Conf.Root + session.user.Root)
+		if err != nil {
+			return sendResponse(session.controlConn, 550, "")
+		}
 		return sendResponse(session.controlConn, 230, "")
 	}
 	return sendResponse(session.controlConn, 430, "")
