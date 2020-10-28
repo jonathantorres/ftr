@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"path"
 	"strconv"
 	"strings"
 )
@@ -246,6 +245,24 @@ func runCommandAcceptAndStore(session *Session, filename string) error {
 
 func runCommandSystemType(session *Session) error {
 	return sendResponse(session.controlConn, 215, "UNIX Type: L8")
+}
+
+func runCommandChangeParent(session *Session) error {
+	cwd := session.cwd
+	pieces := strings.Split(cwd, "/")
+	if len(pieces) <= 1 {
+		cwd = ""
+	} else {
+		cwd = strings.Join(pieces[:len(pieces)-1], "/")
+	}
+	err := os.Chdir(session.server.Conf.Root + session.user.Root + "/" + cwd)
+	if err != nil {
+		return sendResponse(session.controlConn, 550, "")
+	}
+	session.cwd = cwd
+	// base := path.Base(cwd)
+	return runCommandList(session, "")
+	// return sendResponse(session.controlConn, 250, "CDUP successful. \"/"+base+"\" is current directory\n")
 }
 
 func runUninmplemented(session *Session) error {

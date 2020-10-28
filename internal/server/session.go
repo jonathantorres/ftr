@@ -122,6 +122,9 @@ func (s *Session) execCommand(cmd string, cmdArgs ...string) error {
 		err = runCommandAcceptAndStore(s, cmdArgs[0])
 	case CommandSystemType:
 		err = runCommandSystemType(s)
+	case CommandChangeParent:
+	case CommandChangeToParentDir:
+		err = runCommandChangeParent(s)
 	default:
 		err = runUninmplemented(s)
 	}
