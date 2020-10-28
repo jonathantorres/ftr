@@ -121,7 +121,7 @@ func runCommandPrintDir(session *Session) error {
 
 func runCommandChangeDir(session *Session, dir string) error {
 	basename := path.Base(session.cwd + dir)
-	err := os.Chdir(session.server.Conf.Root + session.user.Root + dir)
+	err := os.Chdir(session.server.Conf.Root + session.user.Root + "/" + dir)
 	if err != nil {
 		return sendResponse(session.controlConn, 550, "")
 	}
@@ -166,11 +166,11 @@ func runCommandList(session *Session, file string) error {
 	// wait until the data connection is ready for sending/receiving data
 	<-session.dataConnChan
 
-	file = session.server.Conf.Root + session.user.Root + session.cwd
+	path := session.server.Conf.Root + session.user.Root + "/" + session.cwd
 	if file != "" {
-		file = session.server.Conf.Root + session.user.Root + session.cwd + file
+		path += "/" + file
 	}
-	files, err := ioutil.ReadDir(file)
+	files, err := ioutil.ReadDir(path)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed listing directory: %s\n", err)
 		return sendResponse(session.controlConn, 450, "")
