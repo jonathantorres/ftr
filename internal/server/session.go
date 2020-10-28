@@ -116,6 +116,10 @@ func (s *Session) execCommand(cmd string, cmdArgs ...string) error {
 		err = runCommandPasv(s)
 	case CommandList:
 		err = runCommandList(s, cmdArgs[0])
+	case CommandRetrieve:
+		err = runCommandRetrieve(s, cmdArgs[0])
+	case CommandAcceptAndStore:
+		err = runCommandAcceptAndStore(s, cmdArgs[0])
 	default:
 		err = runUninmplemented(s)
 	}

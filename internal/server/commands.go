@@ -191,6 +191,48 @@ func runCommandList(session *Session, file string) error {
 	return sendResponse(session.controlConn, 200, "")
 }
 
+func runCommandRetrieve(session *Session, filename string) error {
+	<-session.dataConnChan
+	path := session.server.Conf.Root + session.user.Root + "/" + session.cwd + "/" + filename
+	fileData, err := ioutil.ReadFile(path)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error reading file: %s\n", err)
+		return sendResponse(session.controlConn, 450, "")
+	}
+	_, err = session.dataConn.Write(fileData)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error transferring file: %s\n", err)
+		return sendResponse(session.controlConn, 450, "")
+	}
+	var sig struct{}
+	session.dataConnChan <- sig
+	return sendResponse(session.controlConn, 200, "")
+}
+
+func runCommandAcceptAndStore(session *Session, filename string) error {
+	<-session.dataConnChan
+	path := session.server.Conf.Root + session.user.Root + "/" + session.cwd + "/" + filename
+	fileData, err := ioutil.ReadAll(session.dataConn)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error receiving file: %s\n", err)
+		return sendResponse(session.controlConn, 450, "")
+	}
+
+	file, err := os.Create(path)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error creating file: %s\n", err)
+		return sendResponse(session.controlConn, 450, "")
+	}
+	_, err = file.Write(fileData)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error writing bytes to new file: %s\n", err)
+		return sendResponse(session.controlConn, 450, "")
+	}
+	var sig struct{}
+	session.dataConnChan <- sig
+	return sendResponse(session.controlConn, 200, "")
+}
+
 func runUninmplemented(session *Session) error {
 	return sendResponse(session.controlConn, 502, "")
 }
