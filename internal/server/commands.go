@@ -116,22 +116,27 @@ func runCommandPassword(session *Session, pass string) error {
 }
 
 func runCommandPrintDir(session *Session) error {
-	basename := path.Base(session.cwd)
-	err := os.Chdir(session.server.Conf.Root + session.user.Root + session.cwd)
-	if err != nil {
-		return sendResponse(session.controlConn, 550, "")
-	}
-	return sendResponse(session.controlConn, 257, "\"/"+basename+"\" is current directory\n")
+	return sendResponse(session.controlConn, 257, "\"/"+session.cwd+"\" is current directory\n")
 }
 
 func runCommandChangeDir(session *Session, dir string) error {
-	basename := path.Base(session.cwd + dir)
-	err := os.Chdir(session.server.Conf.Root + session.user.Root + "/" + dir)
+	cwd := session.cwd
+	if dir[0] == '/' {
+		// moving to relative path
+		cwd = dir[1:]
+	} else {
+		if cwd != "" {
+			cwd += "/" + dir
+		} else {
+			cwd = dir
+		}
+	}
+	err := os.Chdir(session.server.Conf.Root + session.user.Root + "/" + cwd)
 	if err != nil {
 		return sendResponse(session.controlConn, 550, "")
 	}
-	session.cwd = dir
-	return sendResponse(session.controlConn, 250, "CWD successful. \"/"+basename+"\" is current directory\n")
+	session.cwd = cwd
+	return sendResponse(session.controlConn, 250, "CWD successful. \"/"+dir+"\" is current directory\n")
 }
 
 func runCommandType(session *Session, typ string) error {
