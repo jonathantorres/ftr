@@ -120,6 +120,8 @@ func (s *Session) execCommand(cmd string, cmdArgs ...string) error {
 		err = runCommandRetrieve(s, cmdArgs[0])
 	case CommandAcceptAndStore:
 		err = runCommandAcceptAndStore(s, cmdArgs[0])
+	case CommandSystemType:
+		err = runCommandSystemType(s)
 	default:
 		err = runUninmplemented(s)
 	}

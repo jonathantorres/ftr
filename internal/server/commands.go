@@ -234,6 +234,10 @@ func runCommandAcceptAndStore(session *Session, filename string) error {
 	return sendResponse(session.controlConn, 200, "")
 }
 
+func runCommandSystemType(session *Session) error {
+	return sendResponse(session.controlConn, 215, "UNIX Type: L8")
+}
+
 func runUninmplemented(session *Session) error {
 	return sendResponse(session.controlConn, 502, "")
 }
