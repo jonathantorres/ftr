@@ -228,6 +228,7 @@ func runCommandAcceptAndStore(session *Session, filename string) error {
 		fmt.Fprintf(os.Stderr, "error writing bytes to new file: %s\n", err)
 		return sendResponse(session.controlConn, 450, "")
 	}
+	file.Close()
 	var sig struct{}
 	session.dataConnChan <- sig
 	return sendResponse(session.controlConn, 200, "")
