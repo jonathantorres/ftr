@@ -51,9 +51,6 @@ func (s *Session) start() {
 }
 
 func (s *Session) openDataConn(port uint16) error {
-	if s.dataConn != nil {
-		return nil
-	}
 	l, err := net.Listen("tcp", fmt.Sprintf("%s:%d", s.server.Host, port))
 	if err != nil {
 		return err
@@ -61,19 +58,17 @@ func (s *Session) openDataConn(port uint16) error {
 	s.dataConnPort = port
 	s.dataConnChan = make(chan struct{})
 	go func() {
-		for {
-			conn, err := l.Accept()
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "data conn: accept error:  %s\n", err)
-				continue
-			}
-			go s.handleDataTransfer(conn)
+		conn, err := l.Accept()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "data conn: accept error:  %s\n", err)
+			return
 		}
+		go s.handleDataTransfer(conn, l)
 	}()
 	return nil
 }
 
-func (s *Session) handleDataTransfer(conn net.Conn) {
+func (s *Session) handleDataTransfer(conn net.Conn, l net.Listener) {
 	s.dataConn = conn
 
 	var sig struct{}
@@ -82,7 +77,12 @@ func (s *Session) handleDataTransfer(conn net.Conn) {
 
 	// wait until the command finishes, then close the connection
 	<-s.dataConnChan
+
+	s.dataConn = nil
+	s.dataConnPort = 0
+	s.dataConnChan = nil
 	defer conn.Close()
+	defer l.Close()
 }
 
 func (s *Session) handleCommand(clientCmd []byte) error {
