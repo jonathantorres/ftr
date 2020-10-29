@@ -258,14 +258,13 @@ func runCommandChangeParent(session *Session) error {
 	}
 	err := os.Chdir(session.server.Conf.Root + session.user.Root + "/" + cwd)
 	if err != nil {
+		fmt.Fprintf(os.Stderr, "err chdir: %s\n", err)
 		return sendResponse(session.controlConn, 550, "")
 	}
 	session.cwd = cwd
 	base := path.Base(cwd)
 
-	runCommandPasv(session)
-	runCommandList(session, "")
-	return sendResponse(session.controlConn, 250, "CDUP successful. \"/"+base+"\" is current directory\n")
+	return sendResponse(session.controlConn, 200, "CDUP successful. \"/"+base+"\" is current directory\n")
 }
 
 func runUninmplemented(session *Session) error {
