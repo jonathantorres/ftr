@@ -4,12 +4,12 @@ import (
 	"errors"
 )
 
-// type struct StatusCode{
-// 	uint16 code
-// 	string message
-// }
-
 var statusCodes = map[uint16]string{
+	110: "Restart marker replay",
+	120: "Service ready in a few minutes",
+	125: "Data connection already open",
+	150: "File status okay, about to open data connection",
+
 	200: "Command Ok",
 	202: "Command not implemented",
 	211: "System status",
@@ -32,6 +32,8 @@ var statusCodes = map[uint16]string{
 	257: "Path created",
 
 	331: "Username okay, need password.",
+	332: "Need account for login.",
+	350: "Requested file action pending more information",
 
 	400: "Command not accepted, please try again",
 	421: "Service not available, closing control connection",
@@ -54,7 +56,11 @@ var statusCodes = map[uint16]string{
 	550: "File not found, error encountered",
 	551: "Requested action aborted. Page type unknown.",
 	552: "Requested file action aborted. Exceeded storage allocation",
-	553: "equested action not taken. File name not allowed.",
+	553: "Requested action not taken. File name not allowed.",
+
+	631: "Integrity protected reply",
+	632: "Confidentiality and integrity protected reply",
+	633: "Confidentiality protected reply",
 }
 
 func GetStatusCodeMessage(statusCode uint16) (string, error) {
