@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"path"
@@ -204,12 +205,12 @@ func runCommandList(session *Session, file string) error {
 func runCommandRetrieve(session *Session, filename string) error {
 	<-session.dataConnChan
 	path := session.server.Conf.Root + session.user.Root + "/" + session.cwd + "/" + filename
-	fileData, err := ioutil.ReadFile(path)
+	file, err := os.Open(path)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "error reading file: %s\n", err)
+		fmt.Fprintf(os.Stderr, "error opening file: %s\n", err)
 		return sendResponse(session.controlConn, 450, "")
 	}
-	_, err = session.dataConn.Write(fileData)
+	_, err = io.Copy(session.dataConn, file)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error transferring file: %s\n", err)
 		return sendResponse(session.controlConn, 450, "")
