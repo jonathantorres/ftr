@@ -5,7 +5,6 @@ import (
 	"io"
 	"net"
 	"os"
-	"strings"
 )
 
 // the current active session
@@ -87,39 +86,50 @@ func (s *Session) handleDataTransfer(conn net.Conn, l net.Listener) {
 
 func (s *Session) handleCommand(clientCmd []byte) error {
 	clientCmdStr := trimCommandLine(clientCmd)
-	cmdParts := strings.Split(clientCmdStr, " ")
-	cmd := strings.TrimSpace(cmdParts[0])
-
-	if len(cmdParts) == 1 {
+	cmd := ""
+	cmdParams := ""
+	foundFirstSpace := false
+	for _, r := range clientCmdStr {
+		if !foundFirstSpace && r == ' ' {
+			foundFirstSpace = true
+			continue
+		}
+		if foundFirstSpace {
+			cmdParams += string(r)
+		} else {
+			cmd += string(r)
+		}
+	}
+	if cmdParams == "" {
 		return s.execCommand(cmd, "")
-	} else if len(cmdParts) > 1 {
-		return s.execCommand(cmd, cmdParts[1:]...)
+	} else {
+		return s.execCommand(cmd, cmdParams)
 	}
 	return sendResponse(s.controlConn, 500, "")
 }
 
-func (s *Session) execCommand(cmd string, cmdArgs ...string) error {
+func (s *Session) execCommand(cmd string, cmdArgs string) error {
 	var err error = nil
 	fmt.Fprintf(os.Stdout, "cmd: %s\n", cmd)
 	switch cmd {
 	case CommandUser:
-		err = runCommandUser(s, cmdArgs[0])
+		err = runCommandUser(s, cmdArgs)
 	case CommandPassword:
-		err = runCommandPassword(s, cmdArgs[0])
+		err = runCommandPassword(s, cmdArgs)
 	case CommandPrintDir:
 		err = runCommandPrintDir(s)
 	case CommandChangeDir:
-		err = runCommandChangeDir(s, cmdArgs[0])
+		err = runCommandChangeDir(s, cmdArgs)
 	case CommandType:
-		err = runCommandType(s, cmdArgs[0])
+		err = runCommandType(s, cmdArgs)
 	case CommandPassive:
 		err = runCommandPasv(s)
 	case CommandList:
-		err = runCommandList(s, cmdArgs[0])
+		err = runCommandList(s, cmdArgs)
 	case CommandRetrieve:
-		err = runCommandRetrieve(s, cmdArgs[0])
+		err = runCommandRetrieve(s, cmdArgs)
 	case CommandAcceptAndStore:
-		err = runCommandAcceptAndStore(s, cmdArgs[0])
+		err = runCommandAcceptAndStore(s, cmdArgs)
 	case CommandSystemType:
 		err = runCommandSystemType(s)
 	case CommandChangeParent:
