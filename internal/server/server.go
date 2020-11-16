@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	ControlPort                    = 9999 // this should be 21
+	ControlPort                    = 21
 	DefaultHost                    = "localhost"
 	DefaultConf                    = "./gftp.json"
 	defaultCmdSize                 = 512
