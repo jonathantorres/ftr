@@ -134,6 +134,8 @@ func (s *Session) execCommand(cmd string, cmdArgs string) error {
 		err = runCommandSystemType(s)
 	case CommandChangeParent, CommandChangeToParentDir:
 		err = runCommandChangeParent(s)
+	case CommandMakeDir, CommandMakeADir:
+		err = runCommandMakeDir(s, cmdArgs)
 	default:
 		err = runUninmplemented(s)
 	}

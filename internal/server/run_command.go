@@ -197,6 +197,16 @@ func runCommandChangeParent(session *Session) error {
 	return sendResponse(session.controlConn, 200, "CDUP successful. \"/"+base+"\" is current directory\n")
 }
 
+func runCommandMakeDir(session *Session, dirName string) error {
+	cwd := session.cwd
+	err := os.Mkdir(session.server.Conf.Root+session.user.Root+"/"+cwd+"/"+dirName, 0777)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "err mkdir: %s\n", err)
+		return sendResponse(session.controlConn, 550, "")
+	}
+	return sendResponse(session.controlConn, 200, fmt.Sprintf("Directory %s created", dirName))
+}
+
 func runUninmplemented(session *Session) error {
 	return sendResponse(session.controlConn, 502, "")
 }
