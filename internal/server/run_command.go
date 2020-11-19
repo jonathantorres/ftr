@@ -207,6 +207,16 @@ func runCommandMakeDir(session *Session, dirName string) error {
 	return sendResponse(session.controlConn, 200, fmt.Sprintf("Directory %s created", dirName))
 }
 
+func runCommandDelete(session *Session, filename string) error {
+	cwd := session.cwd
+	err := os.Remove(session.server.Conf.Root + session.user.Root + "/" + cwd + "/" + filename)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "err remove file: %s\n", err)
+		return sendResponse(session.controlConn, 550, "")
+	}
+	return sendResponse(session.controlConn, 200, fmt.Sprintf("File %s deleted", filename))
+}
+
 func runUninmplemented(session *Session) error {
 	return sendResponse(session.controlConn, 502, "")
 }
