@@ -12,7 +12,7 @@ $(CLIENT_PROG):
 # Run tests
 .PHONY: test
 test:
-	@echo "running tests..."
+	go test ./internal/conf/
 
 .PHONY: clean
 clean:
