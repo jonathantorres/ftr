@@ -7,7 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/jonathantorres/gftp/internal/server"
+	"github.com/jonathantorres/ftr/internal/server"
 )
 
 var hostFlag = flag.String("host", server.DefaultHost, "The host of the server")

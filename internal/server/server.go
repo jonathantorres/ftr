@@ -10,7 +10,7 @@ import (
 const (
 	ControlPort                    = 21
 	DefaultHost                    = "localhost"
-	DefaultConf                    = "./gftp.json"
+	DefaultConf                    = "./ftr.json"
 	defaultCmdSize                 = 512
 	TransferTypeAscii TransferType = "A"
 	TransferTypeImage TransferType = "I"
