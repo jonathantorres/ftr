@@ -1,12 +1,11 @@
 package main
 
 import (
-	"encoding/json"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"os"
 
+	"github.com/jonathantorres/ftr/internal/conf"
 	"github.com/jonathantorres/ftr/internal/server"
 )
 
@@ -31,7 +30,7 @@ func main() {
 	//       SIGINT, SIGTERM and SIGQUIT to shutdown the server
 	//       SIGHUB to reload the configuration file
 
-	conf, err := loadConf(*confFlag)
+	config, err := conf.Load(*confFlag)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "server conf error: %s\n", err)
 		os.Exit(1)
@@ -39,26 +38,13 @@ func main() {
 	s := &server.Server{
 		Host: *hostFlag,
 		Port: *portFlag,
-		Conf: conf,
+		Conf: config,
 	}
 	err = s.Start()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "server error: %s\n", err)
 		os.Exit(1)
 	}
-}
-
-func loadConf(configLoc string) (*server.ServerConf, error) {
-	file, err := ioutil.ReadFile(configLoc)
-	if err != nil {
-		return nil, err
-	}
-	conf := &server.ServerConf{}
-	err = json.Unmarshal(file, conf)
-	if err != nil {
-		return nil, err
-	}
-	return conf, nil
 }
 
 func usage() {

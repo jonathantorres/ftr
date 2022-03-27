@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net"
 	"os"
+
+	"github.com/jonathantorres/ftr/internal/conf"
 )
 
 const (
@@ -21,12 +23,7 @@ type TransferType string
 type Server struct {
 	Host string
 	Port int
-	Conf *ServerConf
-}
-
-type ServerConf struct {
-	Root  string
-	Users []*User
+	Conf *conf.Conf
 }
 
 func (s *Server) Start() error {
