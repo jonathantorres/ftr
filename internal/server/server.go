@@ -12,7 +12,7 @@ import (
 const (
 	ControlPort                    = 21
 	DefaultHost                    = "localhost"
-	DefaultConf                    = "./ftr.json"
+	DefaultConf                    = "ftr.conf"
 	defaultCmdSize                 = 512
 	TransferTypeAscii TransferType = "A"
 	TransferTypeImage TransferType = "I"
