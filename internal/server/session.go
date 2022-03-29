@@ -7,6 +7,13 @@ import (
 	"os"
 )
 
+// the current user logged in for this session
+type User struct {
+	Username string
+	Password string
+	Root     string
+}
+
 // the current active session
 type Session struct {
 	user         *User
@@ -18,13 +25,6 @@ type Session struct {
 	dataConnPort uint16
 	dataConnChan chan struct{}
 	cwd          string
-}
-
-// the current user logged in for this session
-type User struct {
-	Username string
-	Password string
-	Root     string
 }
 
 func (s *Session) start() {

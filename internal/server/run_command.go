@@ -15,7 +15,10 @@ func runCommandUser(session *Session, username string) error {
 	for _, u := range session.server.Conf.Users {
 		if u.Username == username {
 			userFound = true
-			session.user = u
+			user := &User{
+				Username: u.Username,
+			}
+			session.user = user
 			break
 		}
 	}
@@ -30,7 +33,12 @@ func runCommandPassword(session *Session, pass string) error {
 	for _, u := range session.server.Conf.Users {
 		if u.Username == session.user.Username && u.Password == pass {
 			passFound = true
-			session.user = u
+			user := &User{
+				Username: u.Username,
+				Password: u.Password,
+				Root:     u.Root,
+			}
+			session.user = user
 			break
 		}
 	}
