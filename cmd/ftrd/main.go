@@ -46,7 +46,6 @@ func main() {
 	err = s.Start()
 	if err != nil {
 		log.Fatalf("server error: %s\n", err)
-		os.Exit(1)
 	}
 }
 
