@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"os"
 	"path"
 	"strconv"
@@ -120,7 +121,7 @@ func runCommandList(session *Session, file string) error {
 	}
 	files, err := ioutil.ReadDir(path)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed listing directory: %s\n", err)
+		log.Printf("failed listing directory: %s\n", err)
 		return sendResponse(session.controlConn, StatusCodeFileActionNotTaken, "")
 	}
 	dirFiles := make([]string, 0)
@@ -131,7 +132,7 @@ func runCommandList(session *Session, file string) error {
 	dirData := strings.Join(dirFiles, "\n")
 	_, err = session.dataConn.Write([]byte(dirData))
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed writing data: %s\n", err)
+		log.Printf("failed writing data: %s\n", err)
 		return sendResponse(session.controlConn, StatusCodeFileActionNotTaken, "")
 	}
 	var sig struct{}
@@ -144,12 +145,12 @@ func runCommandRetrieve(session *Session, filename string) error {
 	path := session.server.Conf.Root + session.user.Root + "/" + session.cwd + "/" + filename
 	file, err := os.Open(path)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "error opening file: %s\n", err)
+		log.Printf("error opening file: %s\n", err)
 		return sendResponse(session.controlConn, StatusCodeFileActionNotTaken, "")
 	}
 	_, err = io.Copy(session.dataConn, file)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "error transferring file: %s\n", err)
+		log.Printf("error transferring file: %s\n", err)
 		return sendResponse(session.controlConn, StatusCodeFileActionNotTaken, "")
 	}
 	file.Close()
@@ -163,18 +164,18 @@ func runCommandAcceptAndStore(session *Session, filename string) error {
 	path := session.server.Conf.Root + session.user.Root + "/" + session.cwd + "/" + filename
 	fileData, err := ioutil.ReadAll(session.dataConn)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "error receiving file: %s\n", err)
+		log.Printf("error receiving file: %s\n", err)
 		return sendResponse(session.controlConn, StatusCodeFileActionNotTaken, "")
 	}
 
 	file, err := os.Create(path)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "error creating file: %s\n", err)
+		log.Printf("error creating file: %s\n", err)
 		return sendResponse(session.controlConn, StatusCodeFileActionNotTaken, "")
 	}
 	_, err = file.Write(fileData)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "error writing bytes to new file: %s\n", err)
+		log.Printf("error writing bytes to new file: %s\n", err)
 		return sendResponse(session.controlConn, StatusCodeFileActionNotTaken, "")
 	}
 	file.Close()
@@ -197,7 +198,7 @@ func runCommandChangeParent(session *Session) error {
 	}
 	err := os.Chdir(session.server.Conf.Root + session.user.Root + "/" + cwd)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "err chdir: %s\n", err)
+		log.Printf("err chdir: %s\n", err)
 		return sendResponse(session.controlConn, StatusCodeFileNotFound, "")
 	}
 	session.cwd = cwd
@@ -210,7 +211,7 @@ func runCommandMakeDir(session *Session, dirName string) error {
 	cwd := session.cwd
 	err := os.Mkdir(session.server.Conf.Root+session.user.Root+"/"+cwd+"/"+dirName, 0777)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "err mkdir: %s\n", err)
+		log.Printf("err mkdir: %s\n", err)
 		return sendResponse(session.controlConn, StatusCodeFileNotFound, "")
 	}
 	return sendResponse(session.controlConn, StatusCodeOk, fmt.Sprintf("Directory %s created", dirName))
@@ -220,7 +221,7 @@ func runCommandDelete(session *Session, filename string) error {
 	cwd := session.cwd
 	err := os.Remove(session.server.Conf.Root + session.user.Root + "/" + cwd + "/" + filename)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "err remove file: %s\n", err)
+		log.Printf("err remove file: %s\n", err)
 		return sendResponse(session.controlConn, StatusCodeFileNotFound, "")
 	}
 	return sendResponse(session.controlConn, StatusCodeOk, fmt.Sprintf("File %s deleted", filename))

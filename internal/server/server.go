@@ -3,8 +3,8 @@ package server
 import (
 	"errors"
 	"fmt"
+	"log"
 	"net"
-	"os"
 
 	"github.com/jonathantorres/ftr/internal/conf"
 )
@@ -34,7 +34,7 @@ func (s *Server) Start() error {
 	for {
 		conn, err := l.Accept()
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "accept error:  %s\n", err)
+			log.Printf("accept error: %s\n", err)
 			continue
 		}
 		go s.handleClient(conn)
@@ -45,7 +45,7 @@ func (s *Server) Start() error {
 func (s *Server) handleClient(conn net.Conn) {
 	err := sendResponse(conn, StatusCodeServiceReady, "") // welcome message
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "error response: %s\n", err)
+		log.Printf("error response: %s\n", err)
 		return
 	}
 	session := &Session{

@@ -3,8 +3,8 @@ package server
 import (
 	"fmt"
 	"io"
+	"log"
 	"net"
-	"os"
 )
 
 // the current user logged in for this session
@@ -33,9 +33,9 @@ func (s *Session) start() {
 		_, err := s.controlConn.Read(clientCmd)
 		if err != nil {
 			if err == io.EOF {
-				fmt.Fprintf(os.Stderr, "connection finished by client %s\n", err)
+				log.Printf("connection finished by client %s\n", err)
 			} else {
-				fmt.Fprintf(os.Stderr, "error read: %s\n", err)
+				log.Printf("read error: %s\n", err)
 				sendResponse(s.controlConn, StatusCodeUnknownErr, "")
 			}
 			s.controlConn.Close()
@@ -59,7 +59,7 @@ func (s *Session) openDataConn(port uint16) error {
 	go func() {
 		conn, err := l.Accept()
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "data conn: accept error:  %s\n", err)
+			log.Printf("data conn: accept error: %s\n", err)
 			return
 		}
 		go s.handleDataTransfer(conn, l)
@@ -110,7 +110,7 @@ func (s *Session) handleCommand(clientCmd []byte) error {
 
 func (s *Session) execCommand(cmd string, cmdArgs string) error {
 	var err error = nil
-	fmt.Fprintf(os.Stdout, "cmd: %s\n", cmd)
+	log.Printf("cmd: %s\n", cmd)
 	switch cmd {
 	case CommandUser:
 		err = runCommandUser(s, cmdArgs)

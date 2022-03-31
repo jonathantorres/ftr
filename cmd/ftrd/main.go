@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/jonathantorres/ftr/internal/conf"
@@ -16,6 +17,8 @@ import (
 // the default value will be /usr/local/ftr, this value can be overriden
 // by using the command line flag -p (prefix)
 
+// TODO: fix these command line arguments
+// make them more sensical and usable
 var hostFlag = flag.String("host", server.DefaultHost, "The host of the server")
 var portFlag = flag.Int("port", server.ControlPort, "The port number for the control connection")
 var confFlag = flag.String("conf", server.DefaultConf, "The location of the configuration file")
@@ -24,7 +27,8 @@ func main() {
 	flag.Usage = usage
 	flag.Parse()
 
-	// TODO: start logging mechanism
+	// logging
+	log.SetPrefix("ftr: ")
 
 	// TODO: install signals to manage the server
 	//       SIGINT, SIGTERM and SIGQUIT to shutdown the server
@@ -32,8 +36,7 @@ func main() {
 
 	config, err := conf.Load(*confFlag)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "server conf error: %s\n", err)
-		os.Exit(1)
+		log.Fatalf("server conf error: %s\n", err)
 	}
 	s := &server.Server{
 		Host: *hostFlag,
@@ -42,7 +45,7 @@ func main() {
 	}
 	err = s.Start()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "server error: %s\n", err)
+		log.Fatalf("server error: %s\n", err)
 		os.Exit(1)
 	}
 }
