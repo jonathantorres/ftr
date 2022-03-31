@@ -4,63 +4,122 @@ import (
 	"errors"
 )
 
+const (
+	StatusCodeRestartMarker       = 110
+	StatusServiceReadyInAFewMins  = 120
+	StatusCodeDataConnAlreadyOpen = 125
+	StatusCodeFileStatusOk        = 150
+
+	StatusCodeOk                 = 200
+	StatusCodeNotImplemented     = 202
+	StatusCodeSystemStatus       = 211
+	StatusCodeDirectoryStatus    = 212
+	StatusCodeFileStatus         = 213
+	StatusCodeHelpMessage        = 214
+	StatusCodeNameSystem         = 215
+	StatusCodeServiceReady       = 220
+	StatusCodeClosingControlConn = 221
+	StatusCodeDataConnOpen       = 225
+	StatusCodeClosingDataConn    = 226
+	StatusCodeEnterPassMode      = 227
+	StatusCodeEnterLongPassMode  = 228
+	StatusCodeEnterExtPassMode   = 229
+	StatusCodeUserLoggedIn       = 230
+	StatusCodeUserLoggedOut      = 231
+	StatusCodeLogoutCmdNoted     = 232
+	StatusCodeAuthAccepted       = 234
+	StatusCodeRequestedFileOk    = 250
+	StatusCodePathCreated        = 257
+
+	StatusCodeUsernameOk          = 331
+	StatusCodeNeedAccount         = 332
+	StatusCodeRequestedFileAction = 350
+
+	StatusCodeCmdNotAccepted      = 400
+	StatusCodeServiceNotAvailable = 421
+	StatusCodeCantOpenDataConn    = 425
+	StatusCodeConnClosed          = 426
+	StatusCodeInvalidUsername     = 430
+	StatusCodeHostUnavailable     = 434
+	StatusCodeFileActionNotTaken  = 450
+	StatusCodeActionAborted       = 451
+	StatusCodeActionNotTaken      = 452
+
+	StatusCodeUnknownErr                 = 500
+	StatusCodeSyntaxErr                  = 501
+	StatusCodeCmdNotImplemented          = 502
+	StatusCodeBadSequence                = 503
+	StatusCodeCmdNotImplementedForParam  = 504
+	StatusCodeNotLoggedIn                = 530
+	StatusCodeNeedAccountForStoring      = 532
+	StatusCodeCouldNotConnToServer       = 534
+	StatusCodeFileNotFound               = 550
+	StatusCodeRequestedActionAborted     = 551
+	StatusCodeRequestedFileActionAborted = 552
+	StatusCodeRequestedActionNotTaken    = 553
+
+	StatusCodeIntegrityProtectedReply        = 631
+	StatusCodeConfAndIntegrityProtectedReply = 632
+	StatusCodeConfProtectedReply             = 633
+)
+
 var statusCodes = map[uint16]string{
-	110: "Restart marker replay",
-	120: "Service ready in a few minutes",
-	125: "Data connection already open",
-	150: "File status okay, about to open data connection",
+	StatusCodeRestartMarker:       "Restart marker replay",
+	StatusServiceReadyInAFewMins:  "Service ready in a few minutes",
+	StatusCodeDataConnAlreadyOpen: "Data connection already open",
+	StatusCodeFileStatusOk:        "File status okay, about to open data connection",
 
-	200: "Command Ok",
-	202: "Command not implemented",
-	211: "System status",
-	212: "Directory Status",
-	213: "File Status",
-	214: "Help message",
-	215: "NAME system type",
-	220: "Service Ready",
-	221: "Closing control connection",
-	225: "Data connection open, no transfer in progress",
-	226: "Closing data connection. File action ok",
-	227: "Entering passive mode",
-	228: "Entering long passive mode",
-	229: "Entering extended passive mode",
-	230: "User logged in, proceed. Logged out if appropriate",
-	231: "User logged out, service terminated.",
-	232: "Logout command noted",
-	234: "Authentication mechanism accepted",
-	250: "Requested file action ok, completed",
-	257: "Path created",
+	StatusCodeOk:                 "Command Ok",
+	StatusCodeNotImplemented:     "Command not implemented",
+	StatusCodeSystemStatus:       "System status",
+	StatusCodeDirectoryStatus:    "Directory Status",
+	StatusCodeFileStatus:         "File Status",
+	StatusCodeHelpMessage:        "Help message",
+	StatusCodeNameSystem:         "NAME system type",
+	StatusCodeServiceReady:       "Service Ready",
+	StatusCodeClosingControlConn: "Closing control connection",
+	StatusCodeDataConnOpen:       "Data connection open, no transfer in progress",
+	StatusCodeClosingDataConn:    "Closing data connection. File action ok",
+	StatusCodeEnterPassMode:      "Entering passive mode",
+	StatusCodeEnterLongPassMode:  "Entering long passive mode",
+	StatusCodeEnterExtPassMode:   "Entering extended passive mode",
+	StatusCodeUserLoggedIn:       "User logged in, proceed. Logged out if appropriate",
+	StatusCodeUserLoggedOut:      "User logged out, service terminated.",
+	StatusCodeLogoutCmdNoted:     "Logout command noted",
+	StatusCodeAuthAccepted:       "Authentication mechanism accepted",
+	StatusCodeRequestedFileOk:    "Requested file action ok, completed",
+	StatusCodePathCreated:        "Path created",
 
-	331: "Username okay, need password.",
-	332: "Need account for login.",
-	350: "Requested file action pending more information",
+	StatusCodeUsernameOk:          "Username okay, need password.",
+	StatusCodeNeedAccount:         "Need account for login.",
+	StatusCodeRequestedFileAction: "Requested file action pending more information",
 
-	400: "Command not accepted, please try again",
-	421: "Service not available, closing control connection",
-	425: "Can't open data connection",
-	426: "Connection closed, transfer aborted",
-	430: "Invalid username or password",
-	434: "Requested host unavailable",
-	450: "Requested file action not taken",
-	451: "Requested action aborted. Local error in processing",
-	452: "Requested action not taken. Insufficient storage space in system. File unavailable",
+	StatusCodeCmdNotAccepted:      "Command not accepted, please try again",
+	StatusCodeServiceNotAvailable: "Service not available, closing control connection",
+	StatusCodeCantOpenDataConn:    "Can't open data connection",
+	StatusCodeConnClosed:          "Connection closed, transfer aborted",
+	StatusCodeInvalidUsername:     "Invalid username or password",
+	StatusCodeHostUnavailable:     "Requested host unavailable",
+	StatusCodeFileActionNotTaken:  "Requested file action not taken",
+	StatusCodeActionAborted:       "Requested action aborted. Local error in processing",
+	StatusCodeActionNotTaken:      "Requested action not taken. Insufficient storage space in system. File unavailable",
 
-	500: "Unknown error",
-	501: "Syntax error in parameters or arguments. ",
-	502: "Command not implemented",
-	503: "Bad sequence of commands",
-	504: "Command not implemented for that parameter.",
-	530: "Not logged in.",
-	532: "Need account for storing files.",
-	534: "Could Not Connect to Server - Policy Requires SSL",
-	550: "File not found, error encountered",
-	551: "Requested action aborted. Page type unknown.",
-	552: "Requested file action aborted. Exceeded storage allocation",
-	553: "Requested action not taken. File name not allowed.",
+	StatusCodeUnknownErr:                 "Unknown error",
+	StatusCodeSyntaxErr:                  "Syntax error in parameters or arguments. ",
+	StatusCodeCmdNotImplemented:          "Command not implemented",
+	StatusCodeBadSequence:                "Bad sequence of commands",
+	StatusCodeCmdNotImplementedForParam:  "Command not implemented for that parameter.",
+	StatusCodeNotLoggedIn:                "Not logged in.",
+	StatusCodeNeedAccountForStoring:      "Need account for storing files.",
+	StatusCodeCouldNotConnToServer:       "Could Not Connect to Server - Policy Requires SSL",
+	StatusCodeFileNotFound:               "File not found, error encountered",
+	StatusCodeRequestedActionAborted:     "Requested action aborted. Page type unknown.",
+	StatusCodeRequestedFileActionAborted: "Requested file action aborted. Exceeded storage allocation",
+	StatusCodeRequestedActionNotTaken:    "Requested action not taken. File name not allowed.",
 
-	631: "Integrity protected reply",
-	632: "Confidentiality and integrity protected reply",
-	633: "Confidentiality protected reply",
+	StatusCodeIntegrityProtectedReply:        "Integrity protected reply",
+	StatusCodeConfAndIntegrityProtectedReply: "Confidentiality and integrity protected reply",
+	StatusCodeConfProtectedReply:             "Confidentiality protected reply",
 }
 
 func GetStatusCodeMessage(statusCode uint16) (string, error) {

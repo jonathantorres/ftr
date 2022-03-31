@@ -43,7 +43,7 @@ func (s *Server) Start() error {
 }
 
 func (s *Server) handleClient(conn net.Conn) {
-	err := sendResponse(conn, 220, "") // welcome message
+	err := sendResponse(conn, StatusCodeServiceReady, "") // welcome message
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error response: %s\n", err)
 		return
@@ -59,7 +59,7 @@ func sendResponse(conn net.Conn, statusCode uint16, respMsg string) error {
 	codeMsg, err := GetStatusCodeMessage(statusCode)
 	var code uint16
 	if err != nil {
-		code = 500
+		code = StatusCodeUnknownErr
 		respMsg = err.Error()
 	} else {
 		code = statusCode

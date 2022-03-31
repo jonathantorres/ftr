@@ -23,9 +23,9 @@ func runCommandUser(session *Session, username string) error {
 		}
 	}
 	if userFound {
-		return sendResponse(session.controlConn, 331, "")
+		return sendResponse(session.controlConn, StatusCodeUsernameOk, "")
 	}
-	return sendResponse(session.controlConn, 430, "")
+	return sendResponse(session.controlConn, StatusCodeInvalidUsername, "")
 }
 
 func runCommandPassword(session *Session, pass string) error {
@@ -46,15 +46,15 @@ func runCommandPassword(session *Session, pass string) error {
 		// change to home directory
 		err := os.Chdir(session.server.Conf.Root + session.user.Root)
 		if err != nil {
-			return sendResponse(session.controlConn, 550, "")
+			return sendResponse(session.controlConn, StatusCodeFileNotFound, "")
 		}
-		return sendResponse(session.controlConn, 230, "")
+		return sendResponse(session.controlConn, StatusCodeUserLoggedIn, "")
 	}
-	return sendResponse(session.controlConn, 430, "")
+	return sendResponse(session.controlConn, StatusCodeInvalidUsername, "")
 }
 
 func runCommandPrintDir(session *Session) error {
-	return sendResponse(session.controlConn, 257, "\"/"+session.cwd+"\" is current directory\n")
+	return sendResponse(session.controlConn, StatusCodePathCreated, "\"/"+session.cwd+"\" is current directory\n")
 }
 
 func runCommandChangeDir(session *Session, dir string) error {
@@ -71,26 +71,26 @@ func runCommandChangeDir(session *Session, dir string) error {
 	}
 	err := os.Chdir(session.server.Conf.Root + session.user.Root + "/" + cwd)
 	if err != nil {
-		return sendResponse(session.controlConn, 550, "")
+		return sendResponse(session.controlConn, StatusCodeFileNotFound, "")
 	}
 	session.cwd = cwd
-	return sendResponse(session.controlConn, 250, "CWD successful. \"/"+dir+"\" is current directory\n")
+	return sendResponse(session.controlConn, StatusCodeRequestedFileOk, "CWD successful. \"/"+dir+"\" is current directory\n")
 }
 
 func runCommandType(session *Session, typ string) error {
 	selectedTransferType := TransferType(typ)
 	if selectedTransferType == TransferTypeAscii || selectedTransferType == TransferTypeImage {
 		session.tType = TransferType(typ)
-		return sendResponse(session.controlConn, 200, "Transfer type Ok")
+		return sendResponse(session.controlConn, StatusCodeOk, "Transfer type Ok")
 	}
-	return sendResponse(session.controlConn, 504, "")
+	return sendResponse(session.controlConn, StatusCodeCmdNotImplemented, "")
 }
 
 func runCommandPasv(session *Session) error {
 	session.passMode = true
 	addr, err := findOpenAddr()
 	if err != nil {
-		return sendResponse(session.controlConn, 425, "")
+		return sendResponse(session.controlConn, StatusCodeCantOpenDataConn, "")
 	}
 	respParts := make([]string, 0)
 	for i := 0; i < len(addr.IP); i++ {
@@ -105,9 +105,9 @@ func runCommandPasv(session *Session) error {
 	respMsg := strings.Join(respParts, ",")
 
 	if err = session.openDataConn(p); err != nil {
-		return sendResponse(session.controlConn, 425, "")
+		return sendResponse(session.controlConn, StatusCodeCantOpenDataConn, "")
 	}
-	return sendResponse(session.controlConn, 227, respMsg)
+	return sendResponse(session.controlConn, StatusCodeEnterPassMode, respMsg)
 }
 
 func runCommandList(session *Session, file string) error {
@@ -121,7 +121,7 @@ func runCommandList(session *Session, file string) error {
 	files, err := ioutil.ReadDir(path)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed listing directory: %s\n", err)
-		return sendResponse(session.controlConn, 450, "")
+		return sendResponse(session.controlConn, StatusCodeFileActionNotTaken, "")
 	}
 	dirFiles := make([]string, 0)
 	for _, f := range files {
@@ -132,11 +132,11 @@ func runCommandList(session *Session, file string) error {
 	_, err = session.dataConn.Write([]byte(dirData))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed writing data: %s\n", err)
-		return sendResponse(session.controlConn, 450, "")
+		return sendResponse(session.controlConn, StatusCodeFileActionNotTaken, "")
 	}
 	var sig struct{}
 	session.dataConnChan <- sig
-	return sendResponse(session.controlConn, 200, "")
+	return sendResponse(session.controlConn, StatusCodeOk, "")
 }
 
 func runCommandRetrieve(session *Session, filename string) error {
@@ -145,17 +145,17 @@ func runCommandRetrieve(session *Session, filename string) error {
 	file, err := os.Open(path)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error opening file: %s\n", err)
-		return sendResponse(session.controlConn, 450, "")
+		return sendResponse(session.controlConn, StatusCodeFileActionNotTaken, "")
 	}
 	_, err = io.Copy(session.dataConn, file)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error transferring file: %s\n", err)
-		return sendResponse(session.controlConn, 450, "")
+		return sendResponse(session.controlConn, StatusCodeFileActionNotTaken, "")
 	}
 	file.Close()
 	var sig struct{}
 	session.dataConnChan <- sig
-	return sendResponse(session.controlConn, 200, "")
+	return sendResponse(session.controlConn, StatusCodeOk, "")
 }
 
 func runCommandAcceptAndStore(session *Session, filename string) error {
@@ -164,27 +164,27 @@ func runCommandAcceptAndStore(session *Session, filename string) error {
 	fileData, err := ioutil.ReadAll(session.dataConn)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error receiving file: %s\n", err)
-		return sendResponse(session.controlConn, 450, "")
+		return sendResponse(session.controlConn, StatusCodeFileActionNotTaken, "")
 	}
 
 	file, err := os.Create(path)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error creating file: %s\n", err)
-		return sendResponse(session.controlConn, 450, "")
+		return sendResponse(session.controlConn, StatusCodeFileActionNotTaken, "")
 	}
 	_, err = file.Write(fileData)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error writing bytes to new file: %s\n", err)
-		return sendResponse(session.controlConn, 450, "")
+		return sendResponse(session.controlConn, StatusCodeFileActionNotTaken, "")
 	}
 	file.Close()
 	var sig struct{}
 	session.dataConnChan <- sig
-	return sendResponse(session.controlConn, 200, "")
+	return sendResponse(session.controlConn, StatusCodeOk, "")
 }
 
 func runCommandSystemType(session *Session) error {
-	return sendResponse(session.controlConn, 215, "UNIX Type: L8")
+	return sendResponse(session.controlConn, StatusCodeNameSystem, "UNIX Type: L8")
 }
 
 func runCommandChangeParent(session *Session) error {
@@ -198,12 +198,12 @@ func runCommandChangeParent(session *Session) error {
 	err := os.Chdir(session.server.Conf.Root + session.user.Root + "/" + cwd)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "err chdir: %s\n", err)
-		return sendResponse(session.controlConn, 550, "")
+		return sendResponse(session.controlConn, StatusCodeFileNotFound, "")
 	}
 	session.cwd = cwd
 	base := path.Base(cwd)
 
-	return sendResponse(session.controlConn, 200, "CDUP successful. \"/"+base+"\" is current directory\n")
+	return sendResponse(session.controlConn, StatusCodeOk, "CDUP successful. \"/"+base+"\" is current directory\n")
 }
 
 func runCommandMakeDir(session *Session, dirName string) error {
@@ -211,9 +211,9 @@ func runCommandMakeDir(session *Session, dirName string) error {
 	err := os.Mkdir(session.server.Conf.Root+session.user.Root+"/"+cwd+"/"+dirName, 0777)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "err mkdir: %s\n", err)
-		return sendResponse(session.controlConn, 550, "")
+		return sendResponse(session.controlConn, StatusCodeFileNotFound, "")
 	}
-	return sendResponse(session.controlConn, 200, fmt.Sprintf("Directory %s created", dirName))
+	return sendResponse(session.controlConn, StatusCodeOk, fmt.Sprintf("Directory %s created", dirName))
 }
 
 func runCommandDelete(session *Session, filename string) error {
@@ -221,11 +221,11 @@ func runCommandDelete(session *Session, filename string) error {
 	err := os.Remove(session.server.Conf.Root + session.user.Root + "/" + cwd + "/" + filename)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "err remove file: %s\n", err)
-		return sendResponse(session.controlConn, 550, "")
+		return sendResponse(session.controlConn, StatusCodeFileNotFound, "")
 	}
-	return sendResponse(session.controlConn, 200, fmt.Sprintf("File %s deleted", filename))
+	return sendResponse(session.controlConn, StatusCodeOk, fmt.Sprintf("File %s deleted", filename))
 }
 
 func runUninmplemented(session *Session) error {
-	return sendResponse(session.controlConn, 502, "")
+	return sendResponse(session.controlConn, StatusCodeCmdNotImplemented, "")
 }

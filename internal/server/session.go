@@ -36,14 +36,14 @@ func (s *Session) start() {
 				fmt.Fprintf(os.Stderr, "connection finished by client %s\n", err)
 			} else {
 				fmt.Fprintf(os.Stderr, "error read: %s\n", err)
-				sendResponse(s.controlConn, 500, "")
+				sendResponse(s.controlConn, StatusCodeUnknownErr, "")
 			}
 			s.controlConn.Close()
 			break
 		}
 		err = s.handleCommand(clientCmd)
 		if err != nil {
-			sendResponse(s.controlConn, 500, "")
+			sendResponse(s.controlConn, StatusCodeUnknownErr, "")
 			continue
 		}
 	}
@@ -105,7 +105,7 @@ func (s *Session) handleCommand(clientCmd []byte) error {
 	} else {
 		return s.execCommand(cmd, cmdParams)
 	}
-	return sendResponse(s.controlConn, 500, "")
+	return sendResponse(s.controlConn, StatusCodeUnknownErr, "")
 }
 
 func (s *Session) execCommand(cmd string, cmdArgs string) error {
