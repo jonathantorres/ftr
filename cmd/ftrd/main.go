@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/jonathantorres/ftr/internal/conf"
 	"github.com/jonathantorres/ftr/internal/server"
@@ -27,12 +29,9 @@ func main() {
 	flag.Usage = usage
 	flag.Parse()
 
-	// logging
 	log.SetPrefix("ftr: ")
 
-	// TODO: install signals to manage the server
-	//       SIGINT, SIGTERM and SIGQUIT to shutdown the server
-	//       SIGHUB to reload the configuration file
+	go handleSignals()
 
 	config, err := conf.Load(*confFlag)
 	if err != nil {
@@ -46,6 +45,27 @@ func main() {
 	err = s.Start()
 	if err != nil {
 		log.Fatalf("server error: %s\n", err)
+	}
+}
+
+func handleSignals() {
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGHUP)
+
+	s := <-sigs
+	switch s {
+	case syscall.SIGINT,
+		syscall.SIGTERM,
+		syscall.SIGQUIT:
+		// TODO: shutdown the server gracefully
+		log.Print("shutting down server...")
+		os.Exit(0)
+	case syscall.SIGHUP:
+		// TODO: this probably shouldn't terminate the program
+		// it should shutdown the server, and restart it
+		// so that it reloads the configuration file
+		log.Print("reloading configuration file...")
+		os.Exit(0)
 	}
 }
 
