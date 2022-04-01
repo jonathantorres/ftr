@@ -27,6 +27,7 @@ type Server struct {
 }
 
 func (s *Server) Start() error {
+	s.parseFlags()
 	l, err := net.Listen("tcp", fmt.Sprintf("%s:%d", s.Host, s.Port))
 	if err != nil {
 		return err
@@ -40,6 +41,17 @@ func (s *Server) Start() error {
 		go s.handleClient(conn)
 	}
 	return nil
+}
+
+func (s *Server) parseFlags() {
+	// use value from configuration file,
+	// if a command line flag was not provided
+	if s.Host == "" {
+		s.Host = s.Conf.ServerName
+	}
+	if s.Port == 0 {
+		s.Port = s.Conf.Port
+	}
 }
 
 func (s *Server) handleClient(conn net.Conn) {
