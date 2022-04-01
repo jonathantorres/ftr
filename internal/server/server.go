@@ -28,12 +28,12 @@ type Server struct {
 
 func (s *Server) Start() error {
 	s.parseFlags()
-	l, err := net.Listen("tcp", fmt.Sprintf("%s:%d", s.Host, s.Port))
+	l, err := s.getServerListener()
 	if err != nil {
 		return err
 	}
 	for {
-		conn, err := l.Accept()
+		conn, err := l.AcceptTCP()
 		if err != nil {
 			log.Printf("accept error: %s\n", err)
 			continue
@@ -41,6 +41,52 @@ func (s *Server) Start() error {
 		go s.handleClient(conn)
 	}
 	return nil
+}
+
+func (s *Server) getServerListener() (*net.TCPListener, error) {
+	// check if a host or an address is provided for the server
+	var ipAddrs []net.IP
+	ip := net.ParseIP(s.Host)
+	if ip == nil {
+		// a hostname was provided
+		addrs, err := net.LookupHost(s.Host)
+		if err != nil {
+			return nil, err
+		}
+		if len(addrs) == 0 {
+			return nil, errors.New("No addresses could be found for the server")
+		}
+		for _, addr := range addrs {
+			ipAddrs = append(ipAddrs, net.ParseIP(addr))
+		}
+	} else {
+		// user specified an IP address, and that sole address here
+		ipAddrs = append(ipAddrs, ip)
+	}
+	if len(ipAddrs) == 0 {
+		return nil, errors.New("The server address could not be parsed")
+	}
+
+	// let's try every address until a binding succeeds
+	var l *net.TCPListener
+	var err error
+	for _, ip := range ipAddrs {
+		laddr := &net.TCPAddr{
+			IP:   ip,
+			Port: s.Port,
+		}
+		l, err = net.ListenTCP("tcp", laddr)
+		if err != nil {
+			// binding failed, let's try the next one
+			continue
+		}
+		// binding is successfull, we are done
+		break
+	}
+	if l == nil {
+		return nil, errors.New("Could not bind an address for the server")
+	}
+	return l, nil
 }
 
 func (s *Server) parseFlags() {
@@ -54,7 +100,7 @@ func (s *Server) parseFlags() {
 	}
 }
 
-func (s *Server) handleClient(conn net.Conn) {
+func (s *Server) handleClient(conn *net.TCPConn) {
 	err := sendResponse(conn, StatusCodeServiceReady, "") // welcome message
 	if err != nil {
 		log.Printf("error response: %s\n", err)
@@ -67,7 +113,7 @@ func (s *Server) handleClient(conn net.Conn) {
 	session.start()
 }
 
-func sendResponse(conn net.Conn, statusCode uint16, respMsg string) error {
+func sendResponse(conn *net.TCPConn, statusCode uint16, respMsg string) error {
 	codeMsg, err := GetStatusCodeMessage(statusCode)
 	var code uint16
 	if err != nil {

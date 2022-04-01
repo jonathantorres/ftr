@@ -20,7 +20,7 @@ type Session struct {
 	server       *Server
 	tType        TransferType
 	passMode     bool
-	controlConn  net.Conn
+	controlConn  *net.TCPConn
 	dataConn     net.Conn
 	dataConnPort uint16
 	dataConnChan chan struct{}
