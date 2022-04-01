@@ -11,7 +11,7 @@ import (
 
 const (
 	ControlPort                    = 21
-	DefaultHost                    = "localhost"
+	DefaultName                    = "localhost"
 	DefaultConf                    = "ftr.conf"
 	defaultCmdSize                 = 512
 	TransferTypeAscii TransferType = "A"

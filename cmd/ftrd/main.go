@@ -26,31 +26,69 @@ func main() {
 	if !strings.HasSuffix(prefix, "/") {
 		prefix += "/"
 	}
-	// TODO: fix these command line arguments
-	// make them more sensical and usable
-	var hostFlag = flag.String("host", server.DefaultHost, "The host of the server")
-	var portFlag = flag.Int("port", server.ControlPort, "The port number for the control connection")
-	var confFlag = flag.String("conf", prefix+server.DefaultConf, "The location of the configuration file")
-	flag.Usage = usage
-	flag.Parse()
+	serverF, confF, portF := parseFlags()
 
 	log.SetPrefix("ftr: ")
 
 	go handleSignals()
 
-	config, err := conf.Load(*confFlag)
+	config, err := conf.Load(confF)
 	if err != nil {
 		log.Fatalf("server conf error: %s\n", err)
 	}
 	s := &server.Server{
-		Host: *hostFlag,
-		Port: *portFlag,
+		Host: serverF,
+		Port: portF,
 		Conf: config,
 	}
 	err = s.Start()
 	if err != nil {
 		log.Fatalf("server error: %s\n", err)
 	}
+}
+
+func parseFlags() (string, string, int) {
+	var (
+		serverF string
+		portF   int
+		confF   string
+	)
+
+	const (
+		serverD = "The default name of the server"
+		portD   = "The port number for the control connection"
+		confD   = "The location of the configuration file"
+	)
+	flag.StringVar(&serverF, "server", server.DefaultName, serverD)
+	flag.StringVar(&serverF, "s", server.DefaultName, serverD)
+	flag.IntVar(&portF, "port", server.ControlPort, portD)
+	flag.IntVar(&portF, "p", server.ControlPort, portD)
+	flag.StringVar(&confF, "conf", prefix+server.DefaultConf, confD)
+	flag.StringVar(&confF, "c", prefix+server.DefaultConf, confD)
+	flag.Usage = usage
+	flag.Parse()
+
+	var (
+		serverUsed bool
+		portUsed   bool
+	)
+
+	flag.Visit(func(f *flag.Flag) {
+		if f.Name == "server" || f.Name == "s" {
+			serverUsed = true
+		}
+		if f.Name == "port" || f.Name == "p" {
+			portUsed = true
+		}
+	})
+	// use zero value if the flag was not specified in the command line
+	if !serverUsed {
+		serverF = ""
+	}
+	if !portUsed {
+		portF = 0
+	}
+	return serverF, confF, portF
 }
 
 func handleSignals() {
@@ -75,6 +113,6 @@ func handleSignals() {
 }
 
 func usage() {
-	fmt.Fprintf(os.Stderr, "Usage: ftr -[hv] [-p port] [-h host] [-c conf]\n")
+	fmt.Fprintf(os.Stderr, "Usage: ftr -[hv] [-s server] [-p port] [-c conf]\n")
 	flag.PrintDefaults()
 }
