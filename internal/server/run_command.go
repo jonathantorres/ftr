@@ -89,7 +89,7 @@ func runCommandType(session *Session, typ string) error {
 
 func runCommandPasv(session *Session) error {
 	session.passMode = true
-	addr, err := findOpenAddr()
+	addr, err := session.server.findOpenAddr()
 	if err != nil {
 		return sendResponse(session.controlConn, StatusCodeCantOpenDataConn, "")
 	}

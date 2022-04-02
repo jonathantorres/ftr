@@ -113,6 +113,23 @@ func (s *Server) handleClient(conn *net.TCPConn) {
 	session.start()
 }
 
+func (s *Server) findOpenAddr() (*net.TCPAddr, error) {
+	addr, err := net.ResolveTCPAddr("tcp", fmt.Sprintf("%s:0", s.Host))
+	if err != nil {
+		return nil, err
+	}
+	l, err := net.ListenTCP("tcp", addr)
+	if err != nil {
+		return nil, err
+	}
+	addr, ok := l.Addr().(*net.TCPAddr)
+	if !ok {
+		return nil, errors.New("tcp address could not be resolved")
+	}
+	defer l.Close()
+	return addr, nil
+}
+
 func sendResponse(conn *net.TCPConn, statusCode uint16, respMsg string) error {
 	codeMsg, err := GetStatusCodeMessage(statusCode)
 	var code uint16
@@ -131,23 +148,6 @@ func sendResponse(conn *net.TCPConn, statusCode uint16, respMsg string) error {
 		return err
 	}
 	return nil
-}
-
-func findOpenAddr() (*net.TCPAddr, error) {
-	addr, err := net.ResolveTCPAddr("tcp", "localhost:0")
-	if err != nil {
-		return nil, err
-	}
-	l, err := net.ListenTCP("tcp", addr)
-	if err != nil {
-		return nil, err
-	}
-	addr, ok := l.Addr().(*net.TCPAddr)
-	if !ok {
-		return nil, errors.New("tcp address could not be resolved")
-	}
-	defer l.Close()
-	return addr, nil
 }
 
 func trimCommandLine(clientCmd []byte) string {
