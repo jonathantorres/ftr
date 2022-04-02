@@ -89,7 +89,7 @@ func runCommandType(session *Session, typ string) error {
 
 func runCommandPasv(session *Session) error {
 	session.passMode = true
-	addr, err := session.server.findOpenAddr()
+	addr, err := session.server.findOpenAddr(false)
 	if err != nil {
 		return sendResponse(session.controlConn, StatusCodeCantOpenDataConn, "")
 	}
@@ -105,7 +105,7 @@ func runCommandPasv(session *Session) error {
 	respParts = append(respParts, strconv.Itoa(int(p2)))
 	respMsg := strings.Join(respParts, ",")
 
-	if err = session.openDataConn(p); err != nil {
+	if err = session.openDataConn(p, false); err != nil {
 		return sendResponse(session.controlConn, StatusCodeCantOpenDataConn, "")
 	}
 	return sendResponse(session.controlConn, StatusCodeEnterPassMode, respMsg)
@@ -225,6 +225,21 @@ func runCommandDelete(session *Session, filename string) error {
 		return sendResponse(session.controlConn, StatusCodeFileNotFound, "")
 	}
 	return sendResponse(session.controlConn, StatusCodeOk, fmt.Sprintf("File %s deleted", filename))
+}
+
+func runCommandExtPassMode(session *Session, cmdArgs string) error {
+	// TODO: handle protocol argument
+	session.passMode = true
+	addr, err := session.server.findOpenAddr(true)
+	if err != nil {
+		return sendResponse(session.controlConn, StatusCodeUnknownErr, fmt.Sprintf("%s", err))
+	}
+	p := uint16(addr.Port)
+	if err = session.openDataConn(p, true); err != nil {
+		return sendResponse(session.controlConn, StatusCodeCantOpenDataConn, fmt.Sprintf("%s", err))
+	}
+	resp := fmt.Sprintf("Entering Extended Passive Mode (|||%d|)", p)
+	return sendResponse(session.controlConn, StatusCodeEnterExtPassMode, resp)
 }
 
 func runUninmplemented(session *Session) error {

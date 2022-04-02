@@ -113,8 +113,12 @@ func (s *Server) handleClient(conn *net.TCPConn) {
 	session.start()
 }
 
-func (s *Server) findOpenAddr() (*net.TCPAddr, error) {
-	addr, err := net.ResolveTCPAddr("tcp", fmt.Sprintf("%s:0", s.Host))
+func (s *Server) findOpenAddr(useIPv6 bool) (*net.TCPAddr, error) {
+	proto := "tcp"
+	if useIPv6 {
+		proto += "6"
+	}
+	addr, err := net.ResolveTCPAddr(proto, fmt.Sprintf("%s:0", s.Host))
 	if err != nil {
 		return nil, err
 	}

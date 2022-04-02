@@ -49,8 +49,12 @@ func (s *Session) start() {
 	}
 }
 
-func (s *Session) openDataConn(port uint16) error {
-	l, err := net.Listen("tcp", fmt.Sprintf("%s:%d", s.server.Host, port))
+func (s *Session) openDataConn(port uint16, useIPv6 bool) error {
+	proto := "tcp"
+	if useIPv6 {
+		proto += "6"
+	}
+	l, err := net.Listen(proto, fmt.Sprintf("%s:%d", s.server.Host, port))
 	if err != nil {
 		return err
 	}
@@ -138,6 +142,11 @@ func (s *Session) execCommand(cmd string, cmdArgs string) error {
 		err = runCommandMakeDir(s, cmdArgs)
 	case CommandDelete:
 		err = runCommandDelete(s, cmdArgs)
+	case CommandExtPassMode:
+		err = runCommandExtPassMode(s, cmdArgs)
+	case CommandExtAddrPort:
+		// TODO: implement at some point
+		err = runUninmplemented(s)
 	default:
 		err = runUninmplemented(s)
 	}
