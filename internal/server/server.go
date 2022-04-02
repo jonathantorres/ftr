@@ -134,20 +134,10 @@ func (s *Server) findOpenAddr(useIPv6 bool) (*net.TCPAddr, error) {
 	return addr, nil
 }
 
-func sendResponse(conn *net.TCPConn, statusCode uint16, respMsg string) error {
-	codeMsg, err := GetStatusCodeMessage(statusCode)
-	var code uint16
-	if err != nil {
-		code = StatusCodeUnknownErr
-		respMsg = err.Error()
-	} else {
-		code = statusCode
-		if respMsg == "" {
-			respMsg = codeMsg
-		}
-	}
-	respMsg = fmt.Sprintf("%d %s\n", code, respMsg)
-	_, err = conn.Write([]byte(respMsg))
+func sendResponse(conn *net.TCPConn, statusCode uint16, extraMsg string) error {
+	codeMsg := GetStatusCodeMessage(statusCode)
+	respMsg := fmt.Sprintf("%d %s %s\n", statusCode, codeMsg, extraMsg)
+	_, err := conn.Write([]byte(respMsg))
 	if err != nil {
 		return err
 	}

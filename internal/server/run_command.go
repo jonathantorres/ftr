@@ -55,7 +55,7 @@ func runCommandPassword(session *Session, pass string) error {
 }
 
 func runCommandPrintDir(session *Session) error {
-	return sendResponse(session.controlConn, StatusCodePathCreated, "\"/"+session.cwd+"\" is current directory\n")
+	return sendResponse(session.controlConn, StatusCodePathCreated, " \"/"+session.cwd+"\" is current directory\n")
 }
 
 func runCommandChangeDir(session *Session, dir string) error {
@@ -75,14 +75,14 @@ func runCommandChangeDir(session *Session, dir string) error {
 		return sendResponse(session.controlConn, StatusCodeFileNotFound, "")
 	}
 	session.cwd = cwd
-	return sendResponse(session.controlConn, StatusCodeRequestedFileOk, "CWD successful. \"/"+dir+"\" is current directory\n")
+	return sendResponse(session.controlConn, StatusCodeRequestedFileOk, " \"/"+dir+"\" is current directory\n")
 }
 
 func runCommandType(session *Session, typ string) error {
 	selectedTransferType := TransferType(typ)
 	if selectedTransferType == TransferTypeAscii || selectedTransferType == TransferTypeImage {
 		session.tType = TransferType(typ)
-		return sendResponse(session.controlConn, StatusCodeOk, "Transfer type Ok")
+		return sendResponse(session.controlConn, StatusCodeOk, " Transfer type Ok")
 	}
 	return sendResponse(session.controlConn, StatusCodeCmdNotImplemented, "")
 }
@@ -108,7 +108,7 @@ func runCommandPasv(session *Session) error {
 	if err = session.openDataConn(p, false); err != nil {
 		return sendResponse(session.controlConn, StatusCodeCantOpenDataConn, "")
 	}
-	return sendResponse(session.controlConn, StatusCodeEnterPassMode, respMsg)
+	return sendResponse(session.controlConn, StatusCodeEnterPassMode, " "+respMsg)
 }
 
 func runCommandList(session *Session, file string) error {
@@ -185,7 +185,7 @@ func runCommandAcceptAndStore(session *Session, filename string) error {
 }
 
 func runCommandSystemType(session *Session) error {
-	return sendResponse(session.controlConn, StatusCodeNameSystem, "UNIX Type: L8")
+	return sendResponse(session.controlConn, StatusCodeNameSystem, " UNIX Type: L8")
 }
 
 func runCommandChangeParent(session *Session) error {
@@ -204,7 +204,7 @@ func runCommandChangeParent(session *Session) error {
 	session.cwd = cwd
 	base := path.Base(cwd)
 
-	return sendResponse(session.controlConn, StatusCodeOk, "CDUP successful. \"/"+base+"\" is current directory\n")
+	return sendResponse(session.controlConn, StatusCodeOk, " \"/"+base+"\" is current directory\n")
 }
 
 func runCommandMakeDir(session *Session, dirName string) error {
@@ -214,7 +214,7 @@ func runCommandMakeDir(session *Session, dirName string) error {
 		log.Printf("err mkdir: %s\n", err)
 		return sendResponse(session.controlConn, StatusCodeFileNotFound, "")
 	}
-	return sendResponse(session.controlConn, StatusCodeOk, fmt.Sprintf("Directory %s created", dirName))
+	return sendResponse(session.controlConn, StatusCodeOk, fmt.Sprintf(" Directory %s created", dirName))
 }
 
 func runCommandDelete(session *Session, filename string) error {
@@ -224,7 +224,7 @@ func runCommandDelete(session *Session, filename string) error {
 		log.Printf("err remove file: %s\n", err)
 		return sendResponse(session.controlConn, StatusCodeFileNotFound, "")
 	}
-	return sendResponse(session.controlConn, StatusCodeOk, fmt.Sprintf("File %s deleted", filename))
+	return sendResponse(session.controlConn, StatusCodeOk, fmt.Sprintf(" File %s deleted", filename))
 }
 
 func runCommandExtPassMode(session *Session, cmdArgs string) error {
@@ -232,14 +232,15 @@ func runCommandExtPassMode(session *Session, cmdArgs string) error {
 	session.passMode = true
 	addr, err := session.server.findOpenAddr(true)
 	if err != nil {
-		return sendResponse(session.controlConn, StatusCodeUnknownErr, fmt.Sprintf("%s", err))
+		log.Printf("error finding an open address: %s\n", err)
+		return sendResponse(session.controlConn, StatusCodeUnknownErr, "")
 	}
 	p := uint16(addr.Port)
 	if err = session.openDataConn(p, true); err != nil {
-		return sendResponse(session.controlConn, StatusCodeCantOpenDataConn, fmt.Sprintf("%s", err))
+		log.Printf("error opening data connection: %s\n", err)
+		return sendResponse(session.controlConn, StatusCodeCantOpenDataConn, "")
 	}
-	resp := fmt.Sprintf("Entering Extended Passive Mode (|||%d|)", p)
-	return sendResponse(session.controlConn, StatusCodeEnterExtPassMode, resp)
+	return sendResponse(session.controlConn, StatusCodeEnterExtPassMode, fmt.Sprintf(" (|||%d|)", p))
 }
 
 func runUninmplemented(session *Session) error {

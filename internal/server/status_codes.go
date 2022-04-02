@@ -1,9 +1,5 @@
 package server
 
-import (
-	"errors"
-)
-
 const (
 	StatusCodeRestartMarker       = 110
 	StatusServiceReadyInAFewMins  = 120
@@ -122,11 +118,11 @@ var statusCodes = map[uint16]string{
 	StatusCodeConfProtectedReply:             "Confidentiality protected reply.",
 }
 
-func GetStatusCodeMessage(statusCode uint16) (string, error) {
+func GetStatusCodeMessage(statusCode uint16) string {
 	for code, statusMsg := range statusCodes {
 		if code == statusCode {
-			return statusMsg, nil
+			return statusMsg
 		}
 	}
-	return "", errors.New("status code not found")
+	return ""
 }
