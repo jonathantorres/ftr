@@ -27,7 +27,8 @@ type Server struct {
 }
 
 func (s *Server) Start() error {
-	s.parseFlags()
+	s.Host = s.Conf.ServerName
+	s.Port = s.Conf.Port
 	l, err := s.getServerListener()
 	if err != nil {
 		return err
@@ -87,17 +88,6 @@ func (s *Server) getServerListener() (*net.TCPListener, error) {
 		return nil, errors.New("Could not bind an address for the server")
 	}
 	return l, nil
-}
-
-func (s *Server) parseFlags() {
-	// use value from configuration file,
-	// if a command line flag was not provided
-	if s.Host == "" {
-		s.Host = s.Conf.ServerName
-	}
-	if s.Port == 0 {
-		s.Port = s.Conf.Port
-	}
 }
 
 func (s *Server) handleClient(conn *net.TCPConn) {

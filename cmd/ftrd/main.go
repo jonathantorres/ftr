@@ -22,12 +22,12 @@ import (
 var prefix = "/home/jonathan/dev/ftr/"
 
 func main() {
+	confF := parseFlags()
+
 	// make sure the prefix ends in "/"
 	if !strings.HasSuffix(prefix, "/") {
 		prefix += "/"
 	}
-	serverF, confF, portF := parseFlags()
-
 	log.SetPrefix("ftr: ")
 
 	go handleSignals()
@@ -37,8 +37,6 @@ func main() {
 		log.Fatalf("server conf error: %s\n", err)
 	}
 	s := &server.Server{
-		Host: serverF,
-		Port: portF,
 		Conf: config,
 	}
 	err = s.Start()
@@ -47,48 +45,69 @@ func main() {
 	}
 }
 
-func parseFlags() (string, string, int) {
+func parseFlags() string {
 	var (
-		serverF string
-		portF   int
-		confF   string
+		versionF bool
+		helpF    bool
+		testF    bool
+		prefixF  string
+		confF    string
 	)
-
 	const (
-		serverD = "The default name of the server"
-		portD   = "The port number for the control connection"
-		confD   = "The location of the configuration file"
+		versionD = "Print the server version and exit"
+		helpD    = "Print the help contents and exit"
+		testD    = "Test the configuration file and exit"
+		prefixD  = "Set the prefix path"
+		confD    = "Set the configuration file"
 	)
-	flag.StringVar(&serverF, "server", server.DefaultName, serverD)
-	flag.StringVar(&serverF, "s", server.DefaultName, serverD)
-	flag.IntVar(&portF, "port", server.ControlPort, portD)
-	flag.IntVar(&portF, "p", server.ControlPort, portD)
+	flag.BoolVar(&versionF, "version", false, versionD)
+	flag.BoolVar(&versionF, "v", false, versionD)
+	flag.BoolVar(&helpF, "help", false, helpD)
+	flag.BoolVar(&helpF, "h", false, helpD)
+	flag.BoolVar(&testF, "test", false, testD)
+	flag.BoolVar(&testF, "t", false, testD)
+	flag.StringVar(&prefixF, "prefix", prefix, prefixD)
+	flag.StringVar(&prefixF, "p", prefix, prefixD)
 	flag.StringVar(&confF, "conf", prefix+server.DefaultConf, confD)
 	flag.StringVar(&confF, "c", prefix+server.DefaultConf, confD)
 	flag.Usage = usage
 	flag.Parse()
 
-	var (
-		serverUsed bool
-		portUsed   bool
-	)
+	// just print the version and exit
+	if versionF {
+		fmt.Fprintf(os.Stderr, "ftr version v0.0.0\n")
+		os.Exit(0)
+	}
+
+	// just print the help and exit
+	if helpF {
+		usage()
+		os.Exit(0)
+	}
+
+	// test the configuration file and exit
+	if testF {
+		// TODO: test the configuration file
+		fmt.Fprintf(os.Stderr, "testing configuration file...Done\n")
+		os.Exit(0)
+	}
+
+	var prefixUsed bool
 
 	flag.Visit(func(f *flag.Flag) {
-		if f.Name == "server" || f.Name == "s" {
-			serverUsed = true
-		}
-		if f.Name == "port" || f.Name == "p" {
-			portUsed = true
+		if f.Name == "prefix" || f.Name == "p" {
+			prefixUsed = true
 		}
 	})
-	// use zero value if the flag was not specified in the command line
-	if !serverUsed {
-		serverF = ""
+	// if prefix was set on the command line,
+	// then the location of the configuration
+	// will be based on this prefix
+	if prefixUsed {
+		prefix = prefixF
+		confF = prefix + server.DefaultConf
 	}
-	if !portUsed {
-		portF = 0
-	}
-	return serverF, confF, portF
+
+	return confF
 }
 
 func handleSignals() {
@@ -113,6 +132,6 @@ func handleSignals() {
 }
 
 func usage() {
-	fmt.Fprintf(os.Stderr, "Usage: ftr -[hv] [-s server] [-p port] [-c conf]\n")
+	fmt.Fprintf(os.Stderr, "Usage: ftr -[htv] [-p prefix] [-c conf]\n")
 	flag.PrintDefaults()
 }
