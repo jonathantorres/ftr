@@ -21,6 +21,8 @@ import (
 // by using the command line flag -p (prefix)
 var prefix = "/home/jonathan/dev/ftr/"
 
+const version = "0.0.0"
+
 func main() {
 	confF := parseFlags()
 
@@ -75,7 +77,7 @@ func parseFlags() string {
 
 	// just print the version and exit
 	if versionF {
-		fmt.Fprintf(os.Stderr, "ftr version v0.0.0\n")
+		fmt.Fprintf(os.Stderr, "ftr version v%s\n", version)
 		os.Exit(0)
 	}
 
