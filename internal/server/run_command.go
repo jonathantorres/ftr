@@ -148,12 +148,12 @@ func runCommandRetrieve(session *Session, filename string) error {
 		log.Printf("error opening file: %s\n", err)
 		return sendResponse(session.controlConn, StatusCodeFileActionNotTaken, "")
 	}
+	defer file.Close()
 	_, err = io.Copy(session.dataConn, file)
 	if err != nil {
 		log.Printf("error transferring file: %s\n", err)
 		return sendResponse(session.controlConn, StatusCodeFileActionNotTaken, "")
 	}
-	file.Close()
 	var sig struct{}
 	session.dataConnChan <- sig
 	return sendResponse(session.controlConn, StatusCodeOk, "")
@@ -173,12 +173,12 @@ func runCommandAcceptAndStore(session *Session, filename string) error {
 		log.Printf("error creating file: %s\n", err)
 		return sendResponse(session.controlConn, StatusCodeFileActionNotTaken, "")
 	}
+	defer file.Close()
 	_, err = file.Write(fileData)
 	if err != nil {
 		log.Printf("error writing bytes to new file: %s\n", err)
 		return sendResponse(session.controlConn, StatusCodeFileActionNotTaken, "")
 	}
-	file.Close()
 	var sig struct{}
 	session.dataConnChan <- sig
 	return sendResponse(session.controlConn, StatusCodeOk, "")
