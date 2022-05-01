@@ -177,8 +177,7 @@ func (s *Session) execCommand(cmd string, cmdArgs string) error {
 	case CommandPort:
 		err = runCommandPort(s, cmdArgs)
 	case CommandExtAddrPort:
-		// TODO: implement at some point
-		err = runUninmplemented(s)
+		err = runCommandExtPort(s, cmdArgs)
 	default:
 		err = runUninmplemented(s)
 	}

@@ -268,6 +268,26 @@ func runCommandPort(session *Session, cmdArgs string) error {
 	return sendResponse(session.controlConn, StatusCodeOk, "")
 }
 
+func runCommandExtPort(session *Session, cmdArgs string) error {
+	// we are ignoring the address here
+	// let's just use the port part
+	var useIPv6 bool
+	cmdParts := strings.Split(cmdArgs, "|")
+	if cmdParts[0] == "2" {
+		useIPv6 = true
+	}
+	p, err := strconv.Atoi(cmdParts[3])
+	if err != nil {
+		log.Printf("error converting port: %s\n", err)
+		return sendResponse(session.controlConn, StatusCodeUnknownErr, "")
+	}
+	if err = session.connectToDataConn(uint16(p), useIPv6); err != nil {
+		log.Printf("error connecting to data connection: %s\n", err)
+		return sendResponse(session.controlConn, StatusCodeUnknownErr, "")
+	}
+	return sendResponse(session.controlConn, StatusCodeOk, "")
+}
+
 func runUninmplemented(session *Session) error {
 	return sendResponse(session.controlConn, StatusCodeCmdNotImplemented, "")
 }
