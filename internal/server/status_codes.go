@@ -46,6 +46,7 @@ const (
 	StatusCodeCmdNotImplemented          = 502
 	StatusCodeBadSequence                = 503
 	StatusCodeCmdNotImplementedForParam  = 504
+	StatusCodeExtPortUnknownProtocol     = 522
 	StatusCodeNotLoggedIn                = 530
 	StatusCodeNeedAccountForStoring      = 532
 	StatusCodeCouldNotConnToServer       = 534
@@ -105,6 +106,7 @@ var statusCodes = map[uint16]string{
 	StatusCodeCmdNotImplemented:          "Command not implemented.",
 	StatusCodeBadSequence:                "Bad sequence of commands.",
 	StatusCodeCmdNotImplementedForParam:  "Command not implemented for that parameter.",
+	StatusCodeExtPortUnknownProtocol:     "Extended Port Failure - unknown network protocol",
 	StatusCodeNotLoggedIn:                "Not logged in.",
 	StatusCodeNeedAccountForStoring:      "Need account for storing files.",
 	StatusCodeCouldNotConnToServer:       "Could Not Connect to Server - Policy Requires SSL.",

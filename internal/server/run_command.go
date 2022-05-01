@@ -228,7 +228,13 @@ func runCommandDelete(session *Session, filename string) error {
 }
 
 func runCommandExtPassMode(session *Session, cmdArgs string) error {
-	// TODO: handle protocol argument, take a look at the RFC for this extension
+	if cmdArgs != "" {
+		if cmdArgs == "1" {
+			// only IPv6 allowed
+			return sendResponse(session.controlConn, StatusCodeExtPortUnknownProtocol, "")
+		}
+		return sendResponse(session.controlConn, StatusCodeCmdNotImplemented, "")
+	}
 	session.passMode = true
 	addr, err := session.server.findOpenAddr(true)
 	if err != nil {
