@@ -127,6 +127,7 @@ func (s *Server) findOpenAddr(useIPv6 bool) (*net.TCPAddr, error) {
 func sendResponse(conn *net.TCPConn, statusCode uint16, extraMsg string) error {
 	codeMsg := GetStatusCodeMessage(statusCode)
 	respMsg := fmt.Sprintf("%d %s %s\n", statusCode, codeMsg, extraMsg)
+	log.Printf(respMsg)
 	_, err := conn.Write([]byte(respMsg))
 	if err != nil {
 		return err
