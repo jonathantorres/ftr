@@ -1,13 +1,8 @@
-SERVER_PROG := ftrd
-CLIENT_PROG := ftr
+PROG := ftr
 
-# compile server program
-$(SERVER_PROG):
-	go build -o bin/ftrd github.com/jonathantorres/ftr/cmd/ftrd
-
-# compile client program
-$(CLIENT_PROG):
-	go build -o bin/ftr github.com/jonathantorres/ftr/cmd/ftr
+# compile program
+$(PROG):
+	go build -o bin/ftr github.com/jonathantorres/ftr
 
 # Run tests
 .PHONY: test
