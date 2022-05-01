@@ -71,6 +71,36 @@ func (s *Session) openDataConn(port uint16, useIPv6 bool) error {
 	return nil
 }
 
+func (s *Session) connectToDataConn(port uint16, useIPv6 bool) error {
+	proto := "tcp"
+	if useIPv6 {
+		proto += "6"
+	}
+	c, err := net.Dial(proto, fmt.Sprintf("%s:%d", s.server.Host, port))
+	if err != nil {
+		return err
+	}
+	s.dataConn = c
+	s.dataConnPort = port
+	s.dataConnChan = make(chan struct{})
+
+	go func() {
+		var sig struct{}
+		// send signal to command that the connection is ready
+		s.dataConnChan <- sig
+
+		// wait until the command finishes, then close the connection
+		<-s.dataConnChan
+
+		s.dataConn = nil
+		s.dataConnPort = 0
+		s.dataConnChan = nil
+
+		defer c.Close()
+	}()
+	return nil
+}
+
 func (s *Session) handleDataTransfer(conn net.Conn, l net.Listener) {
 	s.dataConn = conn
 
@@ -144,6 +174,8 @@ func (s *Session) execCommand(cmd string, cmdArgs string) error {
 		err = runCommandDelete(s, cmdArgs)
 	case CommandExtPassMode:
 		err = runCommandExtPassMode(s, cmdArgs)
+	case CommandPort:
+		err = runCommandPort(s, cmdArgs)
 	case CommandExtAddrPort:
 		// TODO: implement at some point
 		err = runUninmplemented(s)

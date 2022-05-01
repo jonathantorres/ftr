@@ -243,6 +243,31 @@ func runCommandExtPassMode(session *Session, cmdArgs string) error {
 	return sendResponse(session.controlConn, StatusCodeEnterExtPassMode, fmt.Sprintf(" (|||%d|)", p))
 }
 
+func runCommandPort(session *Session, cmdArgs string) error {
+	// we are ignoring the address here
+	// let's just use the port part
+	addrParts := strings.Split(cmdArgs, ",")
+	portParts := addrParts[4:]
+	p1, err := strconv.ParseUint(portParts[0], 10, 8)
+	if err != nil {
+		log.Printf("error converting port: %s\n", err)
+		return sendResponse(session.controlConn, StatusCodeUnknownErr, "")
+	}
+	p2, err := strconv.ParseUint(portParts[1], 10, 8)
+	if err != nil {
+		log.Printf("error converting port: %s\n", err)
+		return sendResponse(session.controlConn, StatusCodeUnknownErr, "")
+	}
+	p := uint16(p1)
+	p <<= 8
+	p |= uint16(p2)
+	if err = session.connectToDataConn(p, false); err != nil {
+		log.Printf("error connecting to data connection: %s\n", err)
+		return sendResponse(session.controlConn, StatusCodeUnknownErr, "")
+	}
+	return sendResponse(session.controlConn, StatusCodeOk, "")
+}
+
 func runUninmplemented(session *Session) error {
 	return sendResponse(session.controlConn, StatusCodeCmdNotImplemented, "")
 }
