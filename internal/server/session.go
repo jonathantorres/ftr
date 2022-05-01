@@ -144,7 +144,7 @@ func (s *Session) handleCommand(clientCmd []byte) error {
 
 func (s *Session) execCommand(cmd string, cmdArgs string) error {
 	var err error = nil
-	log.Printf("cmd: %s\n", cmd)
+	log.Printf("%s %s\n", cmd, cmdArgs)
 	switch cmd {
 	case CommandUser:
 		err = runCommandUser(s, cmdArgs)
