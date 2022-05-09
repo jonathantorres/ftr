@@ -1,6 +1,7 @@
 package server
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -292,6 +293,26 @@ func runCommandExtPort(session *Session, cmdArgs string) error {
 		return sendResponse(session.controlConn, StatusCodeUnknownErr, "")
 	}
 	return sendResponse(session.controlConn, StatusCodeOk, "")
+}
+
+func runCommandHelp(session *Session, cmdArgs string) error {
+	var resp bytes.Buffer
+
+	if cmdArgs == "" {
+		var welcome = "Welcome to FTR, enter a command name to get more information about it. Current commands: "
+		resp.WriteString(welcome)
+		resp.WriteString(getAllCommandsHelpMessage())
+		resp.WriteString("\n")
+	} else {
+		h := getCommandHelpMessage(cmdArgs)
+		if h == "" {
+			resp.WriteString(fmt.Sprintf("Sorry, the command \"%s\" is not implemented\n", cmdArgs))
+		} else {
+			resp.WriteString(fmt.Sprintf("%s: ", strings.ToUpper(cmdArgs)))
+			resp.WriteString(fmt.Sprintf("%s\n", h))
+		}
+	}
+	return sendResponse(session.controlConn, StatusCodeHelpMessage, resp.String())
 }
 
 func runUninmplemented(session *Session) error {

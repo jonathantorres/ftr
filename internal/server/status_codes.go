@@ -1,5 +1,11 @@
 package server
 
+import (
+	"bytes"
+	"fmt"
+	"strings"
+)
+
 const (
 	StatusCodeRestartMarker       = 110
 	StatusServiceReadyInAFewMins  = 120
@@ -127,4 +133,60 @@ func GetStatusCodeMessage(statusCode uint16) string {
 		}
 	}
 	return ""
+}
+
+var helpMessages = map[string]string{
+	"abor": "Abort an active file transfer.",
+	"acct": "Account information.",
+	"allo": "Allocate sufficient disk space to receive a file.",
+	"appe": "Append (with create)",
+	"cdup": "Change to Parent Directory.",
+	"cwd":  "Change working directory.",
+	"dele": "Delete file.",
+	"eprt": "Specifies an extended address and port to which the server should connect.",
+	"epsv": "Enter extended passive mode.",
+	"feat": "Get the feature list implemented by the server.",
+	"help": "Returns usage documentation on a command if specified, else a general help document is returned.",
+	"list": "Returns information of a file or directory if specified, else information of the current working directory is returned.",
+	"mkd":  "Make directory.",
+	"mode": "Sets the transfer mode (Stream, Block, or Compressed).",
+	"nlst": "Returns a list of file names in a specified directory.",
+	"noop": "No operation (dummy packet; used mostly on keepalives).",
+	"pass": "Authentication password.",
+	"pasv": "Enter passive mode.",
+	"port": "Specifies an address and port to which the server should connect.",
+	"pwd":  "Print working directory. Returns the current directory of the host.",
+	"quit": "Disconnect.",
+	"rein": "Re initializes the connection.",
+	"retr": "Retrieve a copy of the file",
+	"rmd":  "Remove a directory.",
+	"rnfr": "Rename from.",
+	"rnto": "Rename to.",
+	"site": "Sends site specific commands to remote server",
+	"smnt": "Mount file structure.",
+	"stat": "Returns information on the server status, including the status of the current connection",
+	"stor": "Accept the data and to store the data as a file at the server site",
+	"stou": "Store file uniquely.",
+	"stru": "Set file transfer structure.",
+	"syst": "Return system type.",
+	"type": "Sets the transfer mode (ASCII/Binary).",
+	"user": "Authentication username.",
+	"xcup": "Change to the parent of the current working directory",
+	"xmkd": "Make a directory",
+}
+
+func getCommandHelpMessage(cmd string) string {
+	c, ok := helpMessages[strings.ToLower(cmd)]
+	if ok {
+		return c
+	}
+	return ""
+}
+
+func getAllCommandsHelpMessage() string {
+	var b bytes.Buffer
+	for cmd := range helpMessages {
+		b.WriteString(fmt.Sprintf("%s ", strings.ToUpper(cmd)))
+	}
+	return b.String()
 }
