@@ -343,6 +343,13 @@ func runCommandSite(session *Session) error {
 	return sendResponse(session.controlConn, StatusCodeOk, "No SITE options for this server")
 }
 
+func runCommandMode(session *Session, cmdArgs string) error {
+	if strings.ToLower(cmdArgs) != "s" {
+		return sendResponse(session.controlConn, StatusCodeCmdNotImplementedForParam, "")
+	}
+	return sendResponse(session.controlConn, StatusCodeOk, "")
+}
+
 func runUninmplemented(session *Session) error {
 	return sendResponse(session.controlConn, StatusCodeCmdNotImplemented, "")
 }

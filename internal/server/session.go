@@ -188,6 +188,8 @@ func (s *Session) execCommand(cmd string, cmdArgs string) error {
 		err = runCommandAccount(s, cmdArgs)
 	case CommandSite:
 		err = runCommandSite(s)
+	case CommandMode:
+		err = runCommandMode(s, cmdArgs)
 	default:
 		err = runUninmplemented(s)
 	}
