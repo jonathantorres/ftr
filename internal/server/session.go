@@ -180,6 +180,8 @@ func (s *Session) execCommand(cmd string, cmdArgs string) error {
 		err = runCommandExtPort(s, cmdArgs)
 	case CommandHelp:
 		err = runCommandHelp(s, cmdArgs)
+	case CommandNoOp:
+		err = runCommandNoOp(s)
 	default:
 		err = runUninmplemented(s)
 	}

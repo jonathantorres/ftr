@@ -315,6 +315,10 @@ func runCommandHelp(session *Session, cmdArgs string) error {
 	return sendResponse(session.controlConn, StatusCodeHelpMessage, resp.String())
 }
 
+func runCommandNoOp(session *Session) error {
+	return sendResponse(session.controlConn, StatusCodeOk, "")
+}
+
 func runUninmplemented(session *Session) error {
 	return sendResponse(session.controlConn, StatusCodeCmdNotImplemented, "")
 }
