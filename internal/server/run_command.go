@@ -339,6 +339,10 @@ func runCommandAccount(session *Session, cmdArgs string) error {
 	return sendResponse(session.controlConn, StatusCodeBadSequence, "The account was not found")
 }
 
+func runCommandSite(session *Session) error {
+	return sendResponse(session.controlConn, StatusCodeOk, "No SITE options for this server")
+}
+
 func runUninmplemented(session *Session) error {
 	return sendResponse(session.controlConn, StatusCodeCmdNotImplemented, "")
 }
