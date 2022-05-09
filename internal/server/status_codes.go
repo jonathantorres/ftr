@@ -145,7 +145,6 @@ var helpMessages = map[string]string{
 	"dele": "Delete file.",
 	"eprt": "Specifies an extended address and port to which the server should connect.",
 	"epsv": "Enter extended passive mode.",
-	"feat": "Get the feature list implemented by the server.",
 	"help": "Returns usage documentation on a command if specified, else a general help document is returned.",
 	"list": "Returns information of a file or directory if specified, else information of the current working directory is returned.",
 	"mkd":  "Make directory.",
