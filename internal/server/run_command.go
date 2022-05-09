@@ -350,6 +350,13 @@ func runCommandMode(session *Session, cmdArgs string) error {
 	return sendResponse(session.controlConn, StatusCodeOk, "")
 }
 
+func runCommandFileStructure(session *Session, cmdArgs string) error {
+	if strings.ToLower(cmdArgs) != "f" {
+		return sendResponse(session.controlConn, StatusCodeCmdNotImplementedForParam, "")
+	}
+	return sendResponse(session.controlConn, StatusCodeOk, "")
+}
+
 func runUninmplemented(session *Session) error {
 	return sendResponse(session.controlConn, StatusCodeCmdNotImplemented, "")
 }
