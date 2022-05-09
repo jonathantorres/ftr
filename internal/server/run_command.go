@@ -323,6 +323,22 @@ func runCommandAllo(session *Session) error {
 	return sendResponse(session.controlConn, StatusCodeOk, "")
 }
 
+func runCommandAccount(session *Session, cmdArgs string) error {
+	if session.user == nil {
+		// no user is logged in
+		return sendResponse(session.controlConn, StatusCodeNotLoggedIn, "")
+	}
+	if cmdArgs == "" {
+		return sendResponse(session.controlConn, StatusCodeBadSequence, "")
+	}
+	if session.user.Username == cmdArgs {
+		var resp bytes.Buffer
+		resp.WriteString(fmt.Sprintf("Username: %s, Root: %s\n", session.user.Username, session.user.Root))
+		return sendResponse(session.controlConn, StatusCodeUserLoggedIn, resp.String())
+	}
+	return sendResponse(session.controlConn, StatusCodeBadSequence, "The account was not found")
+}
+
 func runUninmplemented(session *Session) error {
 	return sendResponse(session.controlConn, StatusCodeCmdNotImplemented, "")
 }
