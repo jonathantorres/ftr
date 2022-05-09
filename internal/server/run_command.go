@@ -319,6 +319,10 @@ func runCommandNoOp(session *Session) error {
 	return sendResponse(session.controlConn, StatusCodeOk, "")
 }
 
+func runCommandAllo(session *Session) error {
+	return sendResponse(session.controlConn, StatusCodeOk, "")
+}
+
 func runUninmplemented(session *Session) error {
 	return sendResponse(session.controlConn, StatusCodeCmdNotImplemented, "")
 }

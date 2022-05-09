@@ -182,6 +182,8 @@ func (s *Session) execCommand(cmd string, cmdArgs string) error {
 		err = runCommandHelp(s, cmdArgs)
 	case CommandNoOp:
 		err = runCommandNoOp(s)
+	case CommandAllo:
+		err = runCommandAllo(s)
 	default:
 		err = runUninmplemented(s)
 	}
