@@ -172,6 +172,8 @@ func (s *Session) execCommand(cmd string, cmdArgs string) error {
 		err = runCommandChangeParent(s)
 	case CommandMakeDir, CommandMakeADir:
 		err = runCommandMakeDir(s, cmdArgs)
+	case CommandRemoveDir:
+		err = runCommandRemoveDir(s, cmdArgs)
 	case CommandDelete:
 		err = runCommandDelete(s, cmdArgs)
 	case CommandExtPassMode:

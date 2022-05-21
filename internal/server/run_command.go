@@ -246,6 +246,16 @@ func runCommandMakeDir(session *Session, dirName string) error {
 	return sendResponse(session.controlConn, StatusCodeOk, fmt.Sprintf(" Directory %s created", dirName))
 }
 
+func runCommandRemoveDir(session *Session, path string) error {
+	cwd := session.cwd
+	err := os.RemoveAll(session.server.Conf.Root + session.user.Root + "/" + cwd + "/" + path)
+	if err != nil {
+		log.Printf("error removing directory: %s", err)
+		return sendResponse(session.controlConn, StatusCodeFileNotFound, "")
+	}
+	return sendResponse(session.controlConn, StatusCodeRequestedFileOk, fmt.Sprintf("Directory %s removed", path))
+}
+
 func runCommandDelete(session *Session, filename string) error {
 	cwd := session.cwd
 	err := os.Remove(session.server.Conf.Root + session.user.Root + "/" + cwd + "/" + filename)
