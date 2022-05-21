@@ -141,6 +141,34 @@ func runCommandList(session *Session, file string) error {
 	return sendResponse(session.controlConn, StatusCodeOk, "")
 }
 
+func runCommandFileNames(session *Session, file string) error {
+	// wait until the data connection is ready for sending/receiving data
+	<-session.dataConnChan
+
+	path := session.server.Conf.Root + session.user.Root + "/" + session.cwd
+	if file != "" {
+		path += "/" + file
+	}
+	files, err := ioutil.ReadDir(path)
+	if err != nil {
+		log.Printf("failed listing directory: %s\n", err)
+		return sendResponse(session.controlConn, StatusCodeFileActionNotTaken, "")
+	}
+	dirFiles := make([]string, 0, 10)
+	for _, f := range files {
+		dirFiles = append(dirFiles, f.Name())
+	}
+	dirData := strings.Join(dirFiles, "\n")
+	_, err = session.dataConn.Write([]byte(dirData))
+	if err != nil {
+		log.Printf("failed writing data: %s\n", err)
+		return sendResponse(session.controlConn, StatusCodeFileActionNotTaken, "")
+	}
+	var sig struct{}
+	session.dataConnChan <- sig
+	return sendResponse(session.controlConn, StatusCodeOk, "")
+}
+
 func runCommandRetrieve(session *Session, filename string) error {
 	<-session.dataConnChan
 	path := session.server.Conf.Root + session.user.Root + "/" + session.cwd + "/" + filename
