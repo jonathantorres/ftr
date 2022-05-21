@@ -194,6 +194,8 @@ func (s *Session) execCommand(cmd string, cmdArgs string) error {
 		err = runCommandMode(s, cmdArgs)
 	case CommandFileStruct:
 		err = runCommandFileStructure(s, cmdArgs)
+	case CommandServerStatus:
+		err = runCommandServerStatus(s, cmdArgs)
 	default:
 		err = runUninmplemented(s)
 	}

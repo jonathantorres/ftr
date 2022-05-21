@@ -385,6 +385,24 @@ func runCommandFileStructure(session *Session, cmdArgs string) error {
 	return sendResponse(session.controlConn, StatusCodeOk, "")
 }
 
+func runCommandServerStatus(session *Session, cmdArgs string) error {
+	if cmdArgs == "" {
+		return sendResponse(session.controlConn, StatusCodeSystemStatus, "Server OK")
+	}
+	path := session.server.Conf.Root + session.user.Root + "/" + session.cwd + "/" + cmdArgs
+	files, err := ioutil.ReadDir(path)
+	if err != nil {
+		log.Printf("failed listing directory: %s\n", err)
+		return sendResponse(session.controlConn, StatusCodeFileActionNotTaken, "")
+	}
+	dirFiles := make([]string, 0, 10)
+	for _, f := range files {
+		dirFiles = append(dirFiles, getFileLine(f))
+	}
+	dirData := strings.Join(dirFiles, "\n")
+	return sendResponse(session.controlConn, StatusCodeSystemStatus, dirData)
+}
+
 func runUninmplemented(session *Session) error {
 	return sendResponse(session.controlConn, StatusCodeCmdNotImplemented, "")
 }
