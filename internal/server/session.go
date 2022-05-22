@@ -164,7 +164,7 @@ func (s *Session) execCommand(cmd string, cmdArgs string) error {
 		err = runCommandFileNames(s, cmdArgs)
 	case CommandRetrieve:
 		err = runCommandRetrieve(s, cmdArgs)
-	case CommandAcceptAndStore:
+	case CommandAcceptAndStore, CommandStoreFile:
 		err = runCommandAcceptAndStore(s, cmdArgs)
 	case CommandSystemType:
 		err = runCommandSystemType(s)
