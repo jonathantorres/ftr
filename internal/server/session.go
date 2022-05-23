@@ -165,7 +165,9 @@ func (s *Session) execCommand(cmd string, cmdArgs string) error {
 	case CommandRetrieve:
 		err = runCommandRetrieve(s, cmdArgs)
 	case CommandAcceptAndStore, CommandStoreFile:
-		err = runCommandAcceptAndStore(s, cmdArgs)
+		err = runCommandAcceptAndStore(s, cmdArgs, false)
+	case CommandAppend:
+		err = runCommandAcceptAndStore(s, cmdArgs, true)
 	case CommandSystemType:
 		err = runCommandSystemType(s)
 	case CommandChangeParent, CommandChangeToParentDir:

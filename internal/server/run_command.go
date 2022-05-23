@@ -188,7 +188,7 @@ func runCommandRetrieve(session *Session, filename string) error {
 	return sendResponse(session.controlConn, StatusCodeOk, "")
 }
 
-func runCommandAcceptAndStore(session *Session, filename string) error {
+func runCommandAcceptAndStore(session *Session, filename string, appendMode bool) error {
 	<-session.dataConnChan
 	path := session.server.Conf.Root + session.user.Root + "/" + session.cwd + "/" + filename
 	fileData, err := ioutil.ReadAll(session.dataConn)
@@ -196,8 +196,12 @@ func runCommandAcceptAndStore(session *Session, filename string) error {
 		log.Printf("error receiving file: %s\n", err)
 		return sendResponse(session.controlConn, StatusCodeFileActionNotTaken, "")
 	}
-
-	file, err := os.Create(path)
+	var file *os.File
+	if appendMode {
+		file, err = os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	} else {
+		file, err = os.Create(path)
+	}
 	if err != nil {
 		log.Printf("error creating file: %s\n", err)
 		return sendResponse(session.controlConn, StatusCodeFileActionNotTaken, "")
