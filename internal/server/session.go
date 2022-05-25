@@ -25,6 +25,7 @@ type Session struct {
 	dataConnPort uint16
 	dataConnChan chan struct{}
 	cwd          string
+	renameFrom   string
 }
 
 func (s *Session) start() {
@@ -200,6 +201,10 @@ func (s *Session) execCommand(cmd string, cmdArgs string) error {
 		err = runCommandFileStructure(s, cmdArgs)
 	case CommandServerStatus:
 		err = runCommandServerStatus(s, cmdArgs)
+	case CommandRenameFrom:
+		err = runCommandRenameFrom(s, cmdArgs)
+	case CommandRenameTo:
+		err = runCommandRenameTo(s, cmdArgs)
 	default:
 		err = runUninmplemented(s)
 	}

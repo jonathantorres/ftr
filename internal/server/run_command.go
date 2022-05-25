@@ -417,6 +417,34 @@ func runCommandServerStatus(session *Session, cmdArgs string) error {
 	return sendResponse(session.controlConn, StatusCodeSystemStatus, dirData)
 }
 
+func runCommandRenameFrom(session *Session, cmdArgs string) error {
+	if cmdArgs == "" {
+		return sendResponse(session.controlConn, StatusCodeSyntaxErr, "A path to rename from is required")
+	}
+	session.renameFrom = strings.TrimSpace(cmdArgs)
+	return sendResponse(session.controlConn, StatusCodeRequestedFileAction, "")
+}
+
+func runCommandRenameTo(session *Session, cmdArgs string) error {
+	if cmdArgs == "" {
+		return sendResponse(session.controlConn, StatusCodeSyntaxErr, "A path to rename to is required")
+	}
+	if session.renameFrom == "" {
+		return sendResponse(session.controlConn, StatusCodeSyntaxErr, "Path to rename from not provided, please run RNFR first")
+	}
+	newfile := strings.TrimSpace(cmdArgs)
+	oldpath := session.server.Conf.Root + session.user.Root + "/" + session.cwd + "/" + session.renameFrom
+	newpath := session.server.Conf.Root + session.user.Root + "/" + session.cwd + "/" + newfile
+	err := os.Rename(oldpath, newpath)
+	defer func() {
+		session.renameFrom = ""
+	}()
+	if err != nil {
+		return sendResponse(session.controlConn, StatusCodeUnknownErr, err.Error())
+	}
+	return sendResponse(session.controlConn, StatusCodeRequestedFileOk, "")
+}
+
 func runUninmplemented(session *Session) error {
 	return sendResponse(session.controlConn, StatusCodeCmdNotImplemented, "")
 }
