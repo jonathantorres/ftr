@@ -16,16 +16,17 @@ type User struct {
 
 // the current active session
 type Session struct {
-	user         *User
-	server       *Server
-	tType        TransferType
-	passMode     bool
-	controlConn  *net.TCPConn
-	dataConn     net.Conn
-	dataConnPort uint16
-	dataConnChan chan struct{}
-	cwd          string
-	renameFrom   string
+	user               *User
+	server             *Server
+	tType              TransferType
+	passMode           bool
+	controlConn        *net.TCPConn
+	dataConn           net.Conn
+	dataConnPort       uint16
+	dataConnChan       chan struct{}
+	cwd                string
+	renameFrom         string
+	transferInProgress bool
 }
 
 func (s *Session) start() {
@@ -197,6 +198,8 @@ func (s *Session) execCommand(cmd string, cmdArgs string) error {
 		err = runCommandSite(s)
 	case CommandMode:
 		err = runCommandMode(s, cmdArgs)
+	case CommandAbort:
+		err = runCommandAbort(s)
 	case CommandFileStruct:
 		err = runCommandFileStructure(s, cmdArgs)
 	case CommandServerStatus:

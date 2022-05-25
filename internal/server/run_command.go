@@ -115,6 +115,10 @@ func runCommandPasv(session *Session) error {
 func runCommandList(session *Session, file string) error {
 	// wait until the data connection is ready for sending/receiving data
 	<-session.dataConnChan
+	session.transferInProgress = true
+	defer func() {
+		session.transferInProgress = false
+	}()
 
 	path := session.server.Conf.Root + session.user.Root + "/" + session.cwd
 	if file != "" {
@@ -145,6 +149,11 @@ func runCommandFileNames(session *Session, file string) error {
 	// wait until the data connection is ready for sending/receiving data
 	<-session.dataConnChan
 
+	session.transferInProgress = true
+	defer func() {
+		session.transferInProgress = false
+	}()
+
 	path := session.server.Conf.Root + session.user.Root + "/" + session.cwd
 	if file != "" {
 		path += "/" + file
@@ -171,6 +180,11 @@ func runCommandFileNames(session *Session, file string) error {
 
 func runCommandRetrieve(session *Session, filename string) error {
 	<-session.dataConnChan
+	session.transferInProgress = true
+	defer func() {
+		session.transferInProgress = false
+	}()
+
 	path := session.server.Conf.Root + session.user.Root + "/" + session.cwd + "/" + filename
 	file, err := os.Open(path)
 	if err != nil {
@@ -190,6 +204,11 @@ func runCommandRetrieve(session *Session, filename string) error {
 
 func runCommandAcceptAndStore(session *Session, filename string, appendMode bool) error {
 	<-session.dataConnChan
+	session.transferInProgress = true
+	defer func() {
+		session.transferInProgress = false
+	}()
+
 	path := session.server.Conf.Root + session.user.Root + "/" + session.cwd + "/" + filename
 	fileData, err := ioutil.ReadAll(session.dataConn)
 	if err != nil {
@@ -443,6 +462,27 @@ func runCommandRenameTo(session *Session, cmdArgs string) error {
 		return sendResponse(session.controlConn, StatusCodeUnknownErr, err.Error())
 	}
 	return sendResponse(session.controlConn, StatusCodeRequestedFileOk, "")
+}
+
+func runCommandAbort(session *Session) error {
+	if session.transferInProgress {
+		// let's close the data connection channel
+		// this will unblock the channel in s.handleDataTransfer()
+		// and close the connection and that listener
+		close(session.dataConnChan)
+		session.transferInProgress = false
+		sendResponse(session.controlConn, StatusCodeConnClosed, "")
+		return sendResponse(session.controlConn, StatusCodeClosingDataConn, "")
+	}
+	// transfer was not in progress (it must have completed)
+	// let's try to close the connection (if it's still open)
+	if session.dataConn != nil {
+		err := session.dataConn.Close()
+		if err != nil {
+			log.Printf("error closing the data connection: %s", err)
+		}
+	}
+	return sendResponse(session.controlConn, StatusCodeClosingDataConn, "")
 }
 
 func runUninmplemented(session *Session) error {
