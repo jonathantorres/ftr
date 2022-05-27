@@ -10,6 +10,7 @@ import (
 	"path"
 	"strconv"
 	"strings"
+	"time"
 )
 
 func runCommandUser(session *Session, username string) error {
@@ -483,6 +484,27 @@ func runCommandAbort(session *Session) error {
 		}
 	}
 	return sendResponse(session.controlConn, StatusCodeClosingDataConn, "")
+}
+
+func runCommandReinit(session *Session) error {
+	// if there is a transfer in progress,
+	// let's wait until it's finished
+	for {
+		if !session.transferInProgress {
+			break
+		}
+		time.Sleep(500 * time.Millisecond)
+	}
+	session.user = nil
+	session.tType = TransferType("")
+	session.passMode = false
+	session.dataConn = nil
+	session.dataConnPort = 0
+	session.dataConnChan = nil
+	session.cwd = ""
+	session.renameFrom = ""
+	session.transferInProgress = false
+	return sendResponse(session.controlConn, StatusCodeServiceReady, "")
 }
 
 func runUninmplemented(session *Session) error {

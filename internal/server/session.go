@@ -208,6 +208,8 @@ func (s *Session) execCommand(cmd string, cmdArgs string) error {
 		err = runCommandRenameFrom(s, cmdArgs)
 	case CommandRenameTo:
 		err = runCommandRenameTo(s, cmdArgs)
+	case CommandReinit:
+		err = runCommandReinit(s)
 	default:
 		err = runUninmplemented(s)
 	}
