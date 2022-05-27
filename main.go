@@ -21,7 +21,7 @@ import (
 // by using the command line flag -p (prefix)
 var prefix = "/home/jonathan/dev/ftr/"
 
-const version = "0.0.0"
+const version = "0.1.0"
 
 func main() {
 	confF := parseFlags()
