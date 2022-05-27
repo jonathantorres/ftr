@@ -215,3 +215,10 @@ func (s *Session) execCommand(cmd string, cmdArgs string) error {
 	}
 	return err
 }
+
+func (s *Session) loggedIn() bool {
+	if s.user == nil {
+		return false
+	}
+	return true
+}

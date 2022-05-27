@@ -61,6 +61,9 @@ func runCommandPrintDir(session *Session) error {
 }
 
 func runCommandChangeDir(session *Session, dir string) error {
+	if !session.loggedIn() {
+		return sendResponse(session.controlConn, StatusCodeNotLoggedIn, "")
+	}
 	cwd := session.cwd
 	if dir[0] == '/' {
 		// moving to relative path
@@ -114,6 +117,9 @@ func runCommandPasv(session *Session) error {
 }
 
 func runCommandList(session *Session, file string) error {
+	if !session.loggedIn() {
+		return sendResponse(session.controlConn, StatusCodeNotLoggedIn, "")
+	}
 	// wait until the data connection is ready for sending/receiving data
 	<-session.dataConnChan
 	session.transferInProgress = true
@@ -147,6 +153,9 @@ func runCommandList(session *Session, file string) error {
 }
 
 func runCommandFileNames(session *Session, file string) error {
+	if !session.loggedIn() {
+		return sendResponse(session.controlConn, StatusCodeNotLoggedIn, "")
+	}
 	// wait until the data connection is ready for sending/receiving data
 	<-session.dataConnChan
 
@@ -180,6 +189,9 @@ func runCommandFileNames(session *Session, file string) error {
 }
 
 func runCommandRetrieve(session *Session, filename string) error {
+	if !session.loggedIn() {
+		return sendResponse(session.controlConn, StatusCodeNotLoggedIn, "")
+	}
 	<-session.dataConnChan
 	session.transferInProgress = true
 	defer func() {
@@ -204,6 +216,9 @@ func runCommandRetrieve(session *Session, filename string) error {
 }
 
 func runCommandAcceptAndStore(session *Session, filename string, appendMode bool) error {
+	if !session.loggedIn() {
+		return sendResponse(session.controlConn, StatusCodeNotLoggedIn, "")
+	}
 	<-session.dataConnChan
 	session.transferInProgress = true
 	defer func() {
@@ -242,6 +257,9 @@ func runCommandSystemType(session *Session) error {
 }
 
 func runCommandChangeParent(session *Session) error {
+	if !session.loggedIn() {
+		return sendResponse(session.controlConn, StatusCodeNotLoggedIn, "")
+	}
 	cwd := session.cwd
 	pieces := strings.Split(cwd, "/")
 	if len(pieces) <= 1 {
@@ -261,6 +279,9 @@ func runCommandChangeParent(session *Session) error {
 }
 
 func runCommandMakeDir(session *Session, dirName string) error {
+	if !session.loggedIn() {
+		return sendResponse(session.controlConn, StatusCodeNotLoggedIn, "")
+	}
 	cwd := session.cwd
 	err := os.Mkdir(session.server.Conf.Root+session.user.Root+"/"+cwd+"/"+dirName, 0777)
 	if err != nil {
@@ -281,6 +302,9 @@ func runCommandRemoveDir(session *Session, path string) error {
 }
 
 func runCommandDelete(session *Session, filename string) error {
+	if !session.loggedIn() {
+		return sendResponse(session.controlConn, StatusCodeNotLoggedIn, "")
+	}
 	cwd := session.cwd
 	err := os.Remove(session.server.Conf.Root + session.user.Root + "/" + cwd + "/" + filename)
 	if err != nil {
@@ -386,8 +410,7 @@ func runCommandAllo(session *Session) error {
 }
 
 func runCommandAccount(session *Session, cmdArgs string) error {
-	if session.user == nil {
-		// no user is logged in
+	if !session.loggedIn() {
 		return sendResponse(session.controlConn, StatusCodeNotLoggedIn, "")
 	}
 	if cmdArgs == "" {
@@ -423,6 +446,9 @@ func runCommandServerStatus(session *Session, cmdArgs string) error {
 	if cmdArgs == "" {
 		return sendResponse(session.controlConn, StatusCodeSystemStatus, "Server OK")
 	}
+	if !session.loggedIn() {
+		return sendResponse(session.controlConn, StatusCodeNotLoggedIn, "")
+	}
 	path := session.server.Conf.Root + session.user.Root + "/" + session.cwd + "/" + cmdArgs
 	files, err := ioutil.ReadDir(path)
 	if err != nil {
@@ -438,6 +464,9 @@ func runCommandServerStatus(session *Session, cmdArgs string) error {
 }
 
 func runCommandRenameFrom(session *Session, cmdArgs string) error {
+	if !session.loggedIn() {
+		return sendResponse(session.controlConn, StatusCodeNotLoggedIn, "")
+	}
 	if cmdArgs == "" {
 		return sendResponse(session.controlConn, StatusCodeSyntaxErr, "A path to rename from is required")
 	}
@@ -446,6 +475,9 @@ func runCommandRenameFrom(session *Session, cmdArgs string) error {
 }
 
 func runCommandRenameTo(session *Session, cmdArgs string) error {
+	if !session.loggedIn() {
+		return sendResponse(session.controlConn, StatusCodeNotLoggedIn, "")
+	}
 	if cmdArgs == "" {
 		return sendResponse(session.controlConn, StatusCodeSyntaxErr, "A path to rename to is required")
 	}
@@ -466,6 +498,9 @@ func runCommandRenameTo(session *Session, cmdArgs string) error {
 }
 
 func runCommandAbort(session *Session) error {
+	if !session.loggedIn() {
+		return sendResponse(session.controlConn, StatusCodeNotLoggedIn, "")
+	}
 	if session.transferInProgress {
 		// let's close the data connection channel
 		// this will unblock the channel in s.handleDataTransfer()
@@ -487,6 +522,9 @@ func runCommandAbort(session *Session) error {
 }
 
 func runCommandReinit(session *Session) error {
+	if !session.loggedIn() {
+		return sendResponse(session.controlConn, StatusCodeNotLoggedIn, "")
+	}
 	// if there is a transfer in progress,
 	// let's wait until it's finished
 	for {
