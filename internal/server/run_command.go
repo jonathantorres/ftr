@@ -57,7 +57,7 @@ func runCommandPassword(session *Session, pass string) error {
 }
 
 func runCommandPrintDir(session *Session) error {
-	return sendResponse(session.controlConn, StatusCodePathCreated, " \"/"+session.cwd+"\" is current directory\n")
+	return sendResponse(session.controlConn, StatusCodePathCreated, " \"/"+session.cwd+"\" is current directory")
 }
 
 func runCommandChangeDir(session *Session, dir string) error {
@@ -80,7 +80,7 @@ func runCommandChangeDir(session *Session, dir string) error {
 		return sendResponse(session.controlConn, StatusCodeFileNotFound, "")
 	}
 	session.cwd = cwd
-	return sendResponse(session.controlConn, StatusCodeRequestedFileOk, " \"/"+dir+"\" is current directory\n")
+	return sendResponse(session.controlConn, StatusCodeRequestedFileOk, " \"/"+dir+"\" is current directory")
 }
 
 func runCommandType(session *Session, typ string) error {
@@ -275,7 +275,7 @@ func runCommandChangeParent(session *Session) error {
 	session.cwd = cwd
 	base := path.Base(cwd)
 
-	return sendResponse(session.controlConn, StatusCodeOk, " \"/"+base+"\" is current directory\n")
+	return sendResponse(session.controlConn, StatusCodeOk, " \"/"+base+"\" is current directory")
 }
 
 func runCommandMakeDir(session *Session, dirName string) error {
