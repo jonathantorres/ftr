@@ -51,6 +51,18 @@ func (s *Session) start() {
 	}
 }
 
+// end the current session, this will assume
+// that the data connection is already closed
+// and that there are no transfers in progress
+func (s *Session) end() {
+	if s.controlConn != nil {
+		err := s.controlConn.CloseWrite()
+		if err != nil {
+			log.Printf("error when closing the control connection: %s", err)
+		}
+	}
+}
+
 func (s *Session) openDataConn(port uint16, useIPv6 bool) error {
 	proto := "tcp"
 	if useIPv6 {
@@ -210,6 +222,8 @@ func (s *Session) execCommand(cmd string, cmdArgs string) error {
 		err = runCommandRenameTo(s, cmdArgs)
 	case CommandReinit:
 		err = runCommandReinit(s)
+	case CommandQuit:
+		err = runCommandQuit(s)
 	default:
 		err = runUninmplemented(s)
 	}

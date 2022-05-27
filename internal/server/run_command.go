@@ -545,6 +545,22 @@ func runCommandReinit(session *Session) error {
 	return sendResponse(session.controlConn, StatusCodeServiceReady, "")
 }
 
+func runCommandQuit(session *Session) error {
+	// if there is a transfer in progress,
+	// let's wait until it's finished
+	if session.loggedIn() {
+		for {
+			if !session.transferInProgress {
+				break
+			}
+			time.Sleep(500 * time.Millisecond)
+		}
+	}
+	sendResponse(session.controlConn, StatusCodeClosingControlConn, "")
+	session.end()
+	return nil
+}
+
 func runUninmplemented(session *Session) error {
 	return sendResponse(session.controlConn, StatusCodeCmdNotImplemented, "")
 }
