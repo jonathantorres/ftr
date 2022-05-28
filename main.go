@@ -87,13 +87,6 @@ func parseFlags() string {
 		os.Exit(0)
 	}
 
-	// test the configuration file and exit
-	if testF {
-		// TODO: test the configuration file
-		fmt.Fprintf(os.Stderr, "testing configuration file...Done\n")
-		os.Exit(0)
-	}
-
 	var prefixUsed bool
 
 	flag.Visit(func(f *flag.Flag) {
@@ -109,6 +102,17 @@ func parseFlags() string {
 		confF = prefix + server.DefaultConf
 	}
 
+	// test the configuration file and exit
+	if testF {
+		fmt.Fprintf(os.Stderr, "testing configuration file...")
+		_, err := conf.Load(confF)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "failed: %s\n", err)
+			os.Exit(1)
+		}
+		fmt.Fprintf(os.Stderr, "OK.\n")
+		os.Exit(0)
+	}
 	return confF
 }
 
