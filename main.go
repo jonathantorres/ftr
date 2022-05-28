@@ -32,18 +32,24 @@ func main() {
 	}
 	log.SetPrefix("ftr: ")
 
-	config, err := conf.Load(confF)
-	if err != nil {
-		log.Fatalf("server conf error: %s", err)
-	}
-	s := &server.Server{
-		Conf: config,
-	}
-	go handleSignals(s)
+	for {
+		config, err := conf.Load(confF)
+		if err != nil {
+			log.Fatalf("server conf error: %s", err)
+		}
+		s := &server.Server{
+			Conf: config,
+		}
+		go handleSignals(s)
 
-	err = s.Start()
-	if err != nil {
-		log.Fatalf("server error: %s", err)
+		err = s.Start()
+		if err != nil {
+			log.Fatalf("server error: %s", err)
+		}
+		if s.IsReloading {
+			continue
+		}
+		break
 	}
 }
 
@@ -127,11 +133,13 @@ func handleSignals(serv *server.Server) {
 		syscall.SIGQUIT:
 		serv.Shutdown()
 	case syscall.SIGHUP:
-		// TODO: this probably shouldn't terminate the program
-		// it should shutdown the server, and restart it
-		// so that it reloads the configuration file
-		log.Print("reloading configuration file...")
-		os.Exit(0)
+		err := serv.Reload(prefix)
+		if err != nil {
+			// there was a problem reloading the configuration file
+			// the server will keep running with the old configuration
+			// fire up this goroutine again so we can keep handling signals
+			go handleSignals(serv)
+		}
 	}
 }
 

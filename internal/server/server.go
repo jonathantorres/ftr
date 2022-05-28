@@ -27,6 +27,7 @@ type Server struct {
 	Host           string
 	Port           int
 	Conf           *conf.Conf
+	IsReloading    bool
 	sessions       map[int]*Session
 	listener       *net.TCPListener
 	shutdownC      chan struct{}
@@ -34,6 +35,7 @@ type Server struct {
 }
 
 func (s *Server) Start() error {
+	log.Print("server starting...")
 	s.Host = s.Conf.ServerName
 	s.Port = s.Conf.Port
 	l, err := s.getServerListener()
@@ -42,6 +44,7 @@ func (s *Server) Start() error {
 	}
 	s.listener = l
 	s.shutdownC = make(chan struct{}, 1)
+	log.Print("server started OK, waiting for connections")
 	for {
 		conn, err := l.AcceptTCP()
 		if err != nil {
@@ -82,6 +85,19 @@ func (s *Server) Shutdown() error {
 	}
 	log.Print("server shutdown complete")
 	s.shutdownC <- struct{}{}
+	return nil
+}
+
+func (s *Server) Reload(prefix string) error {
+	log.Print("reloading configuration file...")
+	_, err := conf.Load(prefix + DefaultConf)
+	if err != nil {
+		log.Printf("configuration file error: %s", err)
+		return err
+	}
+	log.Print("configuration file OK.")
+	s.IsReloading = true
+	s.Shutdown()
 	return nil
 }
 
