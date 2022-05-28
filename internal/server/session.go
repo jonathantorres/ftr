@@ -16,6 +16,7 @@ type User struct {
 
 // the current active session
 type Session struct {
+	id                 int
 	user               *User
 	server             *Server
 	tType              TransferType

@@ -4,7 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"math/rand"
 	"net"
+	"sync"
+	"time"
 
 	"github.com/jonathantorres/ftr/internal/conf"
 )
@@ -21,9 +24,13 @@ const (
 type TransferType string
 
 type Server struct {
-	Host string
-	Port int
-	Conf *conf.Conf
+	Host           string
+	Port           int
+	Conf           *conf.Conf
+	sessions       map[int]*Session
+	listener       *net.TCPListener
+	shutdownC      chan struct{}
+	isShuttingDown bool
 }
 
 func (s *Server) Start() error {
@@ -33,14 +40,48 @@ func (s *Server) Start() error {
 	if err != nil {
 		return err
 	}
+	s.listener = l
+	s.shutdownC = make(chan struct{}, 1)
 	for {
 		conn, err := l.AcceptTCP()
 		if err != nil {
-			log.Printf("accept error: %s\n", err)
-			continue
+			select {
+			case <-s.shutdownC:
+				// nothing to do,
+				// the server is shutting down
+			default:
+				log.Printf("accept error: %s", err)
+			}
+			break
 		}
 		go s.handleClient(conn)
 	}
+	// wait for the shutdown to finish
+	<-s.shutdownC
+	return nil
+}
+
+func (s *Server) Shutdown() error {
+	log.Print("shutting down server...")
+	s.isShuttingDown = true
+	var wg sync.WaitGroup
+	for _, session := range s.sessions {
+		wg.Add(1)
+		go func(s *Session) {
+			defer wg.Done()
+			runCommandQuit(s)
+		}(session)
+	}
+	wg.Wait()
+	if s.listener != nil {
+		s.shutdownC <- struct{}{}
+		err := s.listener.Close()
+		if err != nil {
+			log.Printf("error closing the main listener: %s", err)
+		}
+	}
+	log.Print("server shutdown complete")
+	s.shutdownC <- struct{}{}
 	return nil
 }
 
@@ -91,16 +132,30 @@ func (s *Server) getServerListener() (*net.TCPListener, error) {
 }
 
 func (s *Server) handleClient(conn *net.TCPConn) {
-	err := sendResponse(conn, StatusCodeServiceReady, "") // welcome message
-	if err != nil {
-		log.Printf("error response: %s\n", err)
+	if s.isShuttingDown {
+		err := conn.Close()
+		if err != nil {
+			log.Printf("error closing accepted connection on shutdown: %s", err)
+		}
 		return
 	}
+	err := sendResponse(conn, StatusCodeServiceReady, "") // welcome message
+	if err != nil {
+		log.Printf("error response: %s", err)
+		return
+	}
+	rand.Seed(time.Now().UnixNano())
 	session := &Session{
 		controlConn: conn,
 		server:      s,
+		id:          rand.Int(),
 	}
+	if s.sessions == nil {
+		s.sessions = make(map[int]*Session)
+	}
+	s.sessions[session.id] = session
 	session.start()
+	delete(s.sessions, session.id)
 }
 
 func (s *Server) findOpenAddr(useIPv6 bool) (*net.TCPAddr, error) {

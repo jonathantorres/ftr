@@ -32,18 +32,18 @@ func main() {
 	}
 	log.SetPrefix("ftr: ")
 
-	go handleSignals()
-
 	config, err := conf.Load(confF)
 	if err != nil {
-		log.Fatalf("server conf error: %s\n", err)
+		log.Fatalf("server conf error: %s", err)
 	}
 	s := &server.Server{
 		Conf: config,
 	}
+	go handleSignals(s)
+
 	err = s.Start()
 	if err != nil {
-		log.Fatalf("server error: %s\n", err)
+		log.Fatalf("server error: %s", err)
 	}
 }
 
@@ -112,18 +112,16 @@ func parseFlags() string {
 	return confF
 }
 
-func handleSignals() {
-	sigs := make(chan os.Signal, 1)
-	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGHUP)
+func handleSignals(serv *server.Server) {
+	sig := make(chan os.Signal, 1)
+	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGHUP)
 
-	s := <-sigs
+	s := <-sig
 	switch s {
 	case syscall.SIGINT,
 		syscall.SIGTERM,
 		syscall.SIGQUIT:
-		// TODO: shutdown the server gracefully
-		log.Print("shutting down server...")
-		os.Exit(0)
+		serv.Shutdown()
 	case syscall.SIGHUP:
 		// TODO: this probably shouldn't terminate the program
 		// it should shutdown the server, and restart it
