@@ -16,18 +16,18 @@ type Log struct {
 }
 
 func (l *Log) Printf(format string, v ...interface{}) {
-	l.l.Printf(format, v)
-	l.stderrLog.Printf(format, v)
+	l.l.Printf(format, v...)
+	l.stderrLog.Printf(format, v...)
 }
 
 func (l *Log) Print(v ...interface{}) {
-	l.l.Print(v)
-	l.stderrLog.Print(v)
+	l.l.Print(v...)
+	l.stderrLog.Print(v...)
 }
 
 func (l *Log) Println(v ...interface{}) {
-	l.l.Println(v)
-	l.stderrLog.Println(v)
+	l.l.Println(v...)
+	l.stderrLog.Println(v...)
 }
 
 func Load(config *conf.Conf) (*Log, *Log, error) {
