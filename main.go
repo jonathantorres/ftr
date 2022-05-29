@@ -10,6 +10,7 @@ import (
 	"syscall"
 
 	"github.com/jonathantorres/ftr/internal/conf"
+	"github.com/jonathantorres/ftr/internal/logger"
 	"github.com/jonathantorres/ftr/internal/server"
 )
 
@@ -30,15 +31,21 @@ func main() {
 	if !strings.HasSuffix(prefix, "/") {
 		prefix += "/"
 	}
-	log.SetPrefix("ftr: ")
+	log.SetPrefix(logger.Prefix)
 
 	for {
 		config, err := conf.Load(confF)
 		if err != nil {
-			log.Fatalf("server conf error: %s", err)
+			log.Fatalf("server configuration error: %s", err)
+		}
+		logE, logA, err := logger.Load(config)
+		if err != nil {
+			log.Fatalf("server logging error: %s", err)
 		}
 		s := &server.Server{
 			Conf: config,
+			LogA: logA,
+			LogE: logE,
 		}
 		go handleSignals(s)
 

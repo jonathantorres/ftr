@@ -3,13 +3,13 @@ package server
 import (
 	"errors"
 	"fmt"
-	"log"
 	"math/rand"
 	"net"
 	"sync"
 	"time"
 
 	"github.com/jonathantorres/ftr/internal/conf"
+	"github.com/jonathantorres/ftr/internal/logger"
 )
 
 const (
@@ -28,6 +28,8 @@ type Server struct {
 	Port           int
 	Conf           *conf.Conf
 	IsReloading    bool
+	LogA           *logger.Log
+	LogE           *logger.Log
 	sessions       map[int]*Session
 	listener       *net.TCPListener
 	shutdownC      chan struct{}
@@ -35,7 +37,7 @@ type Server struct {
 }
 
 func (s *Server) Start() error {
-	log.Print("server starting...")
+	s.LogA.Print("server starting...")
 	s.Host = s.Conf.ServerName
 	s.Port = s.Conf.Port
 	l, err := s.getServerListener()
@@ -44,7 +46,7 @@ func (s *Server) Start() error {
 	}
 	s.listener = l
 	s.shutdownC = make(chan struct{}, 1)
-	log.Print("server started OK, waiting for connections")
+	s.LogA.Print("server started OK, waiting for connections")
 	for {
 		conn, err := l.AcceptTCP()
 		if err != nil {
@@ -53,7 +55,7 @@ func (s *Server) Start() error {
 				// nothing to do,
 				// the server is shutting down
 			default:
-				log.Printf("accept error: %s", err)
+				s.LogE.Printf("accept error: %s", err)
 			}
 			break
 		}
@@ -65,7 +67,7 @@ func (s *Server) Start() error {
 }
 
 func (s *Server) Shutdown() error {
-	log.Print("shutting down server...")
+	s.LogA.Print("shutting down server...")
 	s.isShuttingDown = true
 	var wg sync.WaitGroup
 	for _, session := range s.sessions {
@@ -80,22 +82,22 @@ func (s *Server) Shutdown() error {
 		s.shutdownC <- struct{}{}
 		err := s.listener.Close()
 		if err != nil {
-			log.Printf("error closing the main listener: %s", err)
+			s.LogE.Printf("error closing the main listener: %s", err)
 		}
 	}
-	log.Print("server shutdown complete")
+	s.LogA.Print("server shutdown complete")
 	s.shutdownC <- struct{}{}
 	return nil
 }
 
 func (s *Server) Reload(prefix string) error {
-	log.Print("reloading configuration file...")
+	s.LogA.Print("reloading configuration file...")
 	_, err := conf.Load(prefix + DefaultConf)
 	if err != nil {
-		log.Printf("configuration file error: %s", err)
+		s.LogE.Printf("configuration file error: %s", err)
 		return err
 	}
-	log.Print("configuration file OK.")
+	s.LogA.Print("configuration file OK.")
 	s.IsReloading = true
 	s.Shutdown()
 	return nil
@@ -151,13 +153,13 @@ func (s *Server) handleClient(conn *net.TCPConn) {
 	if s.isShuttingDown {
 		err := conn.Close()
 		if err != nil {
-			log.Printf("error closing accepted connection on shutdown: %s", err)
+			s.LogE.Printf("error closing accepted connection on shutdown: %s", err)
 		}
 		return
 	}
-	err := sendResponse(conn, StatusCodeServiceReady, "") // welcome message
+	err := s.sendResponse(conn, StatusCodeServiceReady, "") // welcome message
 	if err != nil {
-		log.Printf("error response: %s", err)
+		s.LogE.Printf("error response: %s", err)
 		return
 	}
 	rand.Seed(time.Now().UnixNano())
@@ -195,10 +197,10 @@ func (s *Server) findOpenAddr(useIPv6 bool) (*net.TCPAddr, error) {
 	return addr, nil
 }
 
-func sendResponse(conn *net.TCPConn, statusCode uint16, extraMsg string) error {
+func (s *Server) sendResponse(conn *net.TCPConn, statusCode uint16, extraMsg string) error {
 	codeMsg := GetStatusCodeMessage(statusCode)
 	respMsg := fmt.Sprintf("%d %s %s\n", statusCode, codeMsg, extraMsg)
-	log.Printf(respMsg)
+	s.LogA.Printf(respMsg)
 	_, err := conn.Write([]byte(respMsg))
 	if err != nil {
 		return err

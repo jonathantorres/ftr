@@ -3,7 +3,6 @@ package server
 import (
 	"fmt"
 	"io"
-	"log"
 	"net"
 )
 
@@ -36,17 +35,17 @@ func (s *Session) start() {
 		_, err := s.controlConn.Read(clientCmd)
 		if err != nil {
 			if err == io.EOF {
-				log.Printf("connection finished by client %s\n", err)
+				s.server.LogA.Printf("connection finished by client %s", err)
 			} else {
-				log.Printf("read error: %s\n", err)
-				sendResponse(s.controlConn, StatusCodeUnknownErr, "")
+				s.server.LogE.Printf("read error: %s", err)
+				s.server.sendResponse(s.controlConn, StatusCodeUnknownErr, "")
 			}
 			s.controlConn.Close()
 			break
 		}
 		err = s.handleCommand(clientCmd)
 		if err != nil {
-			sendResponse(s.controlConn, StatusCodeUnknownErr, "")
+			s.server.sendResponse(s.controlConn, StatusCodeUnknownErr, "")
 			continue
 		}
 	}
@@ -59,7 +58,7 @@ func (s *Session) end() {
 	if s.controlConn != nil {
 		err := s.controlConn.CloseWrite()
 		if err != nil {
-			log.Printf("error when closing the control connection: %s", err)
+			s.server.LogE.Printf("error when closing the control connection: %s", err)
 		}
 	}
 }
@@ -78,7 +77,7 @@ func (s *Session) openDataConn(port uint16, useIPv6 bool) error {
 	go func() {
 		conn, err := l.Accept()
 		if err != nil {
-			log.Printf("data conn: accept error: %s\n", err)
+			s.server.LogE.Printf("data conn: accept error: %s", err)
 			return
 		}
 		go s.handleDataTransfer(conn, l)
@@ -154,12 +153,12 @@ func (s *Session) handleCommand(clientCmd []byte) error {
 	} else {
 		return s.execCommand(cmd, cmdParams)
 	}
-	return sendResponse(s.controlConn, StatusCodeUnknownErr, "")
+	return s.server.sendResponse(s.controlConn, StatusCodeUnknownErr, "")
 }
 
 func (s *Session) execCommand(cmd string, cmdArgs string) error {
 	var err error = nil
-	log.Printf("%s %s\n", cmd, cmdArgs)
+	s.server.LogA.Printf("%s %s\n", cmd, cmdArgs)
 	switch cmd {
 	case CommandUser:
 		err = runCommandUser(s, cmdArgs)
