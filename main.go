@@ -14,27 +14,18 @@ import (
 	"github.com/jonathantorres/ftr/internal/server"
 )
 
-// TODO: look into adding a "prefix" value that will specify
-// the prefix of the server (a location in the filesystem ex. /usr/local/ftr)
-// this location will contain the configuration files and all the log files
-// will be stored here, this value should be set at build time,
-// the default value will be /usr/local/ftr, this value can be overriden
-// by using the command line flag -p (prefix)
-var prefix = "/home/jonathan/dev/ftr/"
-
 const version = "0.1.0"
 
 func main() {
-	confF := parseFlags()
-
 	// make sure the prefix ends in "/"
-	if !strings.HasSuffix(prefix, "/") {
-		prefix += "/"
+	if !strings.HasSuffix(server.Prefix, "/") {
+		server.Prefix += "/"
 	}
+	confF := parseFlags()
 	log.SetPrefix(logger.Prefix)
 
 	for {
-		config, err := conf.Load(confF)
+		config, err := conf.Load(confF, server.Prefix)
 		if err != nil {
 			log.Fatalf("server configuration error: %s", err)
 		}
@@ -81,10 +72,10 @@ func parseFlags() string {
 	flag.BoolVar(&helpF, "h", false, helpD)
 	flag.BoolVar(&testF, "test", false, testD)
 	flag.BoolVar(&testF, "t", false, testD)
-	flag.StringVar(&prefixF, "prefix", prefix, prefixD)
-	flag.StringVar(&prefixF, "p", prefix, prefixD)
-	flag.StringVar(&confF, "conf", prefix+server.DefaultConf, confD)
-	flag.StringVar(&confF, "c", prefix+server.DefaultConf, confD)
+	flag.StringVar(&prefixF, "prefix", server.Prefix, prefixD)
+	flag.StringVar(&prefixF, "p", server.Prefix, prefixD)
+	flag.StringVar(&confF, "conf", server.Prefix+server.DefaultConf, confD)
+	flag.StringVar(&confF, "c", server.Prefix+server.DefaultConf, confD)
 	flag.Usage = usage
 	flag.Parse()
 
@@ -111,14 +102,14 @@ func parseFlags() string {
 	// then the location of the configuration
 	// will be based on this prefix
 	if prefixUsed {
-		prefix = prefixF
-		confF = prefix + server.DefaultConf
+		server.Prefix = prefixF
+		confF = server.Prefix + server.DefaultConf
 	}
 
 	// test the configuration file and exit
 	if testF {
 		fmt.Fprintf(os.Stderr, "testing configuration file...")
-		_, err := conf.Load(confF)
+		_, err := conf.Load(confF, server.Prefix)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "failed: %s\n", err)
 			os.Exit(1)
@@ -140,7 +131,7 @@ func handleSignals(serv *server.Server) {
 		syscall.SIGQUIT:
 		serv.Shutdown()
 	case syscall.SIGHUP:
-		err := serv.Reload(prefix)
+		err := serv.Reload()
 		if err != nil {
 			// there was a problem reloading the configuration file
 			// the server will keep running with the old configuration

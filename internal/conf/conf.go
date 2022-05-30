@@ -32,6 +32,7 @@ type Conf struct {
 	ErrorLog   string
 	AccessLog  string
 	Users      []User // TODO: should we user a pointer here? an array of User pointers?
+	prefix     string
 }
 
 // TODO: should we use a pointer for the "user" param?
@@ -49,9 +50,9 @@ func (c *Conf) addOption(opName, opValue string) {
 	case rootOpt:
 		c.Root = opValue
 	case errorLogOpt:
-		c.ErrorLog = opValue
+		c.ErrorLog = c.prefix + opValue
 	case accessLogOpt:
-		c.AccessLog = opValue
+		c.AccessLog = c.prefix + opValue
 	case portOpt:
 		// TODO: I don't think we should ignore this error
 		p, _ := strconv.Atoi(opValue)
@@ -76,7 +77,7 @@ func (u *User) addOption(opName, opValue string) {
 	}
 }
 
-func Load(confPath string) (*Conf, error) {
+func Load(confPath, prefix string) (*Conf, error) {
 	file, err := openAndStripComments(confPath)
 	if err != nil {
 		log.Println(err)
@@ -92,7 +93,7 @@ func Load(confPath string) (*Conf, error) {
 		log.Println(err)
 		return nil, err
 	}
-	conf, err := buildServerConf(file)
+	conf, err := buildServerConf(file, prefix)
 	if err != nil {
 		log.Println(err)
 		return nil, err
@@ -100,11 +101,11 @@ func Load(confPath string) (*Conf, error) {
 	return conf, nil
 }
 
-func buildServerConf(file []byte) (*Conf, error) {
+func buildServerConf(file []byte, prefix string) (*Conf, error) {
 	r := bytes.NewReader(file)
 	scanner := bufio.NewScanner(r)
 	var insideUserCmd bool
-	conf := &Conf{}
+	conf := &Conf{prefix: prefix}
 	var curUser *User
 
 	for scanner.Scan() {

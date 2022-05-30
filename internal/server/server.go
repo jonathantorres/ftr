@@ -12,6 +12,8 @@ import (
 	"github.com/jonathantorres/ftr/internal/logger"
 )
 
+var Prefix = ""
+
 const (
 	ControlPort                    = 21
 	DefaultName                    = "localhost"
@@ -90,9 +92,9 @@ func (s *Server) Shutdown() error {
 	return nil
 }
 
-func (s *Server) Reload(prefix string) error {
+func (s *Server) Reload() error {
 	s.LogA.Print("reloading configuration file...")
-	_, err := conf.Load(prefix + DefaultConf)
+	_, err := conf.Load(Prefix+DefaultConf, Prefix)
 	if err != nil {
 		s.LogE.Printf("configuration file error: %s", err)
 		return err
