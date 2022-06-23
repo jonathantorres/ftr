@@ -9,3 +9,7 @@ Log::Log() {
 Log::~Log() {
     // destructor
 }
+
+void Log::init() {
+    // TODO
+}

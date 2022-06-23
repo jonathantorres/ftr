@@ -9,3 +9,7 @@ Conf::Conf() {
 Conf::~Conf() {
     // destructor
 }
+
+void Conf::load() {
+    // TODO
+}

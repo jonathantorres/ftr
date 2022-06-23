@@ -3,8 +3,11 @@
 
 namespace ftr {
 class Server {
+  public:
     Server();
     ~Server();
+
+    void start();
 };
 
 } // namespace ftr

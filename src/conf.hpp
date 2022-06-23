@@ -3,8 +3,11 @@
 
 namespace ftr {
 class Conf {
+  public:
     Conf();
     ~Conf();
+
+    void load();
 };
 
 } // namespace ftr

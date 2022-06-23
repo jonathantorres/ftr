@@ -9,3 +9,7 @@ Server::Server() {
 Server::~Server() {
     // destructor
 }
+
+void Server::start() {
+    // TODO
+}
