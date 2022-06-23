@@ -2,13 +2,14 @@ VPATH = src tests bin
 CPPFLAGS = g++ -std=gnu++11 -Wall -Wextra -Isrc
 PROG := ftr
 PREFIX := /usr/local/$(PROG)
-PROGS := server conf log session
-TESTS := $(addsuffix _test,$(PROGS))
-OBJS := $(addsuffix .o,$(PROGS))
+CPPFILES := server conf log session
+CPPHDRS := src/exception.hpp
+TESTS := $(addsuffix _test,$(CPPFILES))
+OBJS := $(addsuffix .o,$(CPPFILES))
 
 # compile main program
-$(PROG): $(PROG).cpp $(OBJS)
-	$(CPPFLAGS) src/$(PROG).cpp $(OBJS) -o bin/$(PROG)
+$(PROG): $(PROG).cpp $(CPPHDRS) $(OBJS)
+	$(CPPFLAGS) src/$(PROG).cpp $(CPPHDRS) $(OBJS) -o bin/$(PROG)
 
 # compile objects
 $(OBJS):%.o: %.cpp %.hpp
