@@ -28,7 +28,7 @@ int main(int argc, char **argv) {
     try {
         // load and test the configuration file
         log.init();
-        config.load();
+        config.load("", "");
     } catch (std::exception &e) {
         std::cerr << "server configuration error: " << e.what() << "\n";
         std::exit(EXIT_FAILURE);
@@ -39,7 +39,6 @@ int main(int argc, char **argv) {
     try {
         // start the server
         std::cout << "Starting server...\n";
-
         server.start();
     } catch (std::exception &e) {
         std::cerr << "server error: " << e.what() << "\n";
