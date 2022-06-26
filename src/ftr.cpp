@@ -4,11 +4,15 @@
 #include <cstdlib>
 #include <exception>
 #include <iostream>
+#include <memory>
 #include <signal.h>
 #include <string>
 #include <sys/wait.h>
 
 const std::string VERSION = "0.0.1";
+
+// TODO: this will be changed soon
+std::string prefix = "/home/jonathan/dev/ft/";
 
 void parse_opts(int argc, char **argv);
 void print_usage();
@@ -20,15 +24,15 @@ int main(int argc, char **argv) {
     // at compile time
 
     ftr::Server server;
-    ftr::Conf config;
     ftr::Log log;
+    std::unique_ptr<ftr::Conf> conf(new ftr::Conf());
 
     parse_opts(argc, argv);
 
     try {
         // load and test the configuration file
         log.init();
-        config.load("", "");
+        conf->load(prefix + ftr::Server::DEFAULT_CONF, "");
     } catch (std::exception &e) {
         std::cerr << "server configuration error: " << e.what() << "\n";
         std::exit(EXIT_FAILURE);
@@ -37,9 +41,7 @@ int main(int argc, char **argv) {
     handle_signals();
 
     try {
-        // start the server
-        std::cout << "Starting server...\n";
-        server.start();
+        server.start(conf);
     } catch (std::exception &e) {
         std::cerr << "server error: " << e.what() << "\n";
         std::exit(EXIT_FAILURE);
@@ -146,6 +148,7 @@ void handle_signals() {
         // TODO: log the error
     }
 }
+
 void print_usage() {
     std::cerr << "Usage: ftr -[htv] [-p prefix] [-c conf]\n";
     std::cerr << "\n";
