@@ -7,6 +7,8 @@
 #include <iostream>
 #include <netdb.h>
 #include <regex>
+#include <sstream>
+#include <string>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -62,6 +64,12 @@ void Server::send_response(int conn_fd, int status_code,
     std::string buf_str = buf.str();
 
     write(conn_fd, buf_str.c_str(), buf_str.size());
+}
+
+std::string Server::get_status_code_msg(int status_code) {
+    // TODO: finish this
+
+    return "";
 }
 
 int Server::get_server_ctrl_listener() {

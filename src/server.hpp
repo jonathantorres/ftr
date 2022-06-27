@@ -2,6 +2,7 @@
 #define ftr_server_hpp
 
 #include "conf.hpp"
+#include "constants.hpp"
 #include "session.hpp"
 #include <arpa/inet.h>
 #include <map>
@@ -11,6 +12,7 @@
 #include <sys/types.h>
 
 namespace ftr {
+
 class Server {
   public:
     Server() = default;
@@ -21,12 +23,14 @@ class Server {
     static const int DEFAULT_CMD_SIZE = 512;
     static const char TRANSFER_TYPE_ASCII = 'A';
     static const char TRANSFER_TYPE_IMG = 'I';
+
     static constexpr char const *DEFAULT_NAME = "localhost";
     static constexpr char const *DEFAULT_CONF = "ftr.conf";
 
     void start(std::unique_ptr<ftr::Conf> &conf);
     void shutdown();
     void reload_conf();
+    std::string get_status_code_msg(int status_code);
 
   private:
     std::string host;

@@ -3,7 +3,7 @@ CPPFLAGS = g++ -std=gnu++11 -Wall -Wextra -Isrc
 PROG := ftr
 PREFIX := /usr/local/$(PROG)
 CPPFILES := server conf log session util
-CPPHDRS := src/exception.hpp
+CPPHDRS := src/exception.hpp src/constants.hpp
 TESTS := $(addsuffix _test,$(CPPFILES))
 OBJS := $(addsuffix .o,$(CPPFILES))
 
