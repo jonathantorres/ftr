@@ -31,6 +31,8 @@ class Server {
     void shutdown();
     void reload_conf();
     std::string get_status_code_msg(int status_code);
+    std::string get_command_help_msg(std::string cmd);
+    std::string get_all_commands_help_msg();
 
   private:
     std::string host;

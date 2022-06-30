@@ -1,5 +1,6 @@
 #include "server.hpp"
 #include "conf.hpp"
+#include "constants.hpp"
 #include "exception.hpp"
 #include "util.hpp"
 #include <arpa/inet.h>
@@ -67,9 +68,36 @@ void Server::send_response(int conn_fd, int status_code,
 }
 
 std::string Server::get_status_code_msg(int status_code) {
-    // TODO: finish this
+    auto sc = ftr::status_codes.find(status_code);
+
+    if (sc != ftr::status_codes.end()) {
+        return sc->second;
+    }
 
     return "";
+}
+
+std::string Server::get_command_help_msg(std::string cmd) {
+    auto msg = ftr::help_messages.find(cmd);
+
+    if (msg != ftr::help_messages.end()) {
+        return std::string(msg->second);
+    }
+
+    return "";
+}
+
+std::string Server::get_all_commands_help_msg() {
+    std::stringstream buf;
+
+    for (auto it = ftr::help_messages.begin(); it != ftr::help_messages.end();
+         ++it) {
+        buf << it->first;
+        buf << ": ";
+        buf << it->second;
+        buf << " ";
+    }
+    return buf.str();
 }
 
 int Server::get_server_ctrl_listener() {
