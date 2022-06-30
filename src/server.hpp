@@ -15,7 +15,9 @@ namespace ftr {
 
 class Server {
   public:
-    Server() = default;
+    Server()
+        : conf{nullptr}, port{0}, ctrl_listener_fd{0}, is_reloading{false},
+          is_shutting_down{false} {};
     ~Server() = default;
 
     static const int CONTROL_PORT = 21;
@@ -36,9 +38,9 @@ class Server {
 
   private:
     std::string host;
-    int port;
     std::unique_ptr<ftr::Conf> conf;
     std::map<int, std::shared_ptr<ftr::Session>> sessions;
+    int port;
     int ctrl_listener_fd;
     bool is_reloading;
     bool is_shutting_down;

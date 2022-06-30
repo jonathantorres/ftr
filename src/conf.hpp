@@ -11,6 +11,11 @@ class User {
   public:
     User() = default;
     ~User() = default;
+    User(const User &u) = delete;
+    User(User &&u) = delete;
+    User &operator=(const User &rhs) = delete;
+    User &operator=(User &&rhs) = delete;
+
     void add_option(std::string op_name, std::string op_value);
     const std::string get_username() { return username; }
     const std::string get_password() { return password; }
@@ -26,8 +31,12 @@ class Conf {
   public:
     Conf() = default;
     ~Conf() = default;
-    void load(std::string path, std::string prefix);
+    Conf(const Conf &conf) = delete;
+    Conf(Conf &&conf) = delete;
+    Conf &operator=(Conf &&rhs) = delete;
+    Conf &operator=(const Conf &rhs) = delete;
 
+    void load(std::string path, std::string prefix);
     const std::vector<std::shared_ptr<ftr::User>> &get_users() { return users; }
     const std::string get_root() { return root; }
     const std::string get_server_name() { return server_name; }
