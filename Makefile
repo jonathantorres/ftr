@@ -1,5 +1,5 @@
 VPATH = src tests bin
-CPPFLAGS = g++ -std=c++11 -Wall -Wextra -Isrc
+CPPFLAGS = g++ -std=c++20 -Wall -Wextra -Isrc
 PROG := ftr
 PREFIX := /usr/local/$(PROG)
 CPPFILES := server conf log session util
