@@ -43,7 +43,7 @@ class Server {
     bool is_reloading;
     bool is_shutting_down;
 
-    enum HostType {
+    enum class HostType {
         DomainName,
         IPv4,
         IPv6,
