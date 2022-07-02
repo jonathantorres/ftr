@@ -29,7 +29,7 @@ class User {
 
 class Conf {
   public:
-    Conf() = default;
+    Conf() : port{0} {};
     ~Conf() = default;
     Conf(const Conf &conf) = delete;
     Conf(Conf &&conf) = delete;
@@ -61,12 +61,12 @@ class Conf {
 
   private:
     std::string prefix;
-    int port;
     std::string server_name;
     std::string root;
     std::string error_log;
     std::string access_log;
     std::vector<std::shared_ptr<ftr::User>> users;
+    int port;
 
     void add_option(std::string op_name, std::string op_value);
     std::vector<std::string> open_and_strip_comments(std::string path);
