@@ -25,18 +25,14 @@ class Server {
     Server &operator=(const Server &server) = delete;
     Server &operator=(Server &&server) = delete;
 
-    static const int CONTROL_PORT = 21;
+    // TODO: move these 2 constants to the constants.hpp header file
     static const int BACKLOG = 4096;
-    static const int DEFAULT_CMD_SIZE = 512;
-    static const char TRANSFER_TYPE_ASCII = 'A';
-    static const char TRANSFER_TYPE_IMG = 'I';
-
-    static constexpr char const *DEFAULT_NAME = "localhost";
     static constexpr char const *DEFAULT_CONF = "ftr.conf";
 
     void start(std::unique_ptr<ftr::Conf> &conf);
     void shutdown();
     void reload_conf();
+    void send_response(int conn_fd, int status_code, std::string extra_msg);
     std::string get_status_code_msg(int status_code);
     std::string get_command_help_msg(std::string cmd);
     std::string get_all_commands_help_msg();
@@ -62,7 +58,6 @@ class Server {
     std::string get_addr_string(struct sockaddr *addr);
     int bind_address(const struct addrinfo *addr_info);
     void handle_conn(int conn_fd);
-    void send_response(int conn_fd, int status_code, std::string extra_msg);
 };
 
 } // namespace ftr

@@ -5,6 +5,13 @@
 #include <string>
 
 namespace ftr {
+// server constants
+const int DEFAULT_CMD_SIZE = 512;
+const int CONTROL_PORT = 21;
+const char TRANSFER_TYPE_ASCII = 'A';
+const char TRANSFER_TYPE_IMG = 'I';
+constexpr char const *DEFAULT_NAME = "localhost";
+
 // status codes
 const int STATUS_CODE_RESTART_MARKER = 110;
 const int STATUS_CODE_READY_IN_A_FEW_MINS = 120;

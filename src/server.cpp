@@ -5,7 +5,10 @@
 #include "util.hpp"
 #include <arpa/inet.h>
 #include <cerrno>
+#include <cstdlib>
+#include <ctime>
 #include <iostream>
+#include <memory>
 #include <netdb.h>
 #include <regex>
 #include <sstream>
@@ -55,21 +58,33 @@ void Server::start(std::unique_ptr<ftr::Conf> &conf) {
 
 void Server::handle_conn(int conn_fd) {
     // handle new client connection here
-    send_response(conn_fd, 200, "Hola");
+    send_response(conn_fd, ftr::STATUS_CODE_SERVICE_READY,
+                  ""); // welcome message
+
+    std::srand(std::time(nullptr));
+    int id = std::rand();
+    std::shared_ptr s = std::make_shared<Session>(conn_fd, *this, id);
+
+    sessions[id] = s;
+    s->start();
+    sessions.erase(id);
 }
 
 void Server::send_response(int conn_fd, int status_code,
                            std::string extra_msg) {
-    // TODO
-    std::stringstream buf;
-    buf << status_code;
-    buf << " OK ";
-    buf << extra_msg;
-    buf << '\n';
+    std::stringstream resp_msg;
+    std::string code_msg = get_status_code_msg(status_code);
+    resp_msg << status_code << ' ';
+    resp_msg << code_msg << ' ';
+    resp_msg << extra_msg << '\n';
 
-    std::string buf_str = buf.str();
+    std::string msg_str = resp_msg.str();
+    // TODO: log the response message
 
-    write(conn_fd, buf_str.c_str(), buf_str.size());
+    if (write(conn_fd, msg_str.c_str(), msg_str.size()) < 0) {
+        // TODO: log the error
+        throw ServerError(strerror(errno));
+    }
 }
 
 std::string Server::get_status_code_msg(int status_code) {
