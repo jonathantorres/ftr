@@ -33,14 +33,19 @@ void Server::start(std::unique_ptr<ftr::Conf> &conf) {
 
     listen(ctrl_listener_fd, Server::BACKLOG);
 
-    std::cout << "OK...waiting for connections...\n";
+    std::cout << "OK.\n";
 
     while (true) {
         int conn_fd = accept(ctrl_listener_fd, nullptr, nullptr);
 
         if (conn_fd < 0) {
+            // TODO: log this error
             std::cerr << "accept error: " << std::strerror(errno) << '\n';
-            // TODO: check for interrupted system calls
+            if (errno == EINTR) {
+                // interrupted system call, let's try again
+                continue;
+            }
+            break;
         }
 
         // TODO: spawn a new thread to handle this client
