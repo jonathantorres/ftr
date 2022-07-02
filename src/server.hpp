@@ -20,6 +20,11 @@ class Server {
           is_shutting_down{false} {};
     ~Server() = default;
 
+    Server(const Server &server) = delete;
+    Server(Server &&server) = delete;
+    Server &operator=(const Server &server) = delete;
+    Server &operator=(Server &&server) = delete;
+
     static const int CONTROL_PORT = 21;
     static const int BACKLOG = 4096;
     static const int DEFAULT_CMD_SIZE = 512;
