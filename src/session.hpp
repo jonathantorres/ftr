@@ -49,7 +49,7 @@ class Session {
     void handle_command(std::array<char, ftr::DEFAULT_CMD_SIZE> &client_cmd);
     void exec_command(std::string cmd, std::string cmd_params);
     void run_not_implemented();
-    void run_user();
+    void run_user(std::string username);
     void run_password();
     void run_print_dir();
     void run_change_dir();

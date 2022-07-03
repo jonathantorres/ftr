@@ -7,7 +7,9 @@
 #include <cstring>
 #include <exception>
 #include <iostream>
+#include <memory>
 #include <unistd.h>
+#include <vector>
 
 using namespace ftr;
 
@@ -93,7 +95,7 @@ void Session::exec_command(std::string cmd, std::string cmd_params) {
     // TODO: log the command executed
 
     if (cmd == CMD_USER) {
-        run_user();
+        run_user(cmd_params);
         return;
     } else if (cmd == CMD_PASSWORD) {
         run_password();
@@ -193,8 +195,31 @@ void Session::exec_command(std::string cmd, std::string cmd_params) {
     run_not_implemented();
 }
 
-void Session::run_user() {
-    // TODO
+void Session::run_user(std::string username) {
+    bool user_found = false;
+    const std::vector<std::shared_ptr<ftr::User>> users =
+        server.get_conf()->get_users();
+
+    for (auto &u : users) {
+        if (u->get_username() == username) {
+            user_found = true;
+            SessionUser session_user = {
+                username : std::string(username),
+                password : "",
+                root : "",
+            };
+            user = session_user;
+            break;
+        }
+    }
+
+    if (user_found) {
+        server.send_response(control_conn_fd, ftr::STATUS_CODE_USERNAME_OK, "");
+        return;
+    }
+
+    server.send_response(control_conn_fd, ftr::STATUS_CODE_INVALID_USERNAME,
+                         "");
 }
 
 void Session::run_password() {
@@ -234,7 +259,8 @@ void Session::run_accept_and_store() {
 }
 
 void Session::run_system_type() {
-    // TODO
+    server.send_response(control_conn_fd, ftr::STATUS_CODE_NAME_SYSTEM,
+                         " UNIX Type: L8");
 }
 
 void Session::run_change_parent() {
