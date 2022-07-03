@@ -36,6 +36,7 @@ class Server {
     std::string get_status_code_msg(int status_code);
     std::string get_command_help_msg(std::string cmd);
     std::string get_all_commands_help_msg();
+    const std::shared_ptr<ftr::Conf> get_conf() { return conf; }
 
   private:
     std::string host;
