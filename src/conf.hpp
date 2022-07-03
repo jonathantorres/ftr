@@ -37,11 +37,13 @@ class Conf {
     Conf &operator=(const Conf &rhs) = delete;
 
     void load(std::string path, std::string prefix);
-    const std::vector<std::shared_ptr<ftr::User>> &get_users() { return users; }
-    const std::string get_root() { return root; }
-    const std::string get_server_name() { return server_name; }
-    const std::string get_error_log() { return error_log; }
-    const std::string get_access_log() { return access_log; }
+    const std::vector<std::shared_ptr<ftr::User>> &get_users() const {
+        return users;
+    }
+    std::string get_root() { return root; }
+    std::string get_server_name() { return server_name; }
+    std::string get_error_log() { return error_log; }
+    std::string get_access_log() { return access_log; }
     int get_port() { return port; }
 
     static constexpr char EQUAL_SIGN = '=';
