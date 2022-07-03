@@ -224,38 +224,47 @@ void Session::run_user(std::string username) {
 
 void Session::run_password() {
     // TODO
+    run_not_implemented();
 }
 
 void Session::run_print_dir() {
     // TODO
+    run_not_implemented();
 }
 
 void Session::run_change_dir() {
     // TODO
+    run_not_implemented();
 }
 
 void Session::run_type() {
     // TODO
+    run_not_implemented();
 }
 
 void Session::run_passive() {
     // TODO
+    run_not_implemented();
 }
 
 void Session::run_list() {
     // TODO
+    run_not_implemented();
 }
 
 void Session::run_file_names() {
     // TODO
+    run_not_implemented();
 }
 
 void Session::run_retrieve() {
     // TODO
+    run_not_implemented();
 }
 
 void Session::run_accept_and_store() {
     // TODO
+    run_not_implemented();
 }
 
 void Session::run_system_type() {
@@ -265,82 +274,102 @@ void Session::run_system_type() {
 
 void Session::run_change_parent() {
     // TODO
+    run_not_implemented();
 }
 
 void Session::run_make_dir() {
     // TODO
+    run_not_implemented();
 }
 
 void Session::run_remove_dir() {
     // TODO
+    run_not_implemented();
 }
 
 void Session::run_delete() {
     // TODO
+    run_not_implemented();
 }
 
 void Session::run_ext_passv_mode() {
     // TODO
+    run_not_implemented();
 }
 
 void Session::run_port() {
     // TODO
+    run_not_implemented();
 }
 
 void Session::run_ext_addr_port() {
     // TODO
+    run_not_implemented();
 }
 
 void Session::run_help() {
     // TODO
+    run_not_implemented();
 }
 
 void Session::run_noop() {
     // TODO
+    run_not_implemented();
 }
 
 void Session::run_allo() {
     // TODO
+    run_not_implemented();
 }
 
 void Session::run_account() {
     // TODO
+    run_not_implemented();
 }
 
 void Session::run_site() {
     // TODO
+    run_not_implemented();
 }
 
 void Session::run_mode() {
     // TODO
+    run_not_implemented();
 }
 
 void Session::run_abort() {
     // TODO
+    run_not_implemented();
 }
 
 void Session::run_file_struct() {
     // TODO
+    run_not_implemented();
 }
 
 void Session::run_server_status() {
     // TODO
+    run_not_implemented();
 }
 
 void Session::run_rename_from() {
     // TODO
+    run_not_implemented();
 }
 
 void Session::run_rename_to() {
     // TODO
+    run_not_implemented();
 }
 
 void Session::run_reinit() {
     // TODO
+    run_not_implemented();
 }
 
 void Session::run_quit() {
     // TODO
+    run_not_implemented();
 }
 
 void Session::run_not_implemented() {

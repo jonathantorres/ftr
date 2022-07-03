@@ -63,6 +63,9 @@ void Server::handle_conn(int conn_fd) {
 
     std::srand(std::time(nullptr));
     int id = std::rand();
+
+    // TODO: could this be make better
+    // not sure if using *this over here is the right thing to do
     std::shared_ptr s = std::make_shared<Session>(conn_fd, *this, id);
 
     sessions[id] = s;
