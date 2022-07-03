@@ -37,7 +37,7 @@ class Session {
     int data_conn_fd;
     bool pass_mode;
     bool transfer_in_progress;
-    SessionUser user;
+    SessionUser session_user;
     ftr::Server &server;
     std::string transfer_type;
     std::string cwd;
@@ -50,7 +50,7 @@ class Session {
     void exec_command(std::string cmd, std::string cmd_params);
     void run_not_implemented();
     void run_user(std::string username);
-    void run_password();
+    void run_password(std::string password);
     void run_print_dir();
     void run_change_dir();
     void run_type();

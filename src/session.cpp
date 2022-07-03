@@ -1,4 +1,5 @@
 #include "session.hpp"
+#include "conf.hpp"
 #include "constants.hpp"
 #include "server.hpp"
 #include "util.hpp"
@@ -98,7 +99,7 @@ void Session::exec_command(std::string cmd, std::string cmd_params) {
         run_user(cmd_params);
         return;
     } else if (cmd == CMD_PASSWORD) {
-        run_password();
+        run_password(cmd_params);
         return;
     } else if (cmd == CMD_PRINT_DIR) {
         run_print_dir();
@@ -203,12 +204,12 @@ void Session::run_user(std::string username) {
     for (auto &u : users) {
         if (u->get_username() == username) {
             user_found = true;
-            SessionUser session_user = {
+            SessionUser new_session_user = {
                 username : std::string(username),
                 password : "",
                 root : "",
             };
-            user = session_user;
+            session_user = new_session_user;
             break;
         }
     }
@@ -222,9 +223,41 @@ void Session::run_user(std::string username) {
                          "");
 }
 
-void Session::run_password() {
-    // TODO
-    run_not_implemented();
+void Session::run_password(std::string password) {
+    bool pass_found = false;
+    const std::shared_ptr<ftr::Conf> conf = server.get_conf();
+    const std::vector<std::shared_ptr<ftr::User>> users = conf->get_users();
+
+    for (auto &u : users) {
+        if (u->get_username() == session_user.username &&
+            u->get_password() == password) {
+            pass_found = true;
+
+            session_user.password = std::string(password);
+            session_user.root = std::string(u->get_root());
+            break;
+        }
+    }
+
+    if (pass_found) {
+        // change to home directory
+        std::string path(conf->get_root() + session_user.root);
+        int res = chdir(path.c_str());
+
+        if (res < 0) {
+            // TODO: log this error
+            server.send_response(control_conn_fd,
+                                 ftr::STATUS_CODE_FILE_NOT_FOUND, "");
+            return;
+        }
+
+        server.send_response(control_conn_fd, ftr::STATUS_CODE_USER_LOGGED_IN,
+                             "");
+        return;
+    }
+
+    server.send_response(control_conn_fd, ftr::STATUS_CODE_INVALID_USERNAME,
+                         "");
 }
 
 void Session::run_print_dir() {
