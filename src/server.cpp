@@ -21,10 +21,10 @@
 
 using namespace ftr;
 
-void Server::start(std::unique_ptr<ftr::Conf> &conf) {
+void Server::start(std::shared_ptr<ftr::Conf> created_conf) {
     std::cout << "server starting...";
 
-    conf = std::move(conf);
+    conf = created_conf;
     host = conf->get_server_name();
     port = conf->get_port();
 

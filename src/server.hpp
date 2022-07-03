@@ -29,7 +29,7 @@ class Server {
     static const int BACKLOG = 4096;
     static constexpr char const *DEFAULT_CONF = "ftr.conf";
 
-    void start(std::unique_ptr<ftr::Conf> &conf);
+    void start(std::shared_ptr<ftr::Conf> created_conf);
     void shutdown();
     void reload_conf();
     void send_response(int conn_fd, int status_code, std::string extra_msg);
@@ -39,7 +39,7 @@ class Server {
 
   private:
     std::string host;
-    std::unique_ptr<ftr::Conf> conf;
+    std::shared_ptr<ftr::Conf> conf;
     std::map<int, std::shared_ptr<ftr::Session>> sessions;
     int port;
     int ctrl_listener_fd;

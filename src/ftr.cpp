@@ -23,9 +23,9 @@ int main(int argc, char **argv) {
     // TODO: set the prefix of the server
     // at compile time
 
-    ftr::Server server;
     ftr::Log log;
-    std::unique_ptr<ftr::Conf> conf(new ftr::Conf());
+    std::shared_ptr<ftr::Conf> conf = std::make_shared<ftr::Conf>();
+    std::shared_ptr<ftr::Server> server = std::make_shared<ftr::Server>();
 
     parse_opts(argc, argv);
 
@@ -41,7 +41,7 @@ int main(int argc, char **argv) {
     handle_signals();
 
     try {
-        server.start(conf);
+        server->start(conf);
     } catch (std::exception &e) {
         std::cerr << "server error: " << e.what() << "\n";
         std::exit(EXIT_FAILURE);
