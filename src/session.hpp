@@ -53,7 +53,7 @@ class Session {
     void run_password(std::string password);
     void run_print_dir();
     void run_change_dir();
-    void run_type();
+    void run_type(std::string selected_transfer_type);
     void run_passive();
     void run_list();
     void run_file_names();
@@ -67,14 +67,14 @@ class Session {
     void run_ext_passv_mode();
     void run_port();
     void run_ext_addr_port();
-    void run_help();
+    void run_help(std::string cmd_args);
     void run_noop();
     void run_allo();
     void run_account();
     void run_site();
     void run_mode();
     void run_abort();
-    void run_file_struct();
+    void run_file_struct(std::string args);
     void run_server_status();
     void run_rename_from();
     void run_rename_to();

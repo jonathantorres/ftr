@@ -9,6 +9,7 @@
 #include <exception>
 #include <iostream>
 #include <memory>
+#include <sstream>
 #include <unistd.h>
 #include <vector>
 
@@ -108,7 +109,7 @@ void Session::exec_command(std::string cmd, std::string cmd_params) {
         run_change_dir();
         return;
     } else if (cmd == CMD_TYPE) {
-        run_type();
+        run_type(cmd_params);
         return;
     } else if (cmd == CMD_PASSIVE) {
         run_passive();
@@ -153,7 +154,7 @@ void Session::exec_command(std::string cmd, std::string cmd_params) {
         run_ext_addr_port();
         return;
     } else if (cmd == CMD_HELP) {
-        run_help();
+        run_help(cmd_params);
         return;
     } else if (cmd == CMD_NOOP) {
         run_noop();
@@ -174,7 +175,7 @@ void Session::exec_command(std::string cmd, std::string cmd_params) {
         run_abort();
         return;
     } else if (cmd == CMD_FILE_STRUCT) {
-        run_file_struct();
+        run_file_struct(cmd_params);
         return;
     } else if (cmd == CMD_SERVER_STATUS) {
         run_server_status();
@@ -261,8 +262,8 @@ void Session::run_password(std::string password) {
 }
 
 void Session::run_print_dir() {
-    // TODO
-    run_not_implemented();
+    server.send_response(control_conn_fd, ftr::STATUS_CODE_PATH_CREATED,
+                         " \"/" + cwd + "\" is current directory");
 }
 
 void Session::run_change_dir() {
@@ -270,8 +271,14 @@ void Session::run_change_dir() {
     run_not_implemented();
 }
 
-void Session::run_type() {
-    // TODO
+void Session::run_type(std::string selected_transfer_type) {
+    if (selected_transfer_type == ftr::TRANSFER_TYPE_ASCII ||
+        selected_transfer_type == TRANSFER_TYPE_IMG) {
+        transfer_type = selected_transfer_type;
+        server.send_response(control_conn_fd, ftr::STATUS_CODE_OK,
+                             " Transfer Type OK");
+        return;
+    }
     run_not_implemented();
 }
 
@@ -340,19 +347,33 @@ void Session::run_ext_addr_port() {
     run_not_implemented();
 }
 
-void Session::run_help() {
-    // TODO
-    run_not_implemented();
+void Session::run_help(std::string cmd_args) {
+    std::stringstream ss;
+
+    if (cmd_args == "") {
+        ss << "Welcome to FTR, enter a command name to get more information "
+              "about it. Current commands: ";
+        ss << server.get_all_commands_help_msg() << '\n';
+    } else {
+        std::string help_msg = server.get_command_help_msg(cmd_args);
+
+        if (help_msg == "") {
+            ss << "Sorry, the command " << cmd_args << " is not implemented\n";
+        } else {
+            ss << ftr::to_upper(cmd_args) << ": " << help_msg << '\n';
+        }
+    }
+
+    server.send_response(control_conn_fd, ftr::STATUS_CODE_HELP_MESSAGE,
+                         ss.str());
 }
 
 void Session::run_noop() {
-    // TODO
-    run_not_implemented();
+    server.send_response(control_conn_fd, ftr::STATUS_CODE_OK, "");
 }
 
 void Session::run_allo() {
-    // TODO
-    run_not_implemented();
+    server.send_response(control_conn_fd, ftr::STATUS_CODE_OK, "");
 }
 
 void Session::run_account() {
@@ -361,8 +382,8 @@ void Session::run_account() {
 }
 
 void Session::run_site() {
-    // TODO
-    run_not_implemented();
+    server.send_response(control_conn_fd, ftr::STATUS_CODE_OK,
+                         "No SITE options for this server");
 }
 
 void Session::run_mode() {
@@ -375,9 +396,15 @@ void Session::run_abort() {
     run_not_implemented();
 }
 
-void Session::run_file_struct() {
-    // TODO
-    run_not_implemented();
+void Session::run_file_struct(std::string args) {
+    if (ftr::to_lower(args) != "f") {
+        server.send_response(control_conn_fd,
+                             ftr::STATUS_CODE_CMD_NOT_IMPLEMENTED_FOR_PARAM,
+                             "");
+        return;
+    }
+
+    server.send_response(control_conn_fd, ftr::STATUS_CODE_OK, "");
 }
 
 void Session::run_server_status() {
