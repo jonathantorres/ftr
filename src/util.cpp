@@ -35,6 +35,34 @@ std::string ftr::trim_left(const std::string &s) {
     return std::string(it, s.end());
 }
 
+std::string ftr::to_lower(const std::string &s) {
+    std::string res;
+
+    for (auto &c : s) {
+        int new_char = c;
+        if (std::isalpha(c)) {
+            new_char = std::tolower(c);
+        }
+        res.push_back(new_char);
+    }
+
+    return res;
+}
+
+std::string ftr::to_upper(const std::string &s) {
+    std::string res;
+
+    for (auto &c : s) {
+        int new_char = c;
+        if (std::isalpha(c)) {
+            new_char = std::toupper(c);
+        }
+        res.push_back(new_char);
+    }
+
+    return res;
+}
+
 bool ftr::is_ipv4(const std::string &s) {
     const std::regex ipv4_regex(
         R"regex((\b25[0-5]|\b2[0-4][0-9]|\b[01]?[0-9][0-9]?)(\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)){3})regex");

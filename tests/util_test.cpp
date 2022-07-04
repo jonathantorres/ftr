@@ -52,6 +52,34 @@ TEST_CASE("left whitespace is trimmed from a string") {
     REQUIRE(ftr::trim_left(s6) == "");
 }
 
+TEST_CASE("string is converted to lower case") {
+    std::string s1("foo");
+    std::string s2("FOO");
+    std::string s3("Jonathan");
+    std::string s4("THIS iS aNoTHer STRINg");
+    std::string s5("this ONE contains numbers 3 4 7575");
+
+    REQUIRE(ftr::to_lower(s1) == "foo");
+    REQUIRE(ftr::to_lower(s2) == "foo");
+    REQUIRE(ftr::to_lower(s3) == "jonathan");
+    REQUIRE(ftr::to_lower(s4) == "this is another string");
+    REQUIRE(ftr::to_lower(s5) == "this one contains numbers 3 4 7575");
+}
+
+TEST_CASE("string is converted to upper case") {
+    std::string s1("foo");
+    std::string s2("FOO");
+    std::string s3("Jonathan");
+    std::string s4("THIS iS aNoTHer STRINg");
+    std::string s5("this ONE contains numbers 3 4 7575");
+
+    REQUIRE(ftr::to_upper(s1) == "FOO");
+    REQUIRE(ftr::to_upper(s2) == "FOO");
+    REQUIRE(ftr::to_upper(s3) == "JONATHAN");
+    REQUIRE(ftr::to_upper(s4) == "THIS IS ANOTHER STRING");
+    REQUIRE(ftr::to_upper(s5) == "THIS ONE CONTAINS NUMBERS 3 4 7575");
+}
+
 TEST_CASE("parse IPv4 address") {
     std::string s1("192.168.1.1");
     std::string s2("127.0.0.1");
