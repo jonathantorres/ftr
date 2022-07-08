@@ -206,9 +206,9 @@ void Session::run_user(std::string username) {
         if (u->get_username() == username) {
             user_found = true;
             SessionUser new_session_user = {
-                username : std::string(username),
-                password : "",
-                root : "",
+                .username = std::string(username),
+                .password = "",
+                .root = "",
             };
             session_user = new_session_user;
             break;
