@@ -2,4 +2,4 @@
 *.o
 *.h.gch
 *.hpp.gch
-bin/*
+/build
