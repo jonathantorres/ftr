@@ -12,7 +12,7 @@
 const std::string VERSION = "0.0.1";
 
 // TODO: this will be changed soon
-std::string prefix = "/home/jonathan/dev/ft/";
+std::string prefix = "/home/jonathan/dev/ftr/";
 
 void parse_opts(int argc, char **argv);
 void print_usage();
