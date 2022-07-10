@@ -15,6 +15,7 @@
 #include <string>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <thread>
 #include <unistd.h>
 #include <utility>
 #include <vector>
@@ -51,20 +52,20 @@ void Server::start(std::shared_ptr<ftr::Conf> created_conf) {
             break;
         }
 
-        // TODO: spawn a new thread to handle this client
-        handle_conn(conn_fd);
+        // handle the client
+        std::thread handle(&Server::handle_conn, this, conn_fd);
+        handle.detach();
     }
 }
 
 void Server::handle_conn(int conn_fd) {
-    // handle new client connection here
-    send_response(conn_fd, ftr::STATUS_CODE_SERVICE_READY,
-                  ""); // welcome message
+    // send welcome message
+    send_response(conn_fd, ftr::STATUS_CODE_SERVICE_READY, "");
 
     std::srand(std::time(nullptr));
     int id = std::rand();
 
-    // TODO: could this be make better
+    // TODO: could this be made better
     // not sure if using *this over here is the right thing to do
     std::shared_ptr s = std::make_shared<Session>(conn_fd, *this, id);
 
