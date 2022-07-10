@@ -1,8 +1,10 @@
 #include "session.hpp"
 #include "conf.hpp"
 #include "constants.hpp"
+#include "exception.hpp"
 #include "server.hpp"
 #include "util.hpp"
+#include <arpa/inet.h>
 #include <array>
 #include <cerrno>
 #include <cstring>
@@ -10,6 +12,8 @@
 #include <iostream>
 #include <memory>
 #include <sstream>
+#include <sys/socket.h>
+#include <sys/types.h>
 #include <unistd.h>
 #include <vector>
 
@@ -283,8 +287,57 @@ void Session::run_type(std::string selected_transfer_type) {
 }
 
 void Session::run_passive() {
-    // TODO
-    run_not_implemented();
+    int fd;
+
+    try {
+        fd = server.find_open_addr(false);
+    } catch (std::exception &e) {
+        server.send_response(control_conn_fd,
+                             ftr::STATUS_CODE_CANT_OPEN_DATA_CONN, e.what());
+        return;
+    }
+
+    struct sockaddr addr;
+    socklen_t addr_size = sizeof(struct sockaddr);
+    int name_res = getsockname(fd, &addr, &addr_size);
+
+    if (name_res < 0) {
+        throw ServerError(strerror(errno));
+    }
+
+    std::string addr_str = server.get_addr_string(&addr);
+
+    for (auto &c : addr_str) {
+        if (c == '.') {
+            c = ',';
+        }
+    }
+
+    struct sockaddr_in *in_addr = reinterpret_cast<sockaddr_in *>(&addr);
+
+    auto p = ntohs(in_addr->sin_port);
+    auto p1 = p >> 8;
+    auto p2 = p;
+
+    std::stringstream resp_msg;
+    resp_msg << addr_str;
+    resp_msg << ',';
+    resp_msg << p1;
+    resp_msg << ',';
+    resp_msg << p2;
+
+    close(fd);
+
+    try {
+        server.open_data_conn(p, false);
+    } catch (std::exception &e) {
+        server.send_response(control_conn_fd,
+                             ftr::STATUS_CODE_CANT_OPEN_DATA_CONN, e.what());
+        return;
+    }
+
+    server.send_response(control_conn_fd, ftr::STATUS_CODE_ENTER_PASS_MODE,
+                         resp_msg.str());
 }
 
 void Session::run_list() {

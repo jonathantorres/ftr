@@ -90,6 +90,118 @@ void Server::send_response(int conn_fd, int status_code,
     }
 }
 
+int Server::find_open_addr(bool use_ipv6) {
+    int ai_family = AF_INET;
+    int fd = -1;
+
+    if (use_ipv6) {
+        ai_family = AF_INET6;
+    }
+
+    struct addrinfo *res, *res_p = nullptr;
+    struct addrinfo hints {
+        0, ai_family, SOCK_STREAM, 0, 0, nullptr, nullptr, nullptr
+    };
+
+    int info_res = getaddrinfo(host.c_str(), "0", &hints, &res);
+
+    if (info_res != 0) {
+        throw ServerError(gai_strerror(info_res));
+    }
+
+    res_p = res;
+    while (res_p != NULL) {
+        fd = bind_address(res_p);
+
+        if (fd > 0) {
+            break;
+        }
+        res_p = res_p->ai_next;
+    }
+
+    freeaddrinfo(res);
+
+    if (fd < 0) {
+        throw ServerError("An address to bind could not be found");
+    }
+
+    return fd;
+}
+
+void Server::open_data_conn(int conn_port, bool use_ipv6) {
+    int ai_family = AF_INET;
+    int fd = -1;
+
+    if (use_ipv6) {
+        ai_family = AF_INET6;
+    }
+
+    fd = socket(ai_family, SOCK_STREAM, 0);
+
+    if (fd < 0) {
+        // TODO: log this error
+        throw ServerError(strerror(errno));
+    }
+
+    int opt = 1;
+    int res = setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(int));
+
+    if (res < 0) {
+        // TODO: log this error
+        close(fd);
+        throw ServerError(strerror(errno));
+    }
+
+    struct in_addr ipv4_addr;
+    res = inet_pton(ai_family, host.c_str(), &ipv4_addr);
+
+    if (res <= 0) {
+        // TODO: log this error
+        close(fd);
+        std::cout << "inet_pton failure\n";
+        throw ServerError(strerror(errno));
+    }
+
+    // TODO: make changes for IPv6
+    struct sockaddr_in addr;
+    addr.sin_family = ai_family;
+    addr.sin_port = htons(conn_port);
+    addr.sin_addr = ipv4_addr;
+
+    struct sockaddr *gen_addr = reinterpret_cast<sockaddr *>(&addr);
+
+    res = bind(fd, gen_addr, sizeof(struct sockaddr));
+
+    if (res < 0) {
+        // TODO: log this error
+        close(fd);
+        std::cout << "bind failure\n";
+        throw ServerError(strerror(errno));
+    }
+
+    res = listen(fd, Server::BACKLOG);
+
+    if (res < 0) {
+        // TODO: log this error
+        close(fd);
+        std::cout << "listen failure\n";
+        throw ServerError(strerror(errno));
+    }
+
+    // TODO: spawn a new thread that will start
+    // accepting connections on this new socket
+    int conn_fd = accept(fd, nullptr, nullptr);
+
+    if (conn_fd < 0) {
+        // TODO: log this error
+        close(fd);
+        std::cout << "accept failure\n";
+        throw ServerError(strerror(errno));
+    }
+
+    // TODO: use the conn_fd to handle the data transfer
+}
+
 std::string Server::get_status_code_msg(int status_code) {
     auto sc = ftr::status_codes.find(status_code);
 
