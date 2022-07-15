@@ -5,6 +5,7 @@
 #include "util.hpp"
 #include <arpa/inet.h>
 #include <cerrno>
+#include <chrono>
 #include <cstdlib>
 #include <ctime>
 #include <iostream>
@@ -129,15 +130,8 @@ int Server::find_open_addr(bool use_ipv6) {
     return fd;
 }
 
-void Server::open_data_conn(int conn_port, bool use_ipv6) {
-    int ai_family = AF_INET;
-    int fd = -1;
-
-    if (use_ipv6) {
-        ai_family = AF_INET6;
-    }
-
-    fd = socket(ai_family, SOCK_STREAM, 0);
+void Server::open_data_conn(struct sockaddr *conn_addr) {
+    int fd = socket(conn_addr->sa_family, SOCK_STREAM, 0);
 
     if (fd < 0) {
         // TODO: log this error
@@ -153,25 +147,7 @@ void Server::open_data_conn(int conn_port, bool use_ipv6) {
         throw ServerError(strerror(errno));
     }
 
-    struct in_addr ipv4_addr;
-    res = inet_pton(ai_family, host.c_str(), &ipv4_addr);
-
-    if (res <= 0) {
-        // TODO: log this error
-        close(fd);
-        std::cout << "inet_pton failure\n";
-        throw ServerError(strerror(errno));
-    }
-
-    // TODO: make changes for IPv6
-    struct sockaddr_in addr;
-    addr.sin_family = ai_family;
-    addr.sin_port = htons(conn_port);
-    addr.sin_addr = ipv4_addr;
-
-    struct sockaddr *gen_addr = reinterpret_cast<sockaddr *>(&addr);
-
-    res = bind(fd, gen_addr, sizeof(struct sockaddr));
+    res = bind(fd, conn_addr, sizeof(*conn_addr));
 
     if (res < 0) {
         // TODO: log this error
@@ -189,18 +165,36 @@ void Server::open_data_conn(int conn_port, bool use_ipv6) {
         throw ServerError(strerror(errno));
     }
 
-    // TODO: spawn a new thread that will start
-    // accepting connections on this new socket
+    // start accepting connections
+    std::thread handle(&Server::accept_on_data_conn, this, fd);
+    handle.detach();
+}
+
+void Server::accept_on_data_conn(int fd) {
     int conn_fd = accept(fd, nullptr, nullptr);
 
     if (conn_fd < 0) {
         // TODO: log this error
         close(fd);
-        std::cout << "accept failure\n";
-        throw ServerError(strerror(errno));
+        std::cout << "accept failure when accepting on the data connection\n";
+        return;
     }
 
-    // TODO: use the conn_fd to handle the data transfer
+    // handle data transfer
+    std::thread handle(&Server::handle_data_transfer, this, conn_fd);
+    handle.detach();
+}
+
+void Server::handle_data_transfer(int conn_fd) {
+    // handle transfer
+    if (conn_fd) {
+        //
+    }
+
+    // TODO: Implement data transfer
+    using namespace std::chrono_literals;
+    std::this_thread::sleep_for(5s);
+    close(conn_fd);
 }
 
 std::string Server::get_status_code_msg(int status_code) {

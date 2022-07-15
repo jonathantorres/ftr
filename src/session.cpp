@@ -6,6 +6,7 @@
 #include "util.hpp"
 #include <arpa/inet.h>
 #include <array>
+#include <bitset>
 #include <cerrno>
 #include <cstring>
 #include <exception>
@@ -287,7 +288,7 @@ void Session::run_type(std::string selected_transfer_type) {
 }
 
 void Session::run_passive() {
-    int fd;
+    int fd = -1;
 
     try {
         fd = server.find_open_addr(false);
@@ -297,9 +298,11 @@ void Session::run_passive() {
         return;
     }
 
-    struct sockaddr addr;
-    socklen_t addr_size = sizeof(struct sockaddr);
+    struct sockaddr addr {};
+    socklen_t addr_size = sizeof(addr);
     int name_res = getsockname(fd, &addr, &addr_size);
+
+    close(fd);
 
     if (name_res < 0) {
         throw ServerError(strerror(errno));
@@ -316,20 +319,18 @@ void Session::run_passive() {
     struct sockaddr_in *in_addr = reinterpret_cast<sockaddr_in *>(&addr);
 
     auto p = ntohs(in_addr->sin_port);
-    auto p1 = p >> 8;
-    auto p2 = p;
+    auto p1 = std::bitset<8>(p >> 8);
+    auto p2 = std::bitset<8>(p);
 
     std::stringstream resp_msg;
     resp_msg << addr_str;
     resp_msg << ',';
-    resp_msg << p1;
+    resp_msg << p1.to_ulong();
     resp_msg << ',';
-    resp_msg << p2;
-
-    close(fd);
+    resp_msg << p2.to_ulong();
 
     try {
-        server.open_data_conn(p, false);
+        server.open_data_conn(&addr);
     } catch (std::exception &e) {
         server.send_response(control_conn_fd,
                              ftr::STATUS_CODE_CANT_OPEN_DATA_CONN, e.what());
