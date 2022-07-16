@@ -23,6 +23,15 @@ class ServerError : public std::exception {
     const char *what_arg;
 };
 
+class SessionError : public std::exception {
+  public:
+    SessionError(const char *what_arg) : what_arg(what_arg) {}
+    const char *what() const noexcept { return what_arg; }
+
+  private:
+    const char *what_arg;
+};
+
 } // namespace ftr
 
 #endif

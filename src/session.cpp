@@ -7,6 +7,7 @@
 #include <arpa/inet.h>
 #include <array>
 #include <cerrno>
+#include <chrono>
 #include <cstdint>
 #include <cstring>
 #include <exception>
@@ -16,6 +17,7 @@
 #include <string>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <thread>
 #include <unistd.h>
 #include <vector>
 
@@ -57,17 +59,72 @@ void Session::start() {
 
 void Session::end() {}
 
-void Session::open_data_conn(int port) {
-    if (port) {
+void Session::open_data_conn(struct sockaddr *conn_addr) {
+    int fd = socket(conn_addr->sa_family, SOCK_STREAM, 0);
+
+    if (fd < 0) {
+        // TODO: log this error
+        throw SessionError(strerror(errno));
     }
+
+    int opt = 1;
+    int res = setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(int));
+
+    if (res < 0) {
+        // TODO: log this error
+        close(fd);
+        throw SessionError(strerror(errno));
+    }
+
+    res = bind(fd, conn_addr, sizeof(*conn_addr));
+
+    if (res < 0) {
+        // TODO: log this error
+        close(fd);
+        std::cout << "bind failure\n";
+        throw SessionError(strerror(errno));
+    }
+
+    res = listen(fd, ftr::Server::BACKLOG);
+
+    if (res < 0) {
+        // TODO: log this error
+        close(fd);
+        std::cout << "listen failure\n";
+        throw SessionError(strerror(errno));
+    }
+
+    // start accepting connections
+    std::thread handle(&Session::accept_on_data_conn, this, fd);
+    handle.detach();
 }
 
-void Session::connect_to_data_conn(int port) {
-    if (port) {
+void Session::accept_on_data_conn(int fd) {
+    int conn_fd = accept(fd, nullptr, nullptr);
+
+    if (conn_fd < 0) {
+        // TODO: log this error
+        close(fd);
+        std::cout << "accept failure when accepting on the data connection\n";
+        return;
     }
+
+    // handle data transfer
+    std::thread handle(&Session::handle_data_transfer, this, conn_fd);
+    handle.detach();
 }
 
-void Session::handle_data_transfer() {}
+void Session::handle_data_transfer(int conn_fd) {
+    // handle transfer
+    if (conn_fd) {
+        //
+    }
+
+    // TODO: Implement data transfer
+    using namespace std::chrono_literals;
+    std::this_thread::sleep_for(5s);
+    close(conn_fd);
+}
 
 void Session::handle_command(
     std::array<char, ftr::DEFAULT_CMD_SIZE> &client_cmd) {
@@ -331,7 +388,7 @@ void Session::run_passive() {
     resp_msg << std::to_string(p2);
 
     try {
-        server.open_data_conn(&addr);
+        open_data_conn(&addr);
     } catch (std::exception &e) {
         server.send_response(control_conn_fd,
                              ftr::STATUS_CODE_CANT_OPEN_DATA_CONN, e.what());

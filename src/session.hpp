@@ -2,8 +2,12 @@
 #define ftr_session_hpp
 
 #include "constants.hpp"
+#include <arpa/inet.h>
 #include <array>
+#include <netdb.h>
 #include <string>
+#include <sys/socket.h>
+#include <sys/types.h>
 
 namespace ftr {
 class Server;
@@ -43,9 +47,10 @@ class Session {
     std::string cwd;
     std::string rename_from;
 
-    void open_data_conn(int port);
+    void open_data_conn(struct sockaddr *conn_addr);
     void connect_to_data_conn(int port);
-    void handle_data_transfer();
+    void accept_on_data_conn(int fd);
+    void handle_data_transfer(int conn_fd);
     void handle_command(std::array<char, ftr::DEFAULT_CMD_SIZE> &client_cmd);
     void exec_command(std::string cmd, std::string cmd_params);
     void run_not_implemented();
