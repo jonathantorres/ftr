@@ -85,7 +85,7 @@ void Session::open_data_conn(struct sockaddr *conn_addr) {
         throw SessionError(strerror(errno));
     }
 
-    res = listen(fd, ftr::Server::BACKLOG);
+    res = listen(fd, ftr::BACKLOG);
 
     if (res < 0) {
         // TODO: log this error

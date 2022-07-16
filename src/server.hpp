@@ -26,10 +26,6 @@ class Server {
     Server &operator=(const Server &server) = delete;
     Server &operator=(Server &&server) = delete;
 
-    // TODO: move these 2 constants to the constants.hpp header file
-    static const int BACKLOG = 4096;
-    static constexpr char const *DEFAULT_CONF = "ftr.conf";
-
     void start(std::shared_ptr<ftr::Conf> created_conf);
     void shutdown();
     void reload_conf();

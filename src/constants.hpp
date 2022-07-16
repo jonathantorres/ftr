@@ -8,6 +8,8 @@ namespace ftr {
 // server constants
 const int DEFAULT_CMD_SIZE = 512;
 const int CONTROL_PORT = 21;
+const int BACKLOG = 4096;
+constexpr char const *DEFAULT_CONF = "ftr.conf";
 constexpr char const *TRANSFER_TYPE_ASCII = "A";
 constexpr char const *TRANSFER_TYPE_IMG = "I";
 constexpr char const *DEFAULT_NAME = "localhost";

@@ -36,7 +36,7 @@ void Server::start(std::shared_ptr<ftr::Conf> created_conf) {
         throw ServerError("The hostname could not be resolved");
     }
 
-    listen(ctrl_listener_fd, Server::BACKLOG);
+    listen(ctrl_listener_fd, ftr::BACKLOG);
 
     std::cout << "OK.\n";
 

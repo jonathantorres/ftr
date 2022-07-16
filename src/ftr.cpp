@@ -1,4 +1,5 @@
 #include "conf.hpp"
+#include "constants.hpp"
 #include "log.hpp"
 #include "server.hpp"
 #include <cstdlib>
@@ -32,7 +33,7 @@ int main(int argc, char **argv) {
     try {
         // load and test the configuration file
         log.init();
-        conf->load(prefix + ftr::Server::DEFAULT_CONF, "");
+        conf->load(prefix + ftr::DEFAULT_CONF, "");
     } catch (std::exception &e) {
         std::cerr << "server configuration error: " << e.what() << "\n";
         std::exit(EXIT_FAILURE);
