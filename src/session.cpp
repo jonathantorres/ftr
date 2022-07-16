@@ -6,8 +6,8 @@
 #include "util.hpp"
 #include <arpa/inet.h>
 #include <array>
-#include <bitset>
 #include <cerrno>
+#include <cstdint>
 #include <cstring>
 #include <exception>
 #include <iostream>
@@ -319,16 +319,16 @@ void Session::run_passive() {
 
     struct sockaddr_in *in_addr = reinterpret_cast<sockaddr_in *>(&addr);
 
-    auto p = ntohs(in_addr->sin_port);
-    auto p1 = std::bitset<8>(p >> 8);
-    auto p2 = std::bitset<8>(p);
+    uint16_t p = ntohs(in_addr->sin_port);
+    uint8_t p1 = (p >> 8);
+    uint8_t p2 = p;
 
     std::stringstream resp_msg;
     resp_msg << addr_str;
     resp_msg << ',';
-    resp_msg << p1.to_ulong();
+    resp_msg << std::to_string(p1);
     resp_msg << ',';
-    resp_msg << p2.to_ulong();
+    resp_msg << std::to_string(p2);
 
     try {
         server.open_data_conn(&addr);
