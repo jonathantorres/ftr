@@ -13,6 +13,7 @@
 #include <iostream>
 #include <memory>
 #include <sstream>
+#include <string>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
