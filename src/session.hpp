@@ -49,8 +49,7 @@ class Session {
 
     void open_data_conn(struct sockaddr *conn_addr);
     void connect_to_data_conn(int port);
-    void accept_on_data_conn(int fd);
-    void handle_data_transfer(int conn_fd);
+    void accept_on_data_conn(int listener_fd);
     void handle_command(std::array<char, ftr::DEFAULT_CMD_SIZE> &client_cmd);
     void exec_command(std::string cmd, std::string cmd_params);
     void run_not_implemented();

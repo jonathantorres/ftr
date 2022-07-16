@@ -99,31 +99,26 @@ void Session::open_data_conn(struct sockaddr *conn_addr) {
     handle.detach();
 }
 
-void Session::accept_on_data_conn(int fd) {
-    int conn_fd = accept(fd, nullptr, nullptr);
+void Session::accept_on_data_conn(int listener_fd) {
+    int conn_fd = accept(listener_fd, nullptr, nullptr);
 
     if (conn_fd < 0) {
         // TODO: log this error
-        close(fd);
+        close(listener_fd);
         std::cout << "accept failure when accepting on the data connection\n";
         return;
     }
 
-    // handle data transfer
-    std::thread handle(&Session::handle_data_transfer, this, conn_fd);
-    handle.detach();
-}
-
-void Session::handle_data_transfer(int conn_fd) {
-    // handle transfer
-    if (conn_fd) {
-        //
-    }
+    data_conn_fd = conn_fd;
 
     // TODO: Implement data transfer
     using namespace std::chrono_literals;
     std::this_thread::sleep_for(5s);
-    close(conn_fd);
+    close(data_conn_fd);
+    close(listener_fd);
+
+    data_conn_fd = -1;
+    listener_fd = -1;
 }
 
 void Session::handle_command(
