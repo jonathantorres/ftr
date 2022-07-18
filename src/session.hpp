@@ -4,6 +4,7 @@
 #include "constants.hpp"
 #include <arpa/inet.h>
 #include <array>
+#include <filesystem>
 #include <netdb.h>
 #include <string>
 #include <sys/socket.h>
@@ -47,6 +48,8 @@ class Session {
     std::string cwd;
     std::string rename_from;
 
+    bool is_logged_in();
+    std::string get_file_line(std::filesystem::directory_entry entry);
     void open_data_conn(struct sockaddr *conn_addr);
     void connect_to_data_conn(int port);
     void accept_on_data_conn(int listener_fd);
@@ -59,7 +62,7 @@ class Session {
     void run_change_dir();
     void run_type(std::string selected_transfer_type);
     void run_passive();
-    void run_list();
+    void run_list(std::string file);
     void run_file_names();
     void run_retrieve();
     void run_accept_and_store();

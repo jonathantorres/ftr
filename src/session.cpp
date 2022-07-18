@@ -11,6 +11,7 @@
 #include <cstdint>
 #include <cstring>
 #include <exception>
+#include <filesystem>
 #include <iostream>
 #include <memory>
 #include <sstream>
@@ -173,7 +174,7 @@ void Session::exec_command(std::string cmd, std::string cmd_params) {
         run_passive();
         return;
     } else if (cmd == CMD_LIST) {
-        run_list();
+        run_list(cmd_params);
         return;
     } else if (cmd == CMD_FILE_NAMES) {
         run_file_names();
@@ -394,9 +395,58 @@ void Session::run_passive() {
                          resp_msg.str());
 }
 
-void Session::run_list() {
-    // TODO
-    run_not_implemented();
+void Session::run_list(std::string file) {
+    if (!is_logged_in()) {
+        server.send_response(control_conn_fd, ftr::STATUS_CODE_NOT_LOGGED_IN,
+                             "");
+        return;
+    }
+
+    // TODO: wait until the data connection is ready for sending/receiving data
+    transfer_in_progress = true;
+
+    auto conf = server.get_conf();
+    std::string path_str(conf->get_root() + session_user.root + "/" + cwd);
+
+    if (file != "") {
+        path_str += "/" + file;
+    }
+
+    std::filesystem::path dir_path(path_str);
+    std::stringstream dir_data;
+
+    try {
+        std::filesystem::directory_iterator dir_iter(dir_path);
+
+        for (auto const &entry : dir_iter) {
+            std::string file_line = get_file_line(entry);
+            dir_data << file_line;
+            dir_data << '\n';
+        }
+    } catch (std::exception &e) {
+        transfer_in_progress = false;
+
+        server.send_response(control_conn_fd,
+                             ftr::STATUS_CODE_FILE_ACTION_NOT_TAKEN, e.what());
+
+        return;
+    }
+
+    std::string dir_data_str = dir_data.str();
+    if (write(data_conn_fd, dir_data_str.c_str(), dir_data_str.size()) < 0) {
+        // TODO: log the error
+        transfer_in_progress = false;
+
+        server.send_response(control_conn_fd,
+                             ftr::STATUS_CODE_FILE_ACTION_NOT_TAKEN,
+                             strerror(errno));
+
+        return;
+    }
+
+    transfer_in_progress = false;
+    // TODO: send notification that the operation has finished
+    server.send_response(control_conn_fd, ftr ::STATUS_CODE_OK, "");
 }
 
 void Session::run_file_names() {
@@ -541,4 +591,30 @@ void Session::run_quit() {
 
 void Session::run_not_implemented() {
     server.send_response(control_conn_fd, ftr::STATUS_CODE_NOT_IMPLEMENTED, "");
+}
+
+std::string Session::get_file_line(std::filesystem::directory_entry entry) {
+    std::stringstream file_data;
+
+    if (entry.is_directory()) {
+        file_data << "drwxr-xr-x" << ' '; // TODO
+        file_data << "jonathan jonathan ";
+        file_data << "4096 ";
+    } else {
+        file_data << "-rw-r--r--" << ' '; // TODO
+        file_data << "jonathan jonathan ";
+        file_data << entry.file_size() << ' ';
+    }
+
+    file_data << "Jul 10 19:07" << ' '; // TODO
+    file_data << entry.path().filename().string();
+
+    return file_data.str();
+}
+
+bool Session::is_logged_in() {
+    if (session_user.username == "" || session_user.password == "") {
+        return false;
+    }
+    return true;
 }
