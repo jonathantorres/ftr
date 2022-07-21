@@ -1,5 +1,6 @@
 set(SOURCES
     conf.cpp
+    file_data_line.cpp
     log.cpp
     server.cpp
     session.cpp

@@ -9,10 +9,13 @@ namespace ftr {
 const int DEFAULT_CMD_SIZE = 512;
 const int CONTROL_PORT = 21;
 const int BACKLOG = 4096;
+
 constexpr char const *DEFAULT_CONF = "ftr.conf";
 constexpr char const *TRANSFER_TYPE_ASCII = "A";
 constexpr char const *TRANSFER_TYPE_IMG = "I";
 constexpr char const *DEFAULT_NAME = "localhost";
+
+const int DIR_SIZE = 4096;
 
 // status codes
 const int STATUS_CODE_RESTART_MARKER = 110;

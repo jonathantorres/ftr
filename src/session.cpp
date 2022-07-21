@@ -2,6 +2,7 @@
 #include "conf.hpp"
 #include "constants.hpp"
 #include "exception.hpp"
+#include "file_data_line.hpp"
 #include "server.hpp"
 #include "util.hpp"
 #include <arpa/inet.h>
@@ -419,7 +420,8 @@ void Session::run_list(std::string file) {
         std::filesystem::directory_iterator dir_iter(dir_path);
 
         for (auto const &entry : dir_iter) {
-            std::string file_line = get_file_line(entry);
+            FileDataLine file_data(entry);
+            std::string file_line = file_data.get_file_line();
             dir_data << file_line;
             dir_data << '\n';
         }
@@ -591,25 +593,6 @@ void Session::run_quit() {
 
 void Session::run_not_implemented() {
     server.send_response(control_conn_fd, ftr::STATUS_CODE_NOT_IMPLEMENTED, "");
-}
-
-std::string Session::get_file_line(std::filesystem::directory_entry entry) {
-    std::stringstream file_data;
-
-    if (entry.is_directory()) {
-        file_data << "drwxr-xr-x" << ' '; // TODO
-        file_data << "jonathan jonathan ";
-        file_data << "4096 ";
-    } else {
-        file_data << "-rw-r--r--" << ' '; // TODO
-        file_data << "jonathan jonathan ";
-        file_data << entry.file_size() << ' ';
-    }
-
-    file_data << "Jul 10 19:07" << ' '; // TODO
-    file_data << entry.path().filename().string();
-
-    return file_data.str();
 }
 
 bool Session::is_logged_in() {
