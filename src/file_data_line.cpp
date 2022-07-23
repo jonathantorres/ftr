@@ -1,7 +1,10 @@
 #include "file_data_line.hpp"
 #include "constants.hpp"
+#include <chrono>
+#include <ctime>
 #include <filesystem>
 #include <grp.h>
+#include <iomanip>
 #include <pwd.h>
 #include <sstream>
 #include <string>
@@ -41,7 +44,11 @@ std::string FileDataLine::get_file_line() {
         file_data << dir_entry.file_size() << ' ';
     }
 
-    file_data << "Jul 10 19:07" << ' '; // TODO
+    std::chrono::sys_time system_time =
+        std::chrono::file_clock::to_sys(dir_entry.last_write_time());
+    std::time_t cur_time = std::chrono::system_clock::to_time_t(system_time);
+    file_data << std::put_time(std::localtime(&cur_time), "%h %d %H:%M");
+    file_data << ' ';
     file_data << dir_entry.path().filename().string();
 
     return file_data.str();
@@ -143,7 +150,3 @@ FileDataLine::get_permissions_line(bool is_directory,
 
     return perms_data.str();
 }
-
-/* drwxr-xr-x  5 jonathan jonathan 4096 Jul 21 11:30 build */
-/* -rw-r--r--  1 jonathan jonathan  106 Jun 11 16:17 .clang-format */
-/* -rw-r--r--  1 jonathan jonathan  347 Jul 10 17:40 CMakeLists.txt */
