@@ -4,7 +4,9 @@
 #include "constants.hpp"
 #include <arpa/inet.h>
 #include <array>
+#include <condition_variable>
 #include <filesystem>
+#include <mutex>
 #include <netdb.h>
 #include <string>
 #include <sys/socket.h>
@@ -26,7 +28,8 @@ class Session {
     ~Session() = default;
     Session(int conn_fd, ftr::Server &server, int id)
         : id{id}, control_conn_fd{conn_fd}, data_conn_fd{0}, pass_mode{false},
-          transfer_in_progress{false}, server{server} {}
+          transfer_in_progress{false}, server{server}, transfer_ready{false},
+          transfer_done{false} {}
 
     Session(const Session &session) = delete;
     Session(Session &&session) = delete;
@@ -47,6 +50,10 @@ class Session {
     std::string transfer_type;
     std::string cwd;
     std::string rename_from;
+    std::mutex session_mu;
+    std::condition_variable session_cv;
+    bool transfer_ready;
+    bool transfer_done;
 
     bool is_logged_in();
     std::string get_file_line(std::filesystem::directory_entry entry);

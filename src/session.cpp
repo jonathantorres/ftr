@@ -8,13 +8,13 @@
 #include <arpa/inet.h>
 #include <array>
 #include <cerrno>
-#include <chrono>
 #include <cstdint>
 #include <cstring>
 #include <exception>
 #include <filesystem>
 #include <iostream>
 #include <memory>
+#include <mutex>
 #include <sstream>
 #include <string>
 #include <sys/socket.h>
@@ -113,14 +113,24 @@ void Session::accept_on_data_conn(int listener_fd) {
 
     data_conn_fd = conn_fd;
 
-    // TODO: Implement data transfer
-    using namespace std::chrono_literals;
-    std::this_thread::sleep_for(5s);
+    // the connection is now ready to be used
+    std::unique_lock conn_lock(session_mu);
+    transfer_ready = true;
+    conn_lock.unlock();
+    session_cv.notify_one();
+
+    // wait until the thread that is doing the transfer
+    // is done, and close the connection
+    conn_lock.lock();
+    session_cv.wait(conn_lock, [&] { return transfer_done; });
+
     close(data_conn_fd);
     close(listener_fd);
 
     data_conn_fd = -1;
     listener_fd = -1;
+    transfer_ready = false;
+    transfer_done = false;
 }
 
 void Session::handle_command(
@@ -403,7 +413,10 @@ void Session::run_list(std::string file) {
         return;
     }
 
-    // TODO: wait until the data connection is ready for sending/receiving data
+    // wait until the data connection is ready for sending/receiving data
+    std::unique_lock list_lock(session_mu);
+    session_cv.wait(list_lock, [&] { return transfer_ready; });
+
     transfer_in_progress = true;
 
     auto conf = server.get_conf();
@@ -427,6 +440,8 @@ void Session::run_list(std::string file) {
         }
     } catch (std::exception &e) {
         transfer_in_progress = false;
+        transfer_done = true;
+        session_cv.notify_one();
 
         server.send_response(control_conn_fd,
                              ftr::STATUS_CODE_FILE_ACTION_NOT_TAKEN, e.what());
@@ -438,6 +453,8 @@ void Session::run_list(std::string file) {
     if (write(data_conn_fd, dir_data_str.c_str(), dir_data_str.size()) < 0) {
         // TODO: log the error
         transfer_in_progress = false;
+        transfer_done = true;
+        session_cv.notify_one();
 
         server.send_response(control_conn_fd,
                              ftr::STATUS_CODE_FILE_ACTION_NOT_TAKEN,
@@ -446,8 +463,11 @@ void Session::run_list(std::string file) {
         return;
     }
 
+    // send notification that the operation has finished
     transfer_in_progress = false;
-    // TODO: send notification that the operation has finished
+    transfer_done = true;
+    session_cv.notify_one();
+
     server.send_response(control_conn_fd, ftr ::STATUS_CODE_OK, "");
 }
 
