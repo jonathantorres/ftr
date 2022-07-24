@@ -105,6 +105,14 @@ TEST_CASE("string is split into a vector of strings") {
     REQUIRE(it3[0] == "a-b-c");
 }
 
+TEST_CASE("vector of strings is joined into a string") {
+    std::vector<std::string> v1 = {"a", "b", "c"};
+    std::vector<std::string> v2 = {"one", "two", "three", "four"};
+
+    REQUIRE(ftr::join(v1, ",") == "a,b,c");
+    REQUIRE(ftr::join(v2, "--") == "one--two--three--four");
+}
+
 TEST_CASE("parse IPv4 address") {
     std::string s1("192.168.1.1");
     std::string s2("127.0.0.1");

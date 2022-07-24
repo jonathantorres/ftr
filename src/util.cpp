@@ -95,6 +95,24 @@ std::vector<std::string> ftr::split(const std::string &s,
     return res;
 }
 
+std::string ftr::join(const std::vector<std::string> &contents,
+                      const std::string &delim) {
+    if (contents.size() == 0) {
+        return "";
+    }
+
+    std::string res;
+
+    for (const auto &item : contents) {
+        res.append(item);
+        res.append(delim);
+    }
+
+    res.erase(res.size() - delim.size(), delim.size());
+
+    return res;
+}
+
 bool ftr::is_ipv4(const std::string &s) {
     const std::regex ipv4_regex(
         R"regex((\b25[0-5]|\b2[0-4][0-9]|\b[01]?[0-9][0-9]?)(\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)){3})regex");
