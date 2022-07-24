@@ -537,16 +537,7 @@ void Session::run_change_parent() {
     } else {
         pieces.pop_back();
 
-        std::string new_cwd;
-        std::for_each(pieces.begin(), pieces.end(),
-                      [&](const std::string &s) { new_cwd += s + "/"; });
-
-        // remove the trailing "/"
-        if (new_cwd.back() == '/') {
-            new_cwd.pop_back();
-        }
-
-        cur_wd = new_cwd;
+        cur_wd = ftr::join(pieces, "/");
     }
 
     const std::shared_ptr<ftr::Conf> conf = server.get_conf();
