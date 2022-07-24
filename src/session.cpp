@@ -114,14 +114,12 @@ void Session::accept_on_data_conn(int listener_fd) {
     data_conn_fd = conn_fd;
 
     // the connection is now ready to be used
-    std::unique_lock conn_lock(session_mu);
     transfer_ready = true;
-    conn_lock.unlock();
     session_cv.notify_one();
 
     // wait until the thread that is doing the transfer
     // is done, and close the connection
-    conn_lock.lock();
+    std::unique_lock conn_lock(session_mu);
     session_cv.wait(conn_lock, [&] { return transfer_done; });
 
     close(data_conn_fd);
@@ -416,6 +414,7 @@ void Session::run_list(std::string file) {
     // wait until the data connection is ready for sending/receiving data
     std::unique_lock list_lock(session_mu);
     session_cv.wait(list_lock, [&] { return transfer_ready; });
+    list_lock.unlock();
 
     transfer_in_progress = true;
 
