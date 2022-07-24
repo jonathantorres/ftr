@@ -174,7 +174,7 @@ void Session::exec_command(std::string cmd, std::string cmd_params) {
         run_print_dir();
         return;
     } else if (cmd == CMD_CHANGE_DIR) {
-        run_change_dir();
+        run_change_dir(cmd_params);
         return;
     } else if (cmd == CMD_TYPE) {
         run_type(cmd_params);
@@ -334,9 +334,40 @@ void Session::run_print_dir() {
                          " \"/" + cwd + "\" is current directory");
 }
 
-void Session::run_change_dir() {
-    // TODO
-    run_not_implemented();
+void Session::run_change_dir(std::string dir) {
+    if (!is_logged_in()) {
+        server.send_response(control_conn_fd, ftr::STATUS_CODE_NOT_LOGGED_IN,
+                             "");
+        return;
+    }
+
+    std::string cur_wd = cwd;
+
+    if (dir[0] == '/') {
+        // moving to relative path
+        cur_wd = std::string(dir, 1, dir.size() - 1);
+    } else {
+        if (cur_wd != "") {
+            cur_wd += "/" + dir;
+        } else {
+            cur_wd = dir;
+        }
+    }
+
+    const std::shared_ptr<ftr::Conf> conf = server.get_conf();
+    std::string path(conf->get_root() + session_user.root + "/" + cur_wd);
+    int res = chdir(path.c_str());
+
+    if (res < 0) {
+        // TODO: log this error
+        server.send_response(control_conn_fd, ftr::STATUS_CODE_FILE_NOT_FOUND,
+                             "");
+        return;
+    }
+
+    cwd = cur_wd;
+    server.send_response(control_conn_fd, ftr::STATUS_CODE_REQUESTED_FILE_OK,
+                         " \"" + dir + "\" is current directory");
 }
 
 void Session::run_type(std::string selected_transfer_type) {

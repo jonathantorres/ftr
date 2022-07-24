@@ -66,7 +66,7 @@ class Session {
     void run_user(std::string username);
     void run_password(std::string password);
     void run_print_dir();
-    void run_change_dir();
+    void run_change_dir(std::string dir);
     void run_type(std::string selected_transfer_type);
     void run_passive();
     void run_list(std::string file);
