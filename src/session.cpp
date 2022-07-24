@@ -5,6 +5,7 @@
 #include "file_data_line.hpp"
 #include "server.hpp"
 #include "util.hpp"
+#include <algorithm>
 #include <arpa/inet.h>
 #include <array>
 #include <cerrno>
@@ -522,8 +523,50 @@ void Session::run_system_type() {
 }
 
 void Session::run_change_parent() {
-    // TODO
-    run_not_implemented();
+    if (!is_logged_in()) {
+        server.send_response(control_conn_fd, ftr::STATUS_CODE_NOT_LOGGED_IN,
+                             "");
+        return;
+    }
+
+    std::string cur_wd = cwd;
+    std::vector<std::string> pieces = ftr::split(cwd, "/");
+
+    if (pieces.size() <= 1) {
+        cur_wd = "";
+    } else {
+        pieces.pop_back();
+
+        std::string new_cwd;
+        std::for_each(pieces.begin(), pieces.end(),
+                      [&](const std::string &s) { new_cwd += s + "/"; });
+
+        // remove the trailing "/"
+        if (new_cwd.back() == '/') {
+            new_cwd.pop_back();
+        }
+
+        cur_wd = new_cwd;
+    }
+
+    const std::shared_ptr<ftr::Conf> conf = server.get_conf();
+    std::string chdir_path =
+        conf->get_root() + session_user.root + "/" + cur_wd.c_str();
+    int res = chdir(chdir_path.c_str());
+
+    if (res < 0) {
+        // TODO: log this error
+        server.send_response(control_conn_fd, ftr::STATUS_CODE_FILE_NOT_FOUND,
+                             "");
+        return;
+    }
+
+    cwd = cur_wd;
+    auto wd_path = std::filesystem::path(cur_wd);
+    std::string base = wd_path.stem().c_str();
+
+    server.send_response(control_conn_fd, ftr::STATUS_CODE_OK,
+                         "\"" + base + "\" is current directory");
 }
 
 void Session::run_make_dir() {
