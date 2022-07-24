@@ -1,7 +1,10 @@
 #include "util.hpp"
 #include <cctype>
+#include <ranges>
 #include <regex>
 #include <string>
+#include <string_view>
+#include <vector>
 
 std::string ftr::trim_whitespace(const std::string &s) {
     auto it = s.begin();
@@ -58,6 +61,35 @@ std::string ftr::to_upper(const std::string &s) {
             new_char = std::toupper(c);
         }
         res.push_back(new_char);
+    }
+
+    return res;
+}
+
+std::vector<std::string> ftr::split(const std::string &s,
+                                    const std::string &delim) {
+    std::vector<std::string> res;
+
+    if (s.size() == 0) {
+        return res;
+    }
+
+    if (delim.size() == 0) {
+        res.push_back(s);
+
+        return res;
+    }
+
+    std::string_view str(s.begin(), s.end());
+    std::string_view sv_delim(delim.begin(), delim.end());
+
+    for (const auto &word : std::views::split(str, sv_delim)) {
+        std::string w;
+
+        for (const auto &c : word) {
+            w.push_back(c);
+        }
+        res.push_back(w);
     }
 
     return res;

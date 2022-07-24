@@ -3,6 +3,7 @@
 #include "catch.hpp"
 #include "util.hpp"
 #include <string>
+#include <vector>
 
 TEST_CASE("whitespace is trimmed from a string") {
     std::string s1("foo");
@@ -78,6 +79,30 @@ TEST_CASE("string is converted to upper case") {
     REQUIRE(ftr::to_upper(s3) == "JONATHAN");
     REQUIRE(ftr::to_upper(s4) == "THIS IS ANOTHER STRING");
     REQUIRE(ftr::to_upper(s5) == "THIS ONE CONTAINS NUMBERS 3 4 7575");
+}
+
+TEST_CASE("string is split into a vector of strings") {
+    std::vector<std::string> it1 =
+        ftr::split(std::string("one/two/three"), std::string("/"));
+
+    REQUIRE(it1.size() == 3);
+    REQUIRE(it1[0] == "one");
+    REQUIRE(it1[1] == "two");
+    REQUIRE(it1[2] == "three");
+
+    std::vector<std::string> it2 =
+        ftr::split(std::string("a.b.c"), std::string("."));
+
+    REQUIRE(it2.size() == 3);
+    REQUIRE(it2[0] == "a");
+    REQUIRE(it2[1] == "b");
+    REQUIRE(it2[2] == "c");
+
+    std::vector<std::string> it3 =
+        ftr::split(std::string("a-b-c"), std::string(""));
+
+    REQUIRE(it3.size() == 1);
+    REQUIRE(it3[0] == "a-b-c");
 }
 
 TEST_CASE("parse IPv4 address") {
