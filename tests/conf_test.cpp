@@ -1,6 +1,5 @@
-#define CATCH_CONFIG_MAIN
-#include "catch.hpp"
 #include "conf.hpp"
+#include <catch2/catch_test_macros.hpp>
 #include <iostream>
 #include <string>
 #include <vector>
