@@ -16,7 +16,13 @@ FetchContent_Declare(
     GIT_TAG v3.1.0 # or later
 )
 
-FetchContent_MakeAvailable(Catch2)
+FetchContent_Declare(
+    string
+    GIT_REPOSITORY https://github.com/jonathantorres/string.git
+    GIT_TAG 7a1056f6c6f4b0ae8ac1f286b5b5904570eebbc9
+)
+
+FetchContent_MakeAvailable(Catch2 string)
 
 add_compile_options(-Wall -Wextra -Wpedantic -Werror)
 include_directories(src)

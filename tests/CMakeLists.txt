@@ -4,7 +4,7 @@ add_executable(conf_test
     ../src/conf.cpp
     ../src/util.cpp
 )
-target_link_libraries(conf_test PRIVATE Catch2::Catch2WithMain)
+target_link_libraries(conf_test PRIVATE Catch2::Catch2WithMain PUBLIC string)
 
 add_executable(util_test
     util_test.cpp
