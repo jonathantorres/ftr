@@ -6,6 +6,7 @@
 #include <ios>
 #include <iostream>
 #include <memory>
+#include <string.hpp>
 #include <string>
 #include <vector>
 
@@ -43,8 +44,10 @@ void Conf::build(std::vector<std::string> &conf_vec) {
         if ((eq_pos = line.find_first_of(ftr::Conf::EQUAL_SIGN)) !=
             std::string::npos) {
             // this is a line with an option
-            std::string op_name = trim_whitespace(line.substr(0, eq_pos));
-            std::string op_value = trim_whitespace(line.substr(eq_pos + 1));
+            std::string op_name =
+                string::trim_whitespace(line.substr(0, eq_pos));
+            std::string op_value =
+                string::trim_whitespace(line.substr(eq_pos + 1));
 
             if (inside_usr_cmd) {
                 // option for the current user

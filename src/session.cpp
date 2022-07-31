@@ -17,6 +17,7 @@
 #include <memory>
 #include <mutex>
 #include <sstream>
+#include <string.hpp>
 #include <string>
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -136,7 +137,7 @@ void Session::handle_command(
     std::array<char, ftr::DEFAULT_CMD_SIZE> &client_cmd) {
     std::string cmd_string =
         std::string(reinterpret_cast<char *>(client_cmd.data()));
-    cmd_string = ftr::trim_whitespace(cmd_string);
+    cmd_string = string::trim_whitespace(cmd_string);
     std::string cmd;
     std::string cmd_params;
     bool found_first_space = false;
@@ -530,14 +531,14 @@ void Session::run_change_parent() {
     }
 
     std::string cur_wd = cwd;
-    std::vector<std::string> pieces = ftr::split(cwd, "/");
+    std::vector<std::string> pieces = string::split(cwd, "/");
 
     if (pieces.size() <= 1) {
         cur_wd = "";
     } else {
         pieces.pop_back();
 
-        cur_wd = ftr::join(pieces, "/");
+        cur_wd = string::join(pieces, "/");
     }
 
     const std::shared_ptr<ftr::Conf> conf = server.get_conf();
@@ -603,7 +604,7 @@ void Session::run_help(std::string cmd_args) {
         if (help_msg == "") {
             ss << "Sorry, the command " << cmd_args << " is not implemented\n";
         } else {
-            ss << ftr::to_upper(cmd_args) << ": " << help_msg << '\n';
+            ss << string::to_upper(cmd_args) << ": " << help_msg << '\n';
         }
     }
 
@@ -640,7 +641,7 @@ void Session::run_abort() {
 }
 
 void Session::run_file_struct(std::string args) {
-    if (ftr::to_lower(args) != "f") {
+    if (string::to_lower(args) != "f") {
         server.send_response(control_conn_fd,
                              ftr::STATUS_CODE_CMD_NOT_IMPLEMENTED_FOR_PARAM,
                              "");
