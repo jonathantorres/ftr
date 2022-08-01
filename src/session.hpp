@@ -84,7 +84,7 @@ class Session {
     void run_help(std::string cmd_args);
     void run_noop();
     void run_allo();
-    void run_account();
+    void run_account(std::string args);
     void run_site();
     void run_mode();
     void run_abort();

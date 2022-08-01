@@ -233,7 +233,7 @@ void Session::exec_command(std::string cmd, std::string cmd_params) {
         run_allo();
         return;
     } else if (cmd == CMD_ACCOUNT) {
-        run_account();
+        run_account(cmd_params);
         return;
     } else if (cmd == CMD_SITE) {
         run_site();
@@ -620,9 +620,31 @@ void Session::run_allo() {
     server.send_response(control_conn_fd, ftr::STATUS_CODE_OK, "");
 }
 
-void Session::run_account() {
-    // TODO
-    run_not_implemented();
+void Session::run_account(std::string args) {
+    if (!is_logged_in()) {
+        server.send_response(control_conn_fd, ftr::STATUS_CODE_NOT_LOGGED_IN,
+                             "");
+        return;
+    }
+
+    if (args == "") {
+        server.send_response(control_conn_fd, ftr::STATUS_CODE_BAD_SEQUENCE,
+                             "");
+        return;
+    }
+
+    if (session_user.username == args) {
+        std::stringstream ss;
+        ss << "Username: " << session_user.username;
+        ss << ", Root: " << session_user.root << '\n';
+
+        server.send_response(control_conn_fd, ftr::STATUS_CODE_USER_LOGGED_IN,
+                             ss.str());
+        return;
+    }
+
+    server.send_response(control_conn_fd, ftr::STATUS_CODE_BAD_SEQUENCE,
+                         "The account was not found");
 }
 
 void Session::run_site() {
