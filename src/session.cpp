@@ -239,7 +239,7 @@ void Session::exec_command(std::string cmd, std::string cmd_params) {
         run_site();
         return;
     } else if (cmd == CMD_MODE) {
-        run_mode();
+        run_mode(cmd_params);
         return;
     } else if (cmd == CMD_ABORT) {
         run_abort();
@@ -652,9 +652,15 @@ void Session::run_site() {
                          "No SITE options for this server");
 }
 
-void Session::run_mode() {
-    // TODO
-    run_not_implemented();
+void Session::run_mode(std::string args) {
+    if (string::to_lower(args) != "s") {
+        server.send_response(control_conn_fd,
+                             ftr::STATUS_CODE_CMD_NOT_IMPLEMENTED_FOR_PARAM,
+                             "");
+        return;
+    }
+
+    server.send_response(control_conn_fd, ftr::STATUS_CODE_OK, "");
 }
 
 void Session::run_abort() {

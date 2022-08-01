@@ -86,7 +86,7 @@ class Session {
     void run_allo();
     void run_account(std::string args);
     void run_site();
-    void run_mode();
+    void run_mode(std::string args);
     void run_abort();
     void run_file_struct(std::string args);
     void run_server_status();
