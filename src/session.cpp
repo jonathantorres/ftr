@@ -500,7 +500,7 @@ void Session::run_list(std::string file) {
     transfer_done = true;
     session_cv.notify_one();
 
-    server.send_response(control_conn_fd, ftr ::STATUS_CODE_OK, "");
+    server.send_response(control_conn_fd, ftr::STATUS_CODE_OK, "");
 }
 
 void Session::run_file_names(std::string file) {
@@ -564,7 +564,7 @@ void Session::run_file_names(std::string file) {
     transfer_done = true;
     session_cv.notify_one();
 
-    server.send_response(control_conn_fd, ftr ::STATUS_CODE_OK, "");
+    server.send_response(control_conn_fd, ftr::STATUS_CODE_OK, "");
 }
 
 void Session::run_retrieve() {
