@@ -89,7 +89,7 @@ class Session {
     void run_mode(std::string args);
     void run_abort();
     void run_file_struct(std::string args);
-    void run_server_status();
+    void run_server_status(std::string args);
     void run_rename_from();
     void run_rename_to();
     void run_reinit();

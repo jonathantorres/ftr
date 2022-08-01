@@ -248,7 +248,7 @@ void Session::exec_command(std::string cmd, std::string cmd_params) {
         run_file_struct(cmd_params);
         return;
     } else if (cmd == CMD_SERVER_STATUS) {
-        run_server_status();
+        run_server_status(cmd_params);
         return;
     } else if (cmd == CMD_RENAME_FROM) {
         run_rename_from();
@@ -738,9 +738,43 @@ void Session::run_file_struct(std::string args) {
     server.send_response(control_conn_fd, ftr::STATUS_CODE_OK, "");
 }
 
-void Session::run_server_status() {
-    // TODO
-    run_not_implemented();
+void Session::run_server_status(std::string args) {
+    if (args == "") {
+        server.send_response(control_conn_fd, ftr::STATUS_CODE_SYSTEM_STATUS,
+                             "Server OK");
+        return;
+    }
+
+    if (!is_logged_in()) {
+        server.send_response(control_conn_fd, ftr::STATUS_CODE_NOT_LOGGED_IN,
+                             "");
+        return;
+    }
+
+    auto conf = server.get_conf();
+    std::string path_str(conf->get_root() + session_user.root + "/" + cwd +
+                         "/" + args);
+    std::filesystem::path dir_path(path_str);
+    std::stringstream dir_data;
+
+    try {
+        std::filesystem::directory_iterator dir_iter(dir_path);
+
+        for (auto const &entry : dir_iter) {
+            FileDataLine file_data(entry);
+            std::string file_line = file_data.get_file_line();
+            dir_data << file_line;
+            dir_data << '\n';
+        }
+    } catch (std::exception &e) {
+        server.send_response(control_conn_fd,
+                             ftr::STATUS_CODE_FILE_ACTION_NOT_TAKEN, e.what());
+
+        return;
+    }
+
+    server.send_response(control_conn_fd, ftr::STATUS_CODE_SYSTEM_STATUS,
+                         dir_data.str());
 }
 
 void Session::run_rename_from() {
