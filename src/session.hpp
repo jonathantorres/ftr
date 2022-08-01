@@ -70,7 +70,7 @@ class Session {
     void run_type(std::string selected_transfer_type);
     void run_passive();
     void run_list(std::string file);
-    void run_file_names();
+    void run_file_names(std::string file);
     void run_retrieve();
     void run_accept_and_store();
     void run_system_type();

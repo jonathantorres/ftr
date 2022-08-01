@@ -188,7 +188,7 @@ void Session::exec_command(std::string cmd, std::string cmd_params) {
         run_list(cmd_params);
         return;
     } else if (cmd == CMD_FILE_NAMES) {
-        run_file_names();
+        run_file_names(cmd_params);
         return;
     } else if (cmd == CMD_RETRIEVE) {
         run_retrieve();
@@ -503,9 +503,68 @@ void Session::run_list(std::string file) {
     server.send_response(control_conn_fd, ftr ::STATUS_CODE_OK, "");
 }
 
-void Session::run_file_names() {
-    // TODO
-    run_not_implemented();
+void Session::run_file_names(std::string file) {
+    if (!is_logged_in()) {
+        server.send_response(control_conn_fd, ftr::STATUS_CODE_NOT_LOGGED_IN,
+                             "");
+        return;
+    }
+
+    // wait until the data connection is ready for sending/receiving data
+    std::unique_lock list_lock(session_mu);
+    session_cv.wait(list_lock, [&] { return transfer_ready; });
+    list_lock.unlock();
+
+    transfer_in_progress = true;
+
+    auto conf = server.get_conf();
+    std::string path_str(conf->get_root() + session_user.root + "/" + cwd);
+
+    if (file != "") {
+        path_str += "/" + file;
+    }
+
+    std::filesystem::path dir_path(path_str);
+    std::stringstream dir_data;
+
+    try {
+        std::filesystem::directory_iterator dir_iter(dir_path);
+
+        for (auto const &entry : dir_iter) {
+            dir_data << entry.path().filename().string();
+            dir_data << '\n';
+        }
+    } catch (std::exception &e) {
+        transfer_in_progress = false;
+        transfer_done = true;
+        session_cv.notify_one();
+
+        server.send_response(control_conn_fd,
+                             ftr::STATUS_CODE_FILE_ACTION_NOT_TAKEN, e.what());
+
+        return;
+    }
+
+    std::string dir_data_str = dir_data.str();
+    if (write(data_conn_fd, dir_data_str.c_str(), dir_data_str.size()) < 0) {
+        // TODO: log the error
+        transfer_in_progress = false;
+        transfer_done = true;
+        session_cv.notify_one();
+
+        server.send_response(control_conn_fd,
+                             ftr::STATUS_CODE_FILE_ACTION_NOT_TAKEN,
+                             std::strerror(errno));
+
+        return;
+    }
+
+    // send notification that the operation has finished
+    transfer_in_progress = false;
+    transfer_done = true;
+    session_cv.notify_one();
+
+    server.send_response(control_conn_fd, ftr ::STATUS_CODE_OK, "");
 }
 
 void Session::run_retrieve() {
