@@ -640,10 +640,6 @@ void Session::run_make_dir(std::string dir_name) {
         return;
     }
 
-    /* std::string msg = " Directory "; */
-    /* msg += dir_name; */
-    /* msg += " created"; */
-
     server.send_response(control_conn_fd, ftr::STATUS_CODE_OK,
                          " Directory " + dir_name + " created");
 }
