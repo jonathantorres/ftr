@@ -206,7 +206,7 @@ void Session::exec_command(std::string cmd, std::string cmd_params) {
         run_change_parent();
         return;
     } else if (cmd == CMD_MAKE_DIR || cmd == CMD_MAKE_A_DIR) {
-        run_make_dir();
+        run_make_dir(cmd_params);
         return;
     } else if (cmd == CMD_REMOVE_DIR) {
         run_remove_dir();
@@ -620,9 +620,32 @@ void Session::run_change_parent() {
                          "\"" + base + "\" is current directory");
 }
 
-void Session::run_make_dir() {
-    // TODO
-    run_not_implemented();
+void Session::run_make_dir(std::string dir_name) {
+    if (!is_logged_in()) {
+        server.send_response(control_conn_fd, ftr::STATUS_CODE_NOT_LOGGED_IN,
+                             "");
+        return;
+    }
+
+    std::string cur_wd = cwd;
+    const std::shared_ptr<ftr::Conf> conf = server.get_conf();
+    std::filesystem::path location(conf->get_root() + session_user.root + "/" +
+                                   cur_wd + "/" + dir_name);
+
+    try {
+        std::filesystem::create_directory(location);
+    } catch (std::exception &e) {
+        server.send_response(control_conn_fd, ftr::STATUS_CODE_FILE_NOT_FOUND,
+                             e.what());
+        return;
+    }
+
+    /* std::string msg = " Directory "; */
+    /* msg += dir_name; */
+    /* msg += " created"; */
+
+    server.send_response(control_conn_fd, ftr::STATUS_CODE_OK,
+                         " Directory " + dir_name + " created");
 }
 
 void Session::run_remove_dir() {
