@@ -635,6 +635,7 @@ void Session::run_make_dir(std::string dir_name) {
     try {
         std::filesystem::create_directory(location);
     } catch (std::exception &e) {
+        // TODO: log the error
         server.send_response(control_conn_fd, ftr::STATUS_CODE_FILE_NOT_FOUND,
                              e.what());
         return;
