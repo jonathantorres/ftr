@@ -77,7 +77,7 @@ class Session {
     void run_change_parent();
     void run_make_dir(std::string dir_name);
     void run_remove_dir(std::string path);
-    void run_delete();
+    void run_delete(std::string filename);
     void run_ext_passv_mode();
     void run_port();
     void run_ext_addr_port();

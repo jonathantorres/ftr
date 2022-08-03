@@ -212,7 +212,7 @@ void Session::exec_command(std::string cmd, std::string cmd_params) {
         run_remove_dir(cmd_params);
         return;
     } else if (cmd == CMD_DELETE) {
-        run_delete();
+        run_delete(cmd_params);
         return;
     } else if (cmd == CMD_EXT_PASSV_MODE) {
         run_ext_passv_mode();
@@ -670,9 +670,29 @@ void Session::run_remove_dir(std::string path) {
                          " Directory " + path + " removed");
 }
 
-void Session::run_delete() {
-    // TODO
-    run_not_implemented();
+void Session::run_delete(std::string filename) {
+    if (!is_logged_in()) {
+        server.send_response(control_conn_fd, ftr::STATUS_CODE_NOT_LOGGED_IN,
+                             "");
+        return;
+    }
+
+    std::string cur_wd = cwd;
+    const std::shared_ptr<ftr::Conf> conf = server.get_conf();
+    std::filesystem::path location(conf->get_root() + session_user.root + "/" +
+                                   cur_wd + "/" + filename);
+
+    try {
+        std::filesystem::remove(location);
+    } catch (std::exception &e) {
+        // TODO: log the error
+        server.send_response(control_conn_fd, ftr::STATUS_CODE_FILE_NOT_FOUND,
+                             e.what());
+        return;
+    }
+
+    server.send_response(control_conn_fd, ftr::STATUS_CODE_REQUESTED_FILE_OK,
+                         " File " + filename + " deleted");
 }
 
 void Session::run_ext_passv_mode() {
