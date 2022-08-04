@@ -251,10 +251,10 @@ void Session::exec_command(std::string cmd, std::string cmd_params) {
         run_server_status(cmd_params);
         return;
     } else if (cmd == CMD_RENAME_FROM) {
-        run_rename_from();
+        run_rename_from(cmd_params);
         return;
     } else if (cmd == CMD_RENAME_TO) {
-        run_rename_to();
+        run_rename_to(cmd_params);
         return;
     } else if (cmd == CMD_REINIT) {
         run_reinit();
@@ -837,14 +837,63 @@ void Session::run_server_status(std::string args) {
                          dir_data.str());
 }
 
-void Session::run_rename_from() {
-    // TODO
-    run_not_implemented();
+void Session::run_rename_from(std::string from) {
+    if (!is_logged_in()) {
+        server.send_response(control_conn_fd, ftr::STATUS_CODE_NOT_LOGGED_IN,
+                             "");
+        return;
+    }
+
+    if (from == "") {
+        server.send_response(control_conn_fd, ftr::STATUS_CODE_SYNTAX_ERROR,
+                             "A path to rename from is required");
+        return;
+    }
+
+    rename_from = string::trim_whitespace(from);
+    server.send_response(control_conn_fd,
+                         ftr::STATUS_CODE_REQUESTED_FILE_ACTION, "");
 }
 
-void Session::run_rename_to() {
-    // TODO
-    run_not_implemented();
+void Session::run_rename_to(std::string new_file) {
+    if (!is_logged_in()) {
+        server.send_response(control_conn_fd, ftr::STATUS_CODE_NOT_LOGGED_IN,
+                             "");
+        return;
+    }
+
+    if (new_file == "") {
+        server.send_response(control_conn_fd, ftr::STATUS_CODE_SYNTAX_ERROR,
+                             "A path to rename to is required");
+        return;
+    }
+
+    if (rename_from == "") {
+        server.send_response(
+            control_conn_fd, ftr::STATUS_CODE_SYNTAX_ERROR,
+            "Path to rename from not provided, please run RNFR first");
+        return;
+    }
+
+    auto conf = server.get_conf();
+    std::string new_file_name = string::trim_whitespace(new_file);
+    std::filesystem::path oldpath(conf->get_root() + session_user.root + "/" +
+                                  cwd + "/" + rename_from);
+    std::filesystem::path newpath(conf->get_root() + session_user.root + "/" +
+                                  cwd + "/" + new_file_name);
+
+    try {
+        std::filesystem::rename(oldpath, newpath);
+    } catch (std::exception &e) {
+        server.send_response(control_conn_fd, ftr::STATUS_CODE_UNKNOWN_ERROR,
+                             e.what());
+        rename_from = "";
+        return;
+    }
+
+    rename_from = "";
+    server.send_response(control_conn_fd, ftr::STATUS_CODE_REQUESTED_FILE_OK,
+                         "");
 }
 
 void Session::run_reinit() {

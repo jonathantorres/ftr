@@ -90,8 +90,8 @@ class Session {
     void run_abort();
     void run_file_struct(std::string args);
     void run_server_status(std::string args);
-    void run_rename_from();
-    void run_rename_to();
+    void run_rename_from(std::string cmd_args);
+    void run_rename_to(std::string cmd_args);
     void run_reinit();
     void run_quit();
 };
