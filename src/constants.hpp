@@ -55,7 +55,7 @@ const int STATUS_CODE_FILE_ACTION_NOT_TAKEN = 450;
 const int STATUS_CODE_ACTION_ABORTED = 451;
 const int STATUS_CODE_ACTION_NOT_TAKEN = 452;
 const int STATUS_CODE_UNKNOWN_ERROR = 500;
-const int STATUS_CODE_SYTAX_ERROR = 501;
+const int STATUS_CODE_SYNTAX_ERROR = 501;
 const int STATUS_CODE_CMD_NOT_IMPLEMENTED = 502;
 const int STATUS_CODE_BAD_SEQUENCE = 503;
 const int STATUS_CODE_CMD_NOT_IMPLEMENTED_FOR_PARAM = 504;
@@ -117,7 +117,7 @@ const std::map<int, std::string> status_codes = {
      "Requested action not taken. Insufficient "
      "storage space in system. File unavailable."},
     {STATUS_CODE_UNKNOWN_ERROR, "Unknown error."},
-    {STATUS_CODE_SYTAX_ERROR, "Syntax error in parameters or arguments."},
+    {STATUS_CODE_SYNTAX_ERROR, "Syntax error in parameters or arguments."},
     {STATUS_CODE_CMD_NOT_IMPLEMENTED, "Command not implemented."},
     {STATUS_CODE_BAD_SEQUENCE, "Bad sequence of commands."},
     {STATUS_CODE_CMD_NOT_IMPLEMENTED_FOR_PARAM,
