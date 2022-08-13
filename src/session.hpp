@@ -71,7 +71,7 @@ class Session {
     void run_passive();
     void run_list(std::string file);
     void run_file_names(std::string file);
-    void run_retrieve();
+    void run_retrieve(std::string filename);
     void run_accept_and_store(std::string filename, bool append_mode);
     void run_system_type();
     void run_change_parent();
