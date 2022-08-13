@@ -72,7 +72,7 @@ class Session {
     void run_list(std::string file);
     void run_file_names(std::string file);
     void run_retrieve();
-    void run_accept_and_store();
+    void run_accept_and_store(std::string filename, bool append_mode);
     void run_system_type();
     void run_change_parent();
     void run_make_dir(std::string dir_name);

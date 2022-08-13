@@ -13,6 +13,8 @@
 #include <cstring>
 #include <exception>
 #include <filesystem>
+#include <fstream>
+#include <ios>
 #include <iostream>
 #include <memory>
 #include <mutex>
@@ -194,10 +196,10 @@ void Session::exec_command(std::string cmd, std::string cmd_params) {
         run_retrieve();
         return;
     } else if (cmd == CMD_ACCEPT_AND_STORE || cmd == CMD_STORE_FILE) {
-        run_accept_and_store();
+        run_accept_and_store(cmd_params, false);
         return;
     } else if (cmd == CMD_APPEND) {
-        run_accept_and_store(); // uses a different flag
+        run_accept_and_store(cmd_params, true);
         return;
     } else if (cmd == CMD_SYSTEM_TYPE) {
         run_system_type();
@@ -572,9 +574,81 @@ void Session::run_retrieve() {
     run_not_implemented();
 }
 
-void Session::run_accept_and_store() {
-    // TODO
-    run_not_implemented();
+void Session::run_accept_and_store(std::string filename, bool append_mode) {
+    if (!is_logged_in()) {
+        server.send_response(control_conn_fd, ftr::STATUS_CODE_NOT_LOGGED_IN,
+                             "");
+        return;
+    }
+
+    // wait until the data connection is ready for sending/receiving data
+    std::unique_lock list_lock(session_mu);
+    session_cv.wait(list_lock, [&] { return transfer_ready; });
+    list_lock.unlock();
+
+    transfer_in_progress = true;
+
+    auto conf = server.get_conf();
+    std::string path_str(conf->get_root() + session_user.root + "/" + cwd +
+                         "/" + filename);
+
+    std::ios_base::openmode mode = std::ios_base::out;
+
+    if (append_mode) {
+        mode |= std::ios_base::ate;
+    }
+
+    std::ofstream new_file(path_str, mode);
+
+    if (!new_file.is_open()) {
+        transfer_in_progress = false;
+        transfer_done = true;
+        session_cv.notify_one();
+
+        // TODO: log this error
+        throw SessionError(strerror(errno));
+    }
+
+    while (true) {
+        std::array<char, 4096> buf = {0};
+
+        int res = read(data_conn_fd, buf.data(), buf.size());
+
+        if (res < 0) {
+            // an error ocurred
+            // TODO: Log this error
+            std::cerr << "read error: " << strerror(errno) << '\n';
+            transfer_in_progress = false;
+            transfer_done = true;
+            session_cv.notify_one();
+
+            server.send_response(control_conn_fd,
+                                 ftr::STATUS_CODE_FILE_ACTION_NOT_TAKEN, "");
+            return;
+        } else if (res == 0) {
+            // connection closed, file was sent completely
+            new_file.close();
+            break;
+        }
+
+        new_file.write(buf.data(), res);
+
+        if (!new_file.good()) {
+            transfer_in_progress = false;
+            transfer_done = true;
+            session_cv.notify_one();
+
+            // TODO: log this error
+            throw SessionError("There was a problem writing to the file");
+        }
+    }
+
+    // send notification that the operation has finished
+    transfer_in_progress = false;
+    transfer_done = true;
+    session_cv.notify_one();
+
+    server.send_response(control_conn_fd, ftr::STATUS_CODE_OK, "");
 }
 
 void Session::run_system_type() {
