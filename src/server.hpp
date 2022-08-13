@@ -30,6 +30,7 @@ class Server {
     void shutdown();
     void reload_conf();
     void send_response(int conn_fd, int status_code, std::string extra_msg);
+    std::string get_host() { return host; };
     std::string get_status_code_msg(int status_code);
     std::string get_command_help_msg(std::string cmd);
     std::string get_all_commands_help_msg();

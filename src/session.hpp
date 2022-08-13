@@ -43,6 +43,7 @@ class Session {
     int id;
     int control_conn_fd;
     int data_conn_fd;
+    unsigned int data_conn_port;
     bool pass_mode;
     bool transfer_in_progress;
     SessionUser session_user;
@@ -58,8 +59,9 @@ class Session {
     bool is_logged_in();
     std::string get_file_line(std::filesystem::directory_entry entry);
     void open_data_conn(struct sockaddr *conn_addr);
-    void connect_to_data_conn(int port);
+    void connect_to_data_conn(unsigned int port, bool use_ipv6);
     void accept_on_data_conn(int listener_fd);
+    void transfer_on_data_conn();
     void handle_command(std::array<char, ftr::DEFAULT_CMD_SIZE> &client_cmd);
     void exec_command(std::string cmd, std::string cmd_params);
     void run_not_implemented();
@@ -79,7 +81,7 @@ class Session {
     void run_remove_dir(std::string path);
     void run_delete(std::string filename);
     void run_ext_passv_mode();
-    void run_port();
+    void run_port(std::string cmd_params);
     void run_ext_addr_port();
     void run_help(std::string cmd_args);
     void run_noop();

@@ -135,6 +135,81 @@ void Session::accept_on_data_conn(int listener_fd) {
     transfer_done = false;
 }
 
+void Session::connect_to_data_conn(unsigned int port, bool use_ipv6) {
+    int res = 0;
+    std::string host = server.get_host();
+    sa_family_t fam = AF_INET;
+    struct sockaddr *conn_addr = nullptr;
+    struct sockaddr_in6 addr6 {};
+    struct sockaddr_in addr4 {};
+
+    if (use_ipv6) {
+        // IPv6 address
+        fam = AF_INET6;
+        conn_addr = reinterpret_cast<struct sockaddr *>(&addr6);
+
+        addr6.sin6_family = AF_INET6;
+        addr6.sin6_port = htons(port);
+
+        res = inet_pton(fam, host.c_str(), &addr6.sin6_addr);
+    } else {
+        // IPv4 address
+        fam = AF_INET;
+        conn_addr = reinterpret_cast<struct sockaddr *>(&addr4);
+
+        addr4.sin_family = AF_INET;
+        addr4.sin_port = htons(port);
+
+        res = inet_pton(fam, host.c_str(), &addr4.sin_addr);
+    }
+
+    if (res == 0) {
+        // TODO: log this error
+        throw new SessionError("The network address is invalid");
+    } else if (res < 0) {
+        // TODO: log this error
+        throw new SessionError(strerror(errno));
+    }
+
+    int conn_fd = socket(fam, SOCK_STREAM, 0);
+
+    if (conn_fd < 0) {
+        throw new SessionError(strerror(errno));
+    }
+
+    res = connect(conn_fd, conn_addr, sizeof(*conn_addr));
+
+    if (res < 0) {
+        // TODO: log this error
+        throw new SessionError(strerror(errno));
+    }
+
+    data_conn_fd = conn_fd;
+    data_conn_port = port;
+
+    // create new thread that will handle the transfer
+    std::thread handle(&Session::transfer_on_data_conn, this);
+    handle.detach();
+}
+
+void Session::transfer_on_data_conn() {
+    // the connection is now ready to be used
+    transfer_ready = true;
+    session_cv.notify_one();
+
+    // wait until the thread that is doing the transfer
+    // is done, and close the connection
+    std::unique_lock conn_lock(session_mu);
+    session_cv.wait(conn_lock, [&] { return transfer_done; });
+
+    close(data_conn_fd);
+
+    data_conn_fd = -1;
+    data_conn_port = 0;
+    transfer_ready = false;
+    transfer_done = false;
+}
+
 void Session::handle_command(
     std::array<char, ftr::DEFAULT_CMD_SIZE> &client_cmd) {
     std::string cmd_string =
@@ -220,7 +295,7 @@ void Session::exec_command(std::string cmd, std::string cmd_params) {
         run_ext_passv_mode();
         return;
     } else if (cmd == CMD_PORT) {
-        run_port();
+        run_port(cmd_params);
         return;
     } else if (cmd == CMD_EXT_ADDR_PORT) {
         run_ext_addr_port();
@@ -847,9 +922,27 @@ void Session::run_ext_passv_mode() {
     run_not_implemented();
 }
 
-void Session::run_port() {
-    // TODO
-    run_not_implemented();
+void Session::run_port(std::string cmd_params) {
+    // we are ignoring the address here, just use the port part
+    std::vector<std::string> pieces = string::split(cmd_params, ",");
+
+    unsigned long p1 = std::stoul(string::trim_whitespace(pieces[4]));
+    unsigned long p2 = std::stoul(string::trim_whitespace(pieces[5]));
+
+    unsigned int p = static_cast<unsigned int>(p1);
+    p <<= 8;
+    p |= static_cast<unsigned int>(p2);
+
+    try {
+        connect_to_data_conn(p, false);
+    } catch (std::exception &e) {
+        // TODO: log this error
+        server.send_response(control_conn_fd, ftr::STATUS_CODE_UNKNOWN_ERROR,
+                             e.what());
+        return;
+    }
+
+    server.send_response(control_conn_fd, ftr::STATUS_CODE_OK, "");
 }
 
 void Session::run_ext_addr_port() {
