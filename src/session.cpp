@@ -610,7 +610,7 @@ void Session::run_accept_and_store(std::string filename, bool append_mode) {
     }
 
     while (true) {
-        std::array<char, 4096> buf = {0};
+        std::array<char, ftr::FILE_BUF> buf = {0};
 
         int res = read(data_conn_fd, buf.data(), buf.size());
 

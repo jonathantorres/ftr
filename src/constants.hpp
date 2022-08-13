@@ -16,6 +16,7 @@ constexpr char const *TRANSFER_TYPE_IMG = "I";
 constexpr char const *DEFAULT_NAME = "localhost";
 
 const int DIR_SIZE = 4096;
+const int FILE_BUF = 4096;
 
 // status codes
 const int STATUS_CODE_RESTART_MARKER = 110;
