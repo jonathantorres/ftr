@@ -292,7 +292,7 @@ void Session::exec_command(std::string cmd, std::string cmd_params) {
         run_delete(cmd_params);
         return;
     } else if (cmd == CMD_EXT_PASSV_MODE) {
-        run_ext_passv_mode();
+        run_ext_passv_mode(cmd_params);
         return;
     } else if (cmd == CMD_PORT) {
         run_port(cmd_params);
@@ -919,9 +919,60 @@ void Session::run_delete(std::string filename) {
                          " File " + filename + " deleted");
 }
 
-void Session::run_ext_passv_mode() {
-    // TODO
-    run_not_implemented();
+void Session::run_ext_passv_mode(std::string cmd_params) {
+    int fd = -1;
+
+    if (cmd_params != "") {
+        if (cmd_params == "1") {
+            // only IPv6 allowed
+            server.send_response(control_conn_fd,
+                                 ftr::STATUS_CODE_EXT_PORT_UNKNOWN_PROTOCOL,
+                                 "");
+            return;
+        }
+
+        run_not_implemented();
+        return;
+    }
+
+    try {
+        fd = server.find_open_addr(true);
+    } catch (std::exception &e) {
+        server.send_response(control_conn_fd,
+                             ftr::STATUS_CODE_CANT_OPEN_DATA_CONN, e.what());
+        return;
+    }
+
+    struct sockaddr_in6 in6_addr = {};
+    struct sockaddr *addr = reinterpret_cast<struct sockaddr *>(&in6_addr);
+    socklen_t addr_size = sizeof(in6_addr);
+    int name_res = getsockname(fd, addr, &addr_size);
+
+    close(fd);
+
+    if (name_res < 0) {
+        throw ServerError(strerror(errno));
+    }
+
+    try {
+        open_data_conn(addr, addr_size);
+    } catch (std::exception &e) {
+        server.send_response(control_conn_fd,
+                             ftr::STATUS_CODE_CANT_OPEN_DATA_CONN, e.what());
+        return;
+    }
+
+    pass_mode = true;
+
+    uint16_t p = ntohs(in6_addr.sin6_port);
+
+    std::stringstream resp_msg;
+    resp_msg << " (|||";
+    resp_msg << std::to_string(p);
+    resp_msg << "|)";
+
+    server.send_response(control_conn_fd, ftr::STATUS_CODE_ENTER_EXT_PASS_MODE,
+                         resp_msg.str());
 }
 
 void Session::run_port(std::string cmd_params) {

@@ -80,7 +80,7 @@ class Session {
     void run_make_dir(std::string dir_name);
     void run_remove_dir(std::string path);
     void run_delete(std::string filename);
-    void run_ext_passv_mode();
+    void run_ext_passv_mode(std::string cmd_params);
     void run_port(std::string cmd_params);
     void run_ext_addr_port();
     void run_help(std::string cmd_args);
