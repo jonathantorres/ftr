@@ -42,6 +42,16 @@ void Server::start(std::shared_ptr<ftr::Conf> created_conf) {
         throw ServerError(std::strerror(errno));
     }
 
+    // save the resolved address
+    struct sockaddr_storage addr_stor = {};
+    struct sockaddr *addr = reinterpret_cast<struct sockaddr *>(&addr_stor);
+    socklen_t addr_size = sizeof(addr_stor);
+    int name_res = getsockname(ctrl_listener_fd, addr, &addr_size);
+
+    if (name_res == 0) {
+        resolved_host = get_addr_string(addr);
+    }
+
     std::cout << "OK.\n";
 
     while (true) {
