@@ -503,12 +503,14 @@ void Session::run_passive() {
     resp_msg << std::to_string(p2);
 
     try {
-        open_data_conn(&addr);
+        open_data_conn(&addr, addr_size);
     } catch (std::exception &e) {
         server.send_response(control_conn_fd,
                              ftr::STATUS_CODE_CANT_OPEN_DATA_CONN, e.what());
         return;
     }
+
+    pass_mode = true;
 
     server.send_response(control_conn_fd, ftr::STATUS_CODE_ENTER_PASS_MODE,
                          resp_msg.str());
