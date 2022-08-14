@@ -137,8 +137,9 @@ void Session::accept_on_data_conn(int listener_fd) {
 
 void Session::connect_to_data_conn(unsigned int port, bool use_ipv6) {
     int res = 0;
-    std::string host = server.get_host();
+    std::string resolved_host = server.get_resolved_host();
     sa_family_t fam = AF_INET;
+    socklen_t addr_size = 0;
     struct sockaddr *conn_addr = nullptr;
     struct sockaddr_in6 addr6 {};
     struct sockaddr_in addr4 {};
@@ -150,8 +151,9 @@ void Session::connect_to_data_conn(unsigned int port, bool use_ipv6) {
 
         addr6.sin6_family = AF_INET6;
         addr6.sin6_port = htons(port);
+        addr_size = sizeof(addr6);
 
-        res = inet_pton(fam, host.c_str(), &addr6.sin6_addr);
+        res = inet_pton(fam, resolved_host.c_str(), &addr6.sin6_addr);
     } else {
         // IPv4 address
         fam = AF_INET;
@@ -159,8 +161,9 @@ void Session::connect_to_data_conn(unsigned int port, bool use_ipv6) {
 
         addr4.sin_family = AF_INET;
         addr4.sin_port = htons(port);
+        addr_size = sizeof(addr4);
 
-        res = inet_pton(fam, host.c_str(), &addr4.sin_addr);
+        res = inet_pton(fam, resolved_host.c_str(), &addr4.sin_addr);
     }
 
     if (res == 0) {
@@ -178,7 +181,7 @@ void Session::connect_to_data_conn(unsigned int port, bool use_ipv6) {
         throw SessionError(strerror(errno));
     }
 
-    res = connect(conn_fd, conn_addr, sizeof(*conn_addr));
+    res = connect(conn_fd, conn_addr, addr_size);
 
     if (res < 0) {
         // TODO: log this error
