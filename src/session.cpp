@@ -165,23 +165,24 @@ void Session::connect_to_data_conn(unsigned int port, bool use_ipv6) {
 
     if (res == 0) {
         // TODO: log this error
-        throw new SessionError("The network address is invalid");
+        throw SessionError("The network address is invalid");
     } else if (res < 0) {
         // TODO: log this error
-        throw new SessionError(strerror(errno));
+        throw SessionError(strerror(errno));
     }
 
     int conn_fd = socket(fam, SOCK_STREAM, 0);
 
     if (conn_fd < 0) {
-        throw new SessionError(strerror(errno));
+        // TODO: log this error
+        throw SessionError(strerror(errno));
     }
 
     res = connect(conn_fd, conn_addr, sizeof(*conn_addr));
 
     if (res < 0) {
         // TODO: log this error
-        throw new SessionError(strerror(errno));
+        throw SessionError(strerror(errno));
     }
 
     data_conn_fd = conn_fd;
