@@ -938,6 +938,7 @@ void Session::run_ext_passv_mode(std::string cmd_params) {
     try {
         fd = server.find_open_addr(true);
     } catch (std::exception &e) {
+        // TODO: log this error
         server.send_response(control_conn_fd,
                              ftr::STATUS_CODE_CANT_OPEN_DATA_CONN, e.what());
         return;
@@ -951,12 +952,14 @@ void Session::run_ext_passv_mode(std::string cmd_params) {
     close(fd);
 
     if (name_res < 0) {
+        // TODO: log this error
         throw ServerError(strerror(errno));
     }
 
     try {
         open_data_conn(addr, addr_size);
     } catch (std::exception &e) {
+        // TODO: log this error
         server.send_response(control_conn_fd,
                              ftr::STATUS_CODE_CANT_OPEN_DATA_CONN, e.what());
         return;
