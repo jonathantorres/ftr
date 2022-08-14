@@ -82,7 +82,7 @@ class Session {
     void run_delete(std::string filename);
     void run_ext_passv_mode(std::string cmd_params);
     void run_port(std::string cmd_params);
-    void run_ext_addr_port();
+    void run_ext_addr_port(std::string cmd_params);
     void run_help(std::string cmd_args);
     void run_noop();
     void run_allo();

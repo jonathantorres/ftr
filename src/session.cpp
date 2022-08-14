@@ -302,7 +302,7 @@ void Session::exec_command(std::string cmd, std::string cmd_params) {
         run_port(cmd_params);
         return;
     } else if (cmd == CMD_EXT_ADDR_PORT) {
-        run_ext_addr_port();
+        run_ext_addr_port(cmd_params);
         return;
     } else if (cmd == CMD_HELP) {
         run_help(cmd_params);
@@ -1005,9 +1005,27 @@ void Session::run_port(std::string cmd_params) {
     server.send_response(control_conn_fd, ftr::STATUS_CODE_OK, "");
 }
 
-void Session::run_ext_addr_port() {
-    // TODO
-    run_not_implemented();
+void Session::run_ext_addr_port(std::string cmd_params) {
+    // we are ignoring the address here, just use the port part
+    std::vector<std::string> pieces = string::split(cmd_params, "|");
+    bool use_ipv6 = false;
+
+    if (pieces[1] == "2") {
+        use_ipv6 = true;
+    }
+
+    unsigned long port = std::stoul(string::trim_whitespace(pieces[3]));
+
+    try {
+        connect_to_data_conn(port, use_ipv6);
+    } catch (std::exception &e) {
+        // TODO: log this error
+        server.send_response(control_conn_fd, ftr::STATUS_CODE_UNKNOWN_ERROR,
+                             e.what());
+        return;
+    }
+
+    server.send_response(control_conn_fd, ftr::STATUS_CODE_OK, "");
 }
 
 void Session::run_help(std::string cmd_args) {
