@@ -58,7 +58,7 @@ class Session {
 
     bool is_logged_in();
     std::string get_file_line(std::filesystem::directory_entry entry);
-    void open_data_conn(struct sockaddr *conn_addr);
+    void open_data_conn(struct sockaddr *conn_addr, socklen_t addr_size);
     void connect_to_data_conn(unsigned int port, bool use_ipv6);
     void accept_on_data_conn(int listener_fd);
     void transfer_on_data_conn();

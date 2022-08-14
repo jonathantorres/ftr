@@ -65,7 +65,7 @@ void Session::start() {
 
 void Session::end() {}
 
-void Session::open_data_conn(struct sockaddr *conn_addr) {
+void Session::open_data_conn(struct sockaddr *conn_addr, socklen_t addr_size) {
     int fd = socket(conn_addr->sa_family, SOCK_STREAM, 0);
 
     if (fd < 0) {
@@ -82,7 +82,7 @@ void Session::open_data_conn(struct sockaddr *conn_addr) {
         throw SessionError(strerror(errno));
     }
 
-    res = bind(fd, conn_addr, sizeof(*conn_addr));
+    res = bind(fd, conn_addr, addr_size);
 
     if (res < 0) {
         // TODO: log this error
