@@ -93,16 +93,16 @@ void Server::send_response(int conn_fd, int status_code,
 }
 
 int Server::find_open_addr(bool use_ipv6) {
-    int ai_family = AF_INET;
+    sa_family_t fam = AF_INET;
     int fd = -1;
 
     if (use_ipv6) {
-        ai_family = AF_INET6;
+        fam = AF_INET6;
     }
 
     struct addrinfo *res, *res_p = nullptr;
     struct addrinfo hints {
-        0, ai_family, SOCK_STREAM, 0, 0, nullptr, nullptr, nullptr
+        AI_PASSIVE, fam, SOCK_STREAM, 0, 0, nullptr, nullptr, nullptr
     };
 
     int info_res = getaddrinfo(host.c_str(), "0", &hints, &res);
