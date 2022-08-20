@@ -19,7 +19,7 @@ FetchContent_Declare(
 FetchContent_Declare(
     string
     GIT_REPOSITORY https://github.com/jonathantorres/string.git
-    GIT_TAG 7a1056f6c6f4b0ae8ac1f286b5b5904570eebbc9
+    GIT_TAG 12a52334a155f794a84d1abd2d8bf5171d39d252
 )
 
 FetchContent_MakeAvailable(Catch2 string)
