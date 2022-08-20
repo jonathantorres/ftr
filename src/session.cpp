@@ -64,7 +64,20 @@ void Session::start() {
     }
 }
 
-void Session::end() {}
+// end the current session, this will assume
+// that the data connection is already closed
+// and that there are no transfers in progress
+void Session::end() {
+    if (control_conn_fd > 0) {
+        int res = shutdown(control_conn_fd, SHUT_WR);
+
+        if (res < 0) {
+            // TODO: log this error
+            std::cerr << "shutdown error on control connection: "
+                      << std::strerror(errno) << '\n';
+        }
+    }
+}
 
 void Session::open_data_conn(struct sockaddr *conn_addr, socklen_t addr_size) {
     int fd = socket(conn_addr->sa_family, SOCK_STREAM, 0);
@@ -1248,8 +1261,21 @@ void Session::run_reinit() {
 }
 
 void Session::run_quit() {
-    // TODO
-    run_not_implemented();
+    if (is_logged_in()) {
+        // check if there's a transfer in progress
+        // if so, wait until it's done
+        while (true) {
+            if (!transfer_in_progress) {
+                break;
+            }
+
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        }
+    }
+
+    server.send_response(control_conn_fd, ftr::STATUS_CODE_CLOSING_CONTROL_CONN,
+                         "");
+    end();
 }
 
 void Session::run_not_implemented() {
