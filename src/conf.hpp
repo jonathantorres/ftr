@@ -17,9 +17,9 @@ class User {
     User &operator=(User &&rhs) = delete;
 
     void add_option(const std::string &op_name, const std::string &op_value);
-    const std::string get_username() { return username; }
-    const std::string get_password() { return password; }
-    const std::string get_root() { return root; }
+    const std::string get_username() { return m_username; }
+    const std::string get_password() { return m_password; }
+    const std::string get_root() { return m_root; }
 
   private:
     std::string m_username;
