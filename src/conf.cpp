@@ -65,7 +65,7 @@ void Conf::build(const std::vector<std::string> &conf_vec) {
                    std::string::npos) {
             // closing bracket for a user command
             if (inside_usr_cmd) {
-                users.push_back(cur_usr);
+                m_users.push_back(cur_usr);
                 inside_usr_cmd = false;
                 cur_usr = nullptr;
             }

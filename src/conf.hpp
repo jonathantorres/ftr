@@ -44,7 +44,7 @@ class Conf {
     const std::string get_server_name() { return m_server_name; }
     const std::string get_error_log() { return m_error_log; }
     const std::string get_access_log() { return m_access_log; }
-    const int get_port() { return m_port; }
+    int get_port() { return m_port; }
 
     static constexpr char EQUAL_SIGN = '=';
     static constexpr char OPEN_BRACKET = '{';
