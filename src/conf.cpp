@@ -12,7 +12,7 @@
 
 using namespace ftr;
 
-void Conf::load(std::string path, std::string prefix) {
+void Conf::load(const std::string &path, const std::string &prefix) {
     if (prefix == "") {
         // TODO: do something with the prefix
     }
@@ -29,7 +29,7 @@ void Conf::load(std::string path, std::string prefix) {
     build(conf_file_lines);
 }
 
-void Conf::build(std::vector<std::string> &conf_vec) {
+void Conf::build(const std::vector<std::string> &conf_vec) {
     bool inside_usr_cmd = false;
     std::shared_ptr<ftr::User> cur_usr = nullptr;
 
@@ -73,25 +73,26 @@ void Conf::build(std::vector<std::string> &conf_vec) {
     }
 }
 
-void Conf::add_option(std::string op_name, std::string op_value) {
+void Conf::add_option(const std::string &op_name, const std::string &op_value) {
     if (op_name == ftr::Conf::SERVER_OPT) {
-        server_name = op_value;
+        m_server_name = op_value;
     } else if (op_name == ftr::Conf::ROOT_OPT) {
-        root = op_value;
+        m_root = op_value;
     } else if (op_name == ftr::Conf::ERROR_LOG_OPT) {
-        error_log = op_value;
+        m_error_log = op_value;
     } else if (op_name == ftr::Conf::ACCESS_LOG_OPT) {
-        access_log = op_value;
+        m_access_log = op_value;
     } else if (op_name == ftr::Conf::PORT_OPT) {
-        port = std::atoi(op_value.c_str());
+        m_port = std::atoi(op_value.c_str());
 
-        if (port == 0) {
+        if (m_port == 0) {
             throw ConfError("the port cannot be zero");
         }
     }
 }
 
-std::vector<std::string> Conf::open_and_strip_comments(std::string path) {
+std::vector<std::string>
+Conf::open_and_strip_comments(const std::string &path) {
     std::fstream fs(path, std::ios::in);
     std::vector<std::string> conf_file_lines;
 
@@ -125,7 +126,7 @@ std::string Conf::strip_comment_from_line(std::string line) {
     return line;
 }
 
-void Conf::check_for_syntax_errors(std::vector<std::string> &conf_vec) {
+void Conf::check_for_syntax_errors(const std::vector<std::string> &conf_vec) {
     // TODO: this needs to be implemented
     // if there is a syntax error, throw an exception
     if (conf_vec.empty()) {
@@ -133,17 +134,17 @@ void Conf::check_for_syntax_errors(std::vector<std::string> &conf_vec) {
 }
 
 std::vector<std::string>
-Conf::parse_includes(std::vector<std::string> &conf_vec) {
+Conf::parse_includes(const std::vector<std::string> &conf_vec) {
     // TODO: this needs to be implemented
     return conf_vec;
 }
 
-void User::add_option(std::string op_name, std::string op_value) {
+void User::add_option(const std::string &op_name, const std::string &op_value) {
     if (op_name == ftr::Conf::USERNAME_OPT) {
-        username = op_value;
+        m_username = op_value;
     } else if (op_name == ftr::Conf::PASSWORD_OPT) {
-        password = op_value;
+        m_password = op_value;
     } else if (op_name == ftr::Conf::ROOT_OPT) {
-        root = op_value;
+        m_root = op_value;
     }
 }

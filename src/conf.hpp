@@ -16,35 +16,35 @@ class User {
     User &operator=(const User &rhs) = delete;
     User &operator=(User &&rhs) = delete;
 
-    void add_option(std::string op_name, std::string op_value);
+    void add_option(const std::string &op_name, const std::string &op_value);
     const std::string get_username() { return username; }
     const std::string get_password() { return password; }
     const std::string get_root() { return root; }
 
   private:
-    std::string username;
-    std::string password;
-    std::string root;
+    std::string m_username;
+    std::string m_password;
+    std::string m_root;
 };
 
 class Conf {
   public:
-    Conf() : port{0} {};
+    Conf() : m_port{0} {};
     ~Conf() = default;
     Conf(const Conf &conf) = delete;
     Conf(Conf &&conf) = delete;
     Conf &operator=(Conf &&rhs) = delete;
     Conf &operator=(const Conf &rhs) = delete;
 
-    void load(std::string path, std::string prefix);
+    void load(const std::string &path, const std::string &prefix);
     const std::vector<std::shared_ptr<ftr::User>> &get_users() const {
-        return users;
+        return m_users;
     }
-    std::string get_root() { return root; }
-    std::string get_server_name() { return server_name; }
-    std::string get_error_log() { return error_log; }
-    std::string get_access_log() { return access_log; }
-    int get_port() { return port; }
+    const std::string get_root() { return m_root; }
+    const std::string get_server_name() { return m_server_name; }
+    const std::string get_error_log() { return m_error_log; }
+    const std::string get_access_log() { return m_access_log; }
+    const int get_port() { return m_port; }
 
     static constexpr char EQUAL_SIGN = '=';
     static constexpr char OPEN_BRACKET = '{';
@@ -62,20 +62,21 @@ class Conf {
     static constexpr char const *INCLUDE_OPT = "include";
 
   private:
-    std::string prefix;
-    std::string server_name;
-    std::string root;
-    std::string error_log;
-    std::string access_log;
-    std::vector<std::shared_ptr<ftr::User>> users;
-    int port;
+    std::string m_prefix;
+    std::string m_server_name;
+    std::string m_root;
+    std::string m_error_log;
+    std::string m_access_log;
+    std::vector<std::shared_ptr<ftr::User>> m_users;
+    int m_port;
 
-    void add_option(std::string op_name, std::string op_value);
-    std::vector<std::string> open_and_strip_comments(std::string path);
+    void add_option(const std::string &op_name, const std::string &op_value);
+    std::vector<std::string> open_and_strip_comments(const std::string &path);
     std::string strip_comment_from_line(std::string line);
-    std::vector<std::string> parse_includes(std::vector<std::string> &conf_vec);
-    void check_for_syntax_errors(std::vector<std::string> &conf_vec);
-    void build(std::vector<std::string> &conf_vec);
+    std::vector<std::string>
+    parse_includes(const std::vector<std::string> &conf_vec);
+    void check_for_syntax_errors(const std::vector<std::string> &conf_vec);
+    void build(const std::vector<std::string> &conf_vec);
 };
 
 } // namespace ftr
