@@ -9,6 +9,7 @@
 #include <arpa/inet.h>
 #include <array>
 #include <cerrno>
+#include <chrono>
 #include <cstdint>
 #include <cstring>
 #include <exception>
@@ -1215,8 +1216,35 @@ void Session::run_rename_to(std::string new_file) {
 }
 
 void Session::run_reinit() {
-    // TODO
-    run_not_implemented();
+    if (!is_logged_in()) {
+        server.send_response(control_conn_fd, ftr::STATUS_CODE_NOT_LOGGED_IN,
+                             "");
+        return;
+    }
+
+    // check if there's a transfer in progress
+    // if so, wait until it's done
+    while (true) {
+        if (!transfer_in_progress) {
+            break;
+        }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    }
+
+    session_user.username = "";
+    session_user.password = "";
+    session_user.root = "";
+
+    transfer_type = "";
+    pass_mode = false;
+    data_conn_fd = -1;
+    data_conn_port = 0;
+    cwd = "";
+    rename_from = "";
+    transfer_in_progress = false;
+
+    server.send_response(control_conn_fd, ftr::STATUS_CODE_SERVICE_READY, "");
 }
 
 void Session::run_quit() {
