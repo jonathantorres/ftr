@@ -20,9 +20,9 @@ class FileDataLine {
     std::string get_file_line();
 
   private:
-    const std::filesystem::directory_entry &dir_entry;
-    uid_t owner_user_id;
-    gid_t owner_group_id;
+    const std::filesystem::directory_entry &m_dir_entry;
+    uid_t m_owner_user_id;
+    gid_t m_owner_group_id;
     std::string get_owner_name();
     std::string get_group_name();
     std::string get_permissions_line(bool is_directory,
