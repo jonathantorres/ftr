@@ -30,26 +30,34 @@ int main(int argc, char **argv) {
     // at compile time
     parse_opts(argc, argv);
 
-    conf = std::make_shared<ftr::Conf>();
-    server = std::make_shared<ftr::Server>();
-    serv_log = std::make_shared<ftr::Log>();
-
-    try {
-        // load and test the configuration file
-        serv_log->init();
-        conf->load(prefix + ftr::DEFAULT_CONF, "");
-    } catch (std::exception &e) {
-        std::cerr << "server configuration error: " << e.what() << "\n";
-        std::exit(EXIT_FAILURE);
-    }
-
     handle_signals();
 
-    try {
-        server->start(conf);
-    } catch (std::exception &e) {
-        std::cerr << "server error: " << e.what() << "\n";
-        std::exit(EXIT_FAILURE);
+    while (true) {
+        conf = std::make_shared<ftr::Conf>();
+        server = std::make_shared<ftr::Server>();
+        serv_log = std::make_shared<ftr::Log>();
+
+        try {
+            // load and test the configuration file
+            serv_log->init();
+            conf->load(prefix + ftr::DEFAULT_CONF, "");
+        } catch (std::exception &e) {
+            std::cerr << "server configuration error: " << e.what() << "\n";
+            std::exit(EXIT_FAILURE);
+        }
+
+        try {
+            server->start(conf);
+        } catch (std::exception &e) {
+            std::cerr << "server error: " << e.what() << "\n";
+            std::exit(EXIT_FAILURE);
+        }
+
+        if (server->is_reloading()) {
+            continue;
+        }
+
+        break;
     }
 
     return 0;
@@ -113,11 +121,7 @@ void sig_handler(int signum) {
         server->shutdown();
         break;
     case SIGHUP:
-        // TODO: shutdown the server and restart it with the new configuration
-        // file make sure the configuration file is validated first!
-        // TODO: log what happens here
-        std::cerr << "Reloading the configuration file...\n";
-        std::exit(EXIT_SUCCESS);
+        server->reload(prefix);
         break;
     case SIGCHLD:
         wait_for_children();

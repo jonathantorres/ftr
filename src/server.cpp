@@ -58,12 +58,18 @@ void Server::start(const std::shared_ptr<ftr::Conf> created_conf) {
         int conn_fd = accept(m_ctrl_listener_fd, nullptr, nullptr);
 
         if (conn_fd < 0) {
+            if (m_is_shutting_down) {
+                // the server is shutting down
+                break;
+            }
+
             // TODO: log this error
             std::cerr << "accept error: " << std::strerror(errno) << '\n';
             if (errno == EINTR) {
                 // interrupted system call, let's try again
                 continue;
             }
+
             break;
         }
 
@@ -110,7 +116,28 @@ void Server::shutdown() {
     }
 
     std::cerr << "Server shutdown complete\n";
-    std::exit(EXIT_SUCCESS);
+
+    if (!m_is_reloading) {
+        std::exit(EXIT_SUCCESS);
+    }
+}
+
+void Server::reload(const std::string &prefix) {
+    // TODO: log what happens here
+    std::cerr << "Reloading the configuration file...\n";
+    auto conf = std::make_shared<ftr::Conf>();
+
+    try {
+        conf->load(prefix + ftr::DEFAULT_CONF, "");
+    } catch (std::exception &e) {
+        // TODO: log this
+        std::cerr << "server configuration error: " << e.what() << "\n";
+        return;
+    }
+
+    std::cerr << "Configuration file OK\n";
+    m_is_reloading = true;
+    shutdown();
 }
 
 void Server::send_response(const int conn_fd, const int status_code,

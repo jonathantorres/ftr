@@ -28,7 +28,7 @@ class Server {
 
     void start(const std::shared_ptr<ftr::Conf> created_conf);
     void shutdown();
-    void reload_conf();
+    void reload(const std::string &prefix);
     void send_response(const int conn_fd, const int status_code,
                        const std::string &extra_msg);
     std::string get_host() { return m_host; };
@@ -36,6 +36,7 @@ class Server {
     std::string get_status_code_msg(const int status_code);
     std::string get_command_help_msg(const std::string &cmd);
     std::string get_all_commands_help_msg();
+    bool is_reloading() { return m_is_reloading; }
     const std::shared_ptr<ftr::Conf> get_conf() { return m_conf; }
     int find_open_addr(bool use_ipv6);
     std::string get_addr_string(struct sockaddr *addr);
