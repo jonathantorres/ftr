@@ -1126,8 +1126,42 @@ void Session::run_mode(const std::string &args) {
 }
 
 void Session::run_abort() {
-    // TODO
-    run_not_implemented();
+    if (!is_logged_in()) {
+        m_server.send_response(m_control_conn_fd,
+                               ftr::STATUS_CODE_NOT_LOGGED_IN, "");
+        return;
+    }
+
+    if (m_transfer_in_progress) {
+        // send notification to the condition variable
+        // that is blocked in accept_on_data_conn()
+        // this will act as if the transfer had finished
+        // and will close the connection on that thread
+        m_transfer_in_progress = false;
+        m_transfer_done = true;
+        m_session_cv.notify_one();
+
+        m_server.send_response(m_control_conn_fd, ftr::STATUS_CODE_CONN_CLOSED,
+                               "");
+        m_server.send_response(m_control_conn_fd,
+                               ftr::STATUS_CODE_CLOSING_DATA_CONN, "");
+        return;
+    }
+
+    // transfer was not in progress (it must have completed)
+    // let's try to close the connection (if it's still open)
+    if (m_data_conn_fd > 0) {
+        int res = close(m_data_conn_fd);
+
+        if (res < 0) {
+            // TODO: log this error
+            std::cerr << "error closing the data connection "
+                      << std::strerror(errno) << '\n';
+        }
+    }
+
+    m_server.send_response(m_control_conn_fd,
+                           ftr::STATUS_CODE_CLOSING_DATA_CONN, "");
 }
 
 void Session::run_file_struct(const std::string &args) {
