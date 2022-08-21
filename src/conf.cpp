@@ -60,7 +60,7 @@ void Conf::build(const std::vector<std::string> &conf_vec) {
                    std::string::npos) {
             // this is a line with a user command
             inside_usr_cmd = true;
-            cur_usr = std::shared_ptr<ftr::User>(new ftr::User());
+            cur_usr = std::make_shared<ftr::User>();
         } else if (line.find_first_of(ftr::Conf::CLOSE_BRACKET) !=
                    std::string::npos) {
             // closing bracket for a user command
