@@ -34,21 +34,21 @@ void Session::start() {
     while (true) {
         std::array<char, ftr::DEFAULT_CMD_SIZE> client_cmd = {0};
 
-        int res = read(control_conn_fd, client_cmd.data(), client_cmd.size());
+        int res = read(m_control_conn_fd, client_cmd.data(), client_cmd.size());
 
         if (res < 0) {
             // an error ocurred
             // TODO: Log this error
             std::cerr << "read error: " << strerror(errno) << '\n';
-            server.send_response(control_conn_fd,
-                                 ftr::STATUS_CODE_UNKNOWN_ERROR, "");
-            close(control_conn_fd);
+            m_server.send_response(m_control_conn_fd,
+                                   ftr::STATUS_CODE_UNKNOWN_ERROR, "");
+            close(m_control_conn_fd);
             break;
         } else if (res == 0) {
             // connection closed
             // TODO: Log this
             std::cerr << "connection finished by client\n";
-            close(control_conn_fd);
+            close(m_control_conn_fd);
             break;
         }
 
@@ -57,8 +57,8 @@ void Session::start() {
         } catch (std::exception &e) {
             // TODO: log this error
             std::cerr << "error handling the command: " << e.what() << '\n';
-            server.send_response(control_conn_fd,
-                                 ftr::STATUS_CODE_UNKNOWN_ERROR, "");
+            m_server.send_response(m_control_conn_fd,
+                                   ftr::STATUS_CODE_UNKNOWN_ERROR, "");
             continue;
         }
     }
@@ -68,8 +68,8 @@ void Session::start() {
 // that the data connection is already closed
 // and that there are no transfers in progress
 void Session::end() {
-    if (control_conn_fd > 0) {
-        int res = shutdown(control_conn_fd, SHUT_WR);
+    if (m_control_conn_fd > 0) {
+        int res = shutdown(m_control_conn_fd, SHUT_WR);
 
         if (res < 0) {
             // TODO: log this error
@@ -79,7 +79,8 @@ void Session::end() {
     }
 }
 
-void Session::open_data_conn(struct sockaddr *conn_addr, socklen_t addr_size) {
+void Session::open_data_conn(const struct sockaddr *conn_addr,
+                             socklen_t addr_size) {
     int fd = socket(conn_addr->sa_family, SOCK_STREAM, 0);
 
     if (fd < 0) {
@@ -129,29 +130,29 @@ void Session::accept_on_data_conn(int listener_fd) {
         return;
     }
 
-    data_conn_fd = conn_fd;
+    m_data_conn_fd = conn_fd;
 
     // the connection is now ready to be used
-    transfer_ready = true;
-    session_cv.notify_one();
+    m_transfer_ready = true;
+    m_session_cv.notify_one();
 
     // wait until the thread that is doing the transfer
     // is done, and close the connection
-    std::unique_lock conn_lock(session_mu);
-    session_cv.wait(conn_lock, [&] { return transfer_done; });
+    std::unique_lock conn_lock(m_session_mu);
+    m_session_cv.wait(conn_lock, [&] { return m_transfer_done; });
 
-    close(data_conn_fd);
+    close(m_data_conn_fd);
     close(listener_fd);
 
-    data_conn_fd = -1;
     listener_fd = -1;
-    transfer_ready = false;
-    transfer_done = false;
+    m_data_conn_fd = -1;
+    m_transfer_ready = false;
+    m_transfer_done = false;
 }
 
-void Session::connect_to_data_conn(unsigned int port, bool use_ipv6) {
+void Session::connect_to_data_conn(const unsigned int port, bool use_ipv6) {
     int res = 0;
-    std::string resolved_host = server.get_resolved_host();
+    std::string resolved_host = m_server.get_resolved_host();
     sa_family_t fam = AF_INET;
     socklen_t addr_size = 0;
     struct sockaddr *conn_addr = nullptr;
@@ -202,8 +203,8 @@ void Session::connect_to_data_conn(unsigned int port, bool use_ipv6) {
         throw SessionError(strerror(errno));
     }
 
-    data_conn_fd = conn_fd;
-    data_conn_port = port;
+    m_data_conn_fd = conn_fd;
+    m_data_conn_port = port;
 
     // create new thread that will handle the transfer
     std::thread handle(&Session::transfer_on_data_conn, this);
@@ -212,26 +213,26 @@ void Session::connect_to_data_conn(unsigned int port, bool use_ipv6) {
 
 void Session::transfer_on_data_conn() {
     // the connection is now ready to be used
-    transfer_ready = true;
-    session_cv.notify_one();
+    m_transfer_ready = true;
+    m_session_cv.notify_one();
 
     // wait until the thread that is doing the transfer
     // is done, and close the connection
-    std::unique_lock conn_lock(session_mu);
-    session_cv.wait(conn_lock, [&] { return transfer_done; });
+    std::unique_lock conn_lock(m_session_mu);
+    m_session_cv.wait(conn_lock, [&] { return m_transfer_done; });
 
-    close(data_conn_fd);
+    close(m_data_conn_fd);
 
-    data_conn_fd = -1;
-    data_conn_port = 0;
-    transfer_ready = false;
-    transfer_done = false;
+    m_data_conn_fd = -1;
+    m_data_conn_port = 0;
+    m_transfer_ready = false;
+    m_transfer_done = false;
 }
 
 void Session::handle_command(
-    std::array<char, ftr::DEFAULT_CMD_SIZE> &client_cmd) {
+    const std::array<char, ftr::DEFAULT_CMD_SIZE> &client_cmd) {
     std::string cmd_string =
-        std::string(reinterpret_cast<char *>(client_cmd.data()));
+        std::string(reinterpret_cast<const char *>(client_cmd.data()));
     cmd_string = string::trim_whitespace(cmd_string);
     std::string cmd;
     std::string cmd_params;
@@ -258,7 +259,8 @@ void Session::handle_command(
     exec_command(cmd, cmd_params);
 }
 
-void Session::exec_command(std::string cmd, std::string cmd_params) {
+void Session::exec_command(const std::string &cmd,
+                           const std::string &cmd_params) {
     // TODO: log the command executed
 
     if (cmd == CMD_USER) {
@@ -362,10 +364,10 @@ void Session::exec_command(std::string cmd, std::string cmd_params) {
     run_not_implemented();
 }
 
-void Session::run_user(std::string username) {
+void Session::run_user(const std::string &username) {
     bool user_found = false;
     const std::vector<std::shared_ptr<ftr::User>> users =
-        server.get_conf()->get_users();
+        m_server.get_conf()->get_users();
 
     for (auto &u : users) {
         if (u->get_username() == username) {
@@ -375,70 +377,71 @@ void Session::run_user(std::string username) {
                 .password = "",
                 .root = "",
             };
-            session_user = new_session_user;
+            m_session_user = new_session_user;
             break;
         }
     }
 
     if (user_found) {
-        server.send_response(control_conn_fd, ftr::STATUS_CODE_USERNAME_OK, "");
+        m_server.send_response(m_control_conn_fd, ftr::STATUS_CODE_USERNAME_OK,
+                               "");
         return;
     }
 
-    server.send_response(control_conn_fd, ftr::STATUS_CODE_INVALID_USERNAME,
-                         "");
+    m_server.send_response(m_control_conn_fd, ftr::STATUS_CODE_INVALID_USERNAME,
+                           "");
 }
 
-void Session::run_password(std::string password) {
+void Session::run_password(const std::string &password) {
     bool pass_found = false;
-    const std::shared_ptr<ftr::Conf> conf = server.get_conf();
+    const std::shared_ptr<ftr::Conf> conf = m_server.get_conf();
     const std::vector<std::shared_ptr<ftr::User>> users = conf->get_users();
 
     for (auto &u : users) {
-        if (u->get_username() == session_user.username &&
+        if (u->get_username() == m_session_user.username &&
             u->get_password() == password) {
             pass_found = true;
 
-            session_user.password = std::string(password);
-            session_user.root = std::string(u->get_root());
+            m_session_user.password = std::string(password);
+            m_session_user.root = std::string(u->get_root());
             break;
         }
     }
 
     if (pass_found) {
         // change to home directory
-        std::string path(conf->get_root() + session_user.root);
+        std::string path(conf->get_root() + m_session_user.root);
         int res = chdir(path.c_str());
 
         if (res < 0) {
             // TODO: log this error
-            server.send_response(control_conn_fd,
-                                 ftr::STATUS_CODE_FILE_NOT_FOUND, "");
+            m_server.send_response(m_control_conn_fd,
+                                   ftr::STATUS_CODE_FILE_NOT_FOUND, "");
             return;
         }
 
-        server.send_response(control_conn_fd, ftr::STATUS_CODE_USER_LOGGED_IN,
-                             "");
+        m_server.send_response(m_control_conn_fd,
+                               ftr::STATUS_CODE_USER_LOGGED_IN, "");
         return;
     }
 
-    server.send_response(control_conn_fd, ftr::STATUS_CODE_INVALID_USERNAME,
-                         "");
+    m_server.send_response(m_control_conn_fd, ftr::STATUS_CODE_INVALID_USERNAME,
+                           "");
 }
 
 void Session::run_print_dir() {
-    server.send_response(control_conn_fd, ftr::STATUS_CODE_PATH_CREATED,
-                         " \"/" + cwd + "\" is current directory");
+    m_server.send_response(m_control_conn_fd, ftr::STATUS_CODE_PATH_CREATED,
+                           " \"/" + m_cwd + "\" is current directory");
 }
 
-void Session::run_change_dir(std::string dir) {
+void Session::run_change_dir(const std::string dir) {
     if (!is_logged_in()) {
-        server.send_response(control_conn_fd, ftr::STATUS_CODE_NOT_LOGGED_IN,
-                             "");
+        m_server.send_response(m_control_conn_fd,
+                               ftr::STATUS_CODE_NOT_LOGGED_IN, "");
         return;
     }
 
-    std::string cur_wd = cwd;
+    std::string cur_wd = m_cwd;
 
     if (dir[0] == '/') {
         // moving to relative path
@@ -451,30 +454,32 @@ void Session::run_change_dir(std::string dir) {
         }
     }
 
-    const std::shared_ptr<ftr::Conf> conf = server.get_conf();
-    std::string path(conf->get_root() + session_user.root + "/" + cur_wd);
+    const std::shared_ptr<ftr::Conf> conf = m_server.get_conf();
+    std::string path(conf->get_root() + m_session_user.root + "/" + cur_wd);
     int res = chdir(path.c_str());
 
     if (res < 0) {
         // TODO: log this error
-        server.send_response(control_conn_fd, ftr::STATUS_CODE_FILE_NOT_FOUND,
-                             "");
+        m_server.send_response(m_control_conn_fd,
+                               ftr::STATUS_CODE_FILE_NOT_FOUND, "");
         return;
     }
 
-    cwd = cur_wd;
-    server.send_response(control_conn_fd, ftr::STATUS_CODE_REQUESTED_FILE_OK,
-                         " \"" + dir + "\" is current directory");
+    m_cwd = cur_wd;
+    m_server.send_response(m_control_conn_fd,
+                           ftr::STATUS_CODE_REQUESTED_FILE_OK,
+                           " \"" + dir + "\" is current directory");
 }
 
-void Session::run_type(std::string selected_transfer_type) {
+void Session::run_type(const std::string selected_transfer_type) {
     if (selected_transfer_type == ftr::TRANSFER_TYPE_ASCII ||
         selected_transfer_type == TRANSFER_TYPE_IMG) {
-        transfer_type = selected_transfer_type;
-        server.send_response(control_conn_fd, ftr::STATUS_CODE_OK,
-                             " Transfer Type OK");
+        m_transfer_type = selected_transfer_type;
+        m_server.send_response(m_control_conn_fd, ftr::STATUS_CODE_OK,
+                               " Transfer Type OK");
         return;
     }
+
     run_not_implemented();
 }
 
@@ -482,10 +487,10 @@ void Session::run_passive() {
     int fd = -1;
 
     try {
-        fd = server.find_open_addr(false);
+        fd = m_server.find_open_addr(false);
     } catch (std::exception &e) {
-        server.send_response(control_conn_fd,
-                             ftr::STATUS_CODE_CANT_OPEN_DATA_CONN, e.what());
+        m_server.send_response(m_control_conn_fd,
+                               ftr::STATUS_CODE_CANT_OPEN_DATA_CONN, e.what());
         return;
     }
 
@@ -499,7 +504,7 @@ void Session::run_passive() {
         throw ServerError(strerror(errno));
     }
 
-    std::string addr_str = server.get_addr_string(&addr);
+    std::string addr_str = m_server.get_addr_string(&addr);
 
     for (auto &c : addr_str) {
         if (c == '.') {
@@ -523,33 +528,33 @@ void Session::run_passive() {
     try {
         open_data_conn(&addr, addr_size);
     } catch (std::exception &e) {
-        server.send_response(control_conn_fd,
-                             ftr::STATUS_CODE_CANT_OPEN_DATA_CONN, e.what());
+        m_server.send_response(m_control_conn_fd,
+                               ftr::STATUS_CODE_CANT_OPEN_DATA_CONN, e.what());
         return;
     }
 
-    pass_mode = true;
+    m_pass_mode = true;
 
-    server.send_response(control_conn_fd, ftr::STATUS_CODE_ENTER_PASS_MODE,
-                         resp_msg.str());
+    m_server.send_response(m_control_conn_fd, ftr::STATUS_CODE_ENTER_PASS_MODE,
+                           resp_msg.str());
 }
 
-void Session::run_list(std::string file) {
+void Session::run_list(const std::string file) {
     if (!is_logged_in()) {
-        server.send_response(control_conn_fd, ftr::STATUS_CODE_NOT_LOGGED_IN,
-                             "");
+        m_server.send_response(m_control_conn_fd,
+                               ftr::STATUS_CODE_NOT_LOGGED_IN, "");
         return;
     }
 
     // wait until the data connection is ready for sending/receiving data
-    std::unique_lock list_lock(session_mu);
-    session_cv.wait(list_lock, [&] { return transfer_ready; });
+    std::unique_lock list_lock(m_session_mu);
+    m_session_cv.wait(list_lock, [&] { return m_transfer_ready; });
     list_lock.unlock();
 
-    transfer_in_progress = true;
+    m_transfer_in_progress = true;
 
-    auto conf = server.get_conf();
-    std::string path_str(conf->get_root() + session_user.root + "/" + cwd);
+    auto conf = m_server.get_conf();
+    std::string path_str(conf->get_root() + m_session_user.root + "/" + m_cwd);
 
     if (file != "") {
         path_str += "/" + file;
@@ -568,54 +573,55 @@ void Session::run_list(std::string file) {
             dir_data << '\n';
         }
     } catch (std::exception &e) {
-        transfer_in_progress = false;
-        transfer_done = true;
-        session_cv.notify_one();
+        m_transfer_in_progress = false;
+        m_transfer_done = true;
+        m_session_cv.notify_one();
 
-        server.send_response(control_conn_fd,
-                             ftr::STATUS_CODE_FILE_ACTION_NOT_TAKEN, e.what());
+        m_server.send_response(m_control_conn_fd,
+                               ftr::STATUS_CODE_FILE_ACTION_NOT_TAKEN,
+                               e.what());
 
         return;
     }
 
     std::string dir_data_str = dir_data.str();
-    if (write(data_conn_fd, dir_data_str.c_str(), dir_data_str.size()) < 0) {
+    if (write(m_data_conn_fd, dir_data_str.c_str(), dir_data_str.size()) < 0) {
         // TODO: log the error
-        transfer_in_progress = false;
-        transfer_done = true;
-        session_cv.notify_one();
+        m_transfer_in_progress = false;
+        m_transfer_done = true;
+        m_session_cv.notify_one();
 
-        server.send_response(control_conn_fd,
-                             ftr::STATUS_CODE_FILE_ACTION_NOT_TAKEN,
-                             strerror(errno));
+        m_server.send_response(m_control_conn_fd,
+                               ftr::STATUS_CODE_FILE_ACTION_NOT_TAKEN,
+                               strerror(errno));
 
         return;
     }
 
     // send notification that the operation has finished
-    transfer_in_progress = false;
-    transfer_done = true;
-    session_cv.notify_one();
+    m_transfer_in_progress = false;
+    m_transfer_done = true;
+    m_session_cv.notify_one();
 
-    server.send_response(control_conn_fd, ftr::STATUS_CODE_OK, "");
+    m_server.send_response(m_control_conn_fd, ftr::STATUS_CODE_OK, "");
 }
 
-void Session::run_file_names(std::string file) {
+void Session::run_file_names(const std::string file) {
     if (!is_logged_in()) {
-        server.send_response(control_conn_fd, ftr::STATUS_CODE_NOT_LOGGED_IN,
-                             "");
+        m_server.send_response(m_control_conn_fd,
+                               ftr::STATUS_CODE_NOT_LOGGED_IN, "");
         return;
     }
 
     // wait until the data connection is ready for sending/receiving data
-    std::unique_lock list_lock(session_mu);
-    session_cv.wait(list_lock, [&] { return transfer_ready; });
+    std::unique_lock list_lock(m_session_mu);
+    m_session_cv.wait(list_lock, [&] { return m_transfer_ready; });
     list_lock.unlock();
 
-    transfer_in_progress = true;
+    m_transfer_in_progress = true;
 
-    auto conf = server.get_conf();
-    std::string path_str(conf->get_root() + session_user.root + "/" + cwd);
+    auto conf = m_server.get_conf();
+    std::string path_str(conf->get_root() + m_session_user.root + "/" + m_cwd);
 
     if (file != "") {
         path_str += "/" + file;
@@ -632,62 +638,63 @@ void Session::run_file_names(std::string file) {
             dir_data << '\n';
         }
     } catch (std::exception &e) {
-        transfer_in_progress = false;
-        transfer_done = true;
-        session_cv.notify_one();
+        m_transfer_in_progress = false;
+        m_transfer_done = true;
+        m_session_cv.notify_one();
 
-        server.send_response(control_conn_fd,
-                             ftr::STATUS_CODE_FILE_ACTION_NOT_TAKEN, e.what());
+        m_server.send_response(m_control_conn_fd,
+                               ftr::STATUS_CODE_FILE_ACTION_NOT_TAKEN,
+                               e.what());
 
         return;
     }
 
     std::string dir_data_str = dir_data.str();
-    if (write(data_conn_fd, dir_data_str.c_str(), dir_data_str.size()) < 0) {
+    if (write(m_data_conn_fd, dir_data_str.c_str(), dir_data_str.size()) < 0) {
         // TODO: log the error
-        transfer_in_progress = false;
-        transfer_done = true;
-        session_cv.notify_one();
+        m_transfer_in_progress = false;
+        m_transfer_done = true;
+        m_session_cv.notify_one();
 
-        server.send_response(control_conn_fd,
-                             ftr::STATUS_CODE_FILE_ACTION_NOT_TAKEN,
-                             std::strerror(errno));
+        m_server.send_response(m_control_conn_fd,
+                               ftr::STATUS_CODE_FILE_ACTION_NOT_TAKEN,
+                               std::strerror(errno));
 
         return;
     }
 
     // send notification that the operation has finished
-    transfer_in_progress = false;
-    transfer_done = true;
-    session_cv.notify_one();
+    m_transfer_in_progress = false;
+    m_transfer_done = true;
+    m_session_cv.notify_one();
 
-    server.send_response(control_conn_fd, ftr::STATUS_CODE_OK, "");
+    m_server.send_response(m_control_conn_fd, ftr::STATUS_CODE_OK, "");
 }
 
-void Session::run_retrieve(std::string filename) {
+void Session::run_retrieve(const std::string filename) {
     if (!is_logged_in()) {
-        server.send_response(control_conn_fd, ftr::STATUS_CODE_NOT_LOGGED_IN,
-                             "");
+        m_server.send_response(m_control_conn_fd,
+                               ftr::STATUS_CODE_NOT_LOGGED_IN, "");
         return;
     }
 
     // wait until the data connection is ready for sending/receiving data
-    std::unique_lock list_lock(session_mu);
-    session_cv.wait(list_lock, [&] { return transfer_ready; });
+    std::unique_lock list_lock(m_session_mu);
+    m_session_cv.wait(list_lock, [&] { return m_transfer_ready; });
     list_lock.unlock();
 
-    transfer_in_progress = true;
+    m_transfer_in_progress = true;
 
-    auto conf = server.get_conf();
-    std::string path_str(conf->get_root() + session_user.root + "/" + cwd +
+    auto conf = m_server.get_conf();
+    std::string path_str(conf->get_root() + m_session_user.root + "/" + m_cwd +
                          "/" + filename);
 
     std::ifstream file(path_str);
 
     if (!file.is_open()) {
-        transfer_in_progress = false;
-        transfer_done = true;
-        session_cv.notify_one();
+        m_transfer_in_progress = false;
+        m_transfer_done = true;
+        m_session_cv.notify_one();
 
         // TODO: log this error
         throw SessionError(strerror(errno));
@@ -707,24 +714,24 @@ void Session::run_retrieve(std::string filename) {
             // TODO: Log this error
             std::cerr << "an error reading the file occurred\n";
             std::cerr << strerror(errno) << '\n';
-            transfer_in_progress = false;
-            transfer_done = true;
-            session_cv.notify_one();
+            m_transfer_in_progress = false;
+            m_transfer_done = true;
+            m_session_cv.notify_one();
 
-            server.send_response(control_conn_fd,
-                                 ftr::STATUS_CODE_FILE_ACTION_NOT_TAKEN, "");
+            m_server.send_response(m_control_conn_fd,
+                                   ftr::STATUS_CODE_FILE_ACTION_NOT_TAKEN, "");
             return;
         }
 
-        if (write(data_conn_fd, buf.data(), bytes_read) < 0) {
+        if (write(m_data_conn_fd, buf.data(), bytes_read) < 0) {
             // TODO: log the error
-            transfer_in_progress = false;
-            transfer_done = true;
-            session_cv.notify_one();
+            m_transfer_in_progress = false;
+            m_transfer_done = true;
+            m_session_cv.notify_one();
 
-            server.send_response(control_conn_fd,
-                                 ftr::STATUS_CODE_FILE_ACTION_NOT_TAKEN,
-                                 strerror(errno));
+            m_server.send_response(m_control_conn_fd,
+                                   ftr::STATUS_CODE_FILE_ACTION_NOT_TAKEN,
+                                   strerror(errno));
 
             return;
         }
@@ -735,29 +742,30 @@ void Session::run_retrieve(std::string filename) {
     }
 
     // send notification that the operation has finished
-    transfer_in_progress = false;
-    transfer_done = true;
-    session_cv.notify_one();
+    m_transfer_in_progress = false;
+    m_transfer_done = true;
+    m_session_cv.notify_one();
 
-    server.send_response(control_conn_fd, ftr::STATUS_CODE_OK, "");
+    m_server.send_response(m_control_conn_fd, ftr::STATUS_CODE_OK, "");
 }
 
-void Session::run_accept_and_store(std::string filename, bool append_mode) {
+void Session::run_accept_and_store(const std::string filename,
+                                   bool append_mode) {
     if (!is_logged_in()) {
-        server.send_response(control_conn_fd, ftr::STATUS_CODE_NOT_LOGGED_IN,
-                             "");
+        m_server.send_response(m_control_conn_fd,
+                               ftr::STATUS_CODE_NOT_LOGGED_IN, "");
         return;
     }
 
     // wait until the data connection is ready for sending/receiving data
-    std::unique_lock list_lock(session_mu);
-    session_cv.wait(list_lock, [&] { return transfer_ready; });
+    std::unique_lock list_lock(m_session_mu);
+    m_session_cv.wait(list_lock, [&] { return m_transfer_ready; });
     list_lock.unlock();
 
-    transfer_in_progress = true;
+    m_transfer_in_progress = true;
 
-    auto conf = server.get_conf();
-    std::string path_str(conf->get_root() + session_user.root + "/" + cwd +
+    auto conf = m_server.get_conf();
+    std::string path_str(conf->get_root() + m_session_user.root + "/" + m_cwd +
                          "/" + filename);
 
     std::ios_base::openmode mode = std::ios_base::out;
@@ -769,9 +777,9 @@ void Session::run_accept_and_store(std::string filename, bool append_mode) {
     std::ofstream new_file(path_str, mode);
 
     if (!new_file.is_open()) {
-        transfer_in_progress = false;
-        transfer_done = true;
-        session_cv.notify_one();
+        m_transfer_in_progress = false;
+        m_transfer_done = true;
+        m_session_cv.notify_one();
 
         // TODO: log this error
         throw SessionError(strerror(errno));
@@ -780,18 +788,18 @@ void Session::run_accept_and_store(std::string filename, bool append_mode) {
     while (true) {
         std::array<char, ftr::FILE_BUF> buf = {0};
 
-        int res = read(data_conn_fd, buf.data(), buf.size());
+        int res = read(m_data_conn_fd, buf.data(), buf.size());
 
         if (res < 0) {
             // an error ocurred
             // TODO: Log this error
             std::cerr << "read error: " << strerror(errno) << '\n';
-            transfer_in_progress = false;
-            transfer_done = true;
-            session_cv.notify_one();
+            m_transfer_in_progress = false;
+            m_transfer_done = true;
+            m_session_cv.notify_one();
 
-            server.send_response(control_conn_fd,
-                                 ftr::STATUS_CODE_FILE_ACTION_NOT_TAKEN, "");
+            m_server.send_response(m_control_conn_fd,
+                                   ftr::STATUS_CODE_FILE_ACTION_NOT_TAKEN, "");
             return;
         } else if (res == 0) {
             // connection closed, file was sent completely
@@ -802,9 +810,9 @@ void Session::run_accept_and_store(std::string filename, bool append_mode) {
         new_file.write(buf.data(), res);
 
         if (!new_file.good()) {
-            transfer_in_progress = false;
-            transfer_done = true;
-            session_cv.notify_one();
+            m_transfer_in_progress = false;
+            m_transfer_done = true;
+            m_session_cv.notify_one();
 
             // TODO: log this error
             throw SessionError("There was a problem writing to the file");
@@ -812,27 +820,27 @@ void Session::run_accept_and_store(std::string filename, bool append_mode) {
     }
 
     // send notification that the operation has finished
-    transfer_in_progress = false;
-    transfer_done = true;
-    session_cv.notify_one();
+    m_transfer_in_progress = false;
+    m_transfer_done = true;
+    m_session_cv.notify_one();
 
-    server.send_response(control_conn_fd, ftr::STATUS_CODE_OK, "");
+    m_server.send_response(m_control_conn_fd, ftr::STATUS_CODE_OK, "");
 }
 
 void Session::run_system_type() {
-    server.send_response(control_conn_fd, ftr::STATUS_CODE_NAME_SYSTEM,
-                         " UNIX Type: L8");
+    m_server.send_response(m_control_conn_fd, ftr::STATUS_CODE_NAME_SYSTEM,
+                           " UNIX Type: L8");
 }
 
 void Session::run_change_parent() {
     if (!is_logged_in()) {
-        server.send_response(control_conn_fd, ftr::STATUS_CODE_NOT_LOGGED_IN,
-                             "");
+        m_server.send_response(m_control_conn_fd,
+                               ftr::STATUS_CODE_NOT_LOGGED_IN, "");
         return;
     }
 
-    std::string cur_wd = cwd;
-    std::vector<std::string> pieces = string::split(cwd, "/");
+    std::string cur_wd = m_cwd;
+    std::vector<std::string> pieces = string::split(m_cwd, "/");
 
     if (pieces.size() <= 1) {
         cur_wd = "";
@@ -842,110 +850,112 @@ void Session::run_change_parent() {
         cur_wd = string::join(pieces, "/");
     }
 
-    const std::shared_ptr<ftr::Conf> conf = server.get_conf();
+    const std::shared_ptr<ftr::Conf> conf = m_server.get_conf();
     std::string chdir_path =
-        conf->get_root() + session_user.root + "/" + cur_wd.c_str();
+        conf->get_root() + m_session_user.root + "/" + cur_wd.c_str();
     int res = chdir(chdir_path.c_str());
 
     if (res < 0) {
         // TODO: log this error
-        server.send_response(control_conn_fd, ftr::STATUS_CODE_FILE_NOT_FOUND,
-                             "");
+        m_server.send_response(m_control_conn_fd,
+                               ftr::STATUS_CODE_FILE_NOT_FOUND, "");
         return;
     }
 
-    cwd = cur_wd;
+    m_cwd = cur_wd;
     auto wd_path = std::filesystem::path(cur_wd);
     std::string base = wd_path.stem().c_str();
 
-    server.send_response(control_conn_fd, ftr::STATUS_CODE_OK,
-                         "\"" + base + "\" is current directory");
+    m_server.send_response(m_control_conn_fd, ftr::STATUS_CODE_OK,
+                           "\"" + base + "\" is current directory");
 }
 
-void Session::run_make_dir(std::string dir_name) {
+void Session::run_make_dir(const std::string dir_name) {
     if (!is_logged_in()) {
-        server.send_response(control_conn_fd, ftr::STATUS_CODE_NOT_LOGGED_IN,
-                             "");
+        m_server.send_response(m_control_conn_fd,
+                               ftr::STATUS_CODE_NOT_LOGGED_IN, "");
         return;
     }
 
-    std::string cur_wd = cwd;
-    const std::shared_ptr<ftr::Conf> conf = server.get_conf();
-    std::filesystem::path location(conf->get_root() + session_user.root + "/" +
-                                   cur_wd + "/" + dir_name);
+    std::string cur_wd = m_cwd;
+    const std::shared_ptr<ftr::Conf> conf = m_server.get_conf();
+    std::filesystem::path location(conf->get_root() + m_session_user.root +
+                                   "/" + cur_wd + "/" + dir_name);
 
     try {
         std::filesystem::create_directory(location);
     } catch (std::exception &e) {
         // TODO: log the error
-        server.send_response(control_conn_fd, ftr::STATUS_CODE_FILE_NOT_FOUND,
-                             e.what());
+        m_server.send_response(m_control_conn_fd,
+                               ftr::STATUS_CODE_FILE_NOT_FOUND, e.what());
         return;
     }
 
-    server.send_response(control_conn_fd, ftr::STATUS_CODE_OK,
-                         " Directory " + dir_name + " created");
+    m_server.send_response(m_control_conn_fd, ftr::STATUS_CODE_OK,
+                           " Directory " + dir_name + " created");
 }
 
-void Session::run_remove_dir(std::string path) {
+void Session::run_remove_dir(const std::string path) {
     if (!is_logged_in()) {
-        server.send_response(control_conn_fd, ftr::STATUS_CODE_NOT_LOGGED_IN,
-                             "");
+        m_server.send_response(m_control_conn_fd,
+                               ftr::STATUS_CODE_NOT_LOGGED_IN, "");
         return;
     }
 
-    std::string cur_wd = cwd;
-    const std::shared_ptr<ftr::Conf> conf = server.get_conf();
-    std::filesystem::path location(conf->get_root() + session_user.root + "/" +
-                                   cur_wd + "/" + path);
+    std::string cur_wd = m_cwd;
+    const std::shared_ptr<ftr::Conf> conf = m_server.get_conf();
+    std::filesystem::path location(conf->get_root() + m_session_user.root +
+                                   "/" + cur_wd + "/" + path);
 
     try {
         std::filesystem::remove_all(location);
     } catch (std::exception &e) {
         // TODO: log the error
-        server.send_response(control_conn_fd, ftr::STATUS_CODE_FILE_NOT_FOUND,
-                             e.what());
+        m_server.send_response(m_control_conn_fd,
+                               ftr::STATUS_CODE_FILE_NOT_FOUND, e.what());
         return;
     }
 
-    server.send_response(control_conn_fd, ftr::STATUS_CODE_REQUESTED_FILE_OK,
-                         " Directory " + path + " removed");
+    m_server.send_response(m_control_conn_fd,
+                           ftr::STATUS_CODE_REQUESTED_FILE_OK,
+                           " Directory " + path + " removed");
 }
 
-void Session::run_delete(std::string filename) {
+void Session::run_delete(const std::string filename) {
     if (!is_logged_in()) {
-        server.send_response(control_conn_fd, ftr::STATUS_CODE_NOT_LOGGED_IN,
-                             "");
+        m_server.send_response(m_control_conn_fd,
+                               ftr::STATUS_CODE_NOT_LOGGED_IN, "");
         return;
     }
 
-    std::string cur_wd = cwd;
-    const std::shared_ptr<ftr::Conf> conf = server.get_conf();
-    std::filesystem::path location(conf->get_root() + session_user.root + "/" +
-                                   cur_wd + "/" + filename);
+    std::string cur_wd = m_cwd;
+    const std::shared_ptr<ftr::Conf> conf = m_server.get_conf();
+    std::filesystem::path location(conf->get_root() + m_session_user.root +
+                                   "/" + cur_wd + "/" + filename);
 
     try {
         std::filesystem::remove(location);
     } catch (std::exception &e) {
         // TODO: log the error
-        server.send_response(control_conn_fd, ftr::STATUS_CODE_FILE_NOT_FOUND,
-                             e.what());
+        m_server.send_response(m_control_conn_fd,
+                               ftr::STATUS_CODE_FILE_NOT_FOUND, e.what());
         return;
     }
 
-    server.send_response(control_conn_fd, ftr::STATUS_CODE_REQUESTED_FILE_OK,
-                         " File " + filename + " deleted");
+    m_server.send_response(m_control_conn_fd,
+                           ftr::STATUS_CODE_REQUESTED_FILE_OK,
+                           " File " + filename + " deleted");
 }
 
-void Session::run_ext_passv_mode(std::string cmd_params) {
+void Session::run_ext_passv_mode(const std::string &cmd_params) {
     int fd = -1;
 
     if (cmd_params != "") {
         if (cmd_params == "1") {
             // only IPv6 allowed
-            server.send_response(control_conn_fd,
-                                 ftr::STATUS_CODE_EXT_PORT_UNKNOWN_PROTOCOL,
-                                 "");
+            m_server.send_response(m_control_conn_fd,
+                                   ftr::STATUS_CODE_EXT_PORT_UNKNOWN_PROTOCOL,
+                                   "");
             return;
         }
 
@@ -954,11 +964,11 @@ void Session::run_ext_passv_mode(std::string cmd_params) {
     }
 
     try {
-        fd = server.find_open_addr(true);
+        fd = m_server.find_open_addr(true);
     } catch (std::exception &e) {
         // TODO: log this error
-        server.send_response(control_conn_fd,
-                             ftr::STATUS_CODE_CANT_OPEN_DATA_CONN, e.what());
+        m_server.send_response(m_control_conn_fd,
+                               ftr::STATUS_CODE_CANT_OPEN_DATA_CONN, e.what());
         return;
     }
 
@@ -978,12 +988,12 @@ void Session::run_ext_passv_mode(std::string cmd_params) {
         open_data_conn(addr, addr_size);
     } catch (std::exception &e) {
         // TODO: log this error
-        server.send_response(control_conn_fd,
-                             ftr::STATUS_CODE_CANT_OPEN_DATA_CONN, e.what());
+        m_server.send_response(m_control_conn_fd,
+                               ftr::STATUS_CODE_CANT_OPEN_DATA_CONN, e.what());
         return;
     }
 
-    pass_mode = true;
+    m_pass_mode = true;
 
     uint16_t p = ntohs(in6_addr.sin6_port);
 
@@ -992,11 +1002,12 @@ void Session::run_ext_passv_mode(std::string cmd_params) {
     resp_msg << std::to_string(p);
     resp_msg << "|)";
 
-    server.send_response(control_conn_fd, ftr::STATUS_CODE_ENTER_EXT_PASS_MODE,
-                         resp_msg.str());
+    m_server.send_response(m_control_conn_fd,
+                           ftr::STATUS_CODE_ENTER_EXT_PASS_MODE,
+                           resp_msg.str());
 }
 
-void Session::run_port(std::string cmd_params) {
+void Session::run_port(const std::string &cmd_params) {
     // we are ignoring the address here, just use the port part
     std::vector<std::string> pieces = string::split(cmd_params, ",");
 
@@ -1011,15 +1022,15 @@ void Session::run_port(std::string cmd_params) {
         connect_to_data_conn(p, false);
     } catch (std::exception &e) {
         // TODO: log this error
-        server.send_response(control_conn_fd, ftr::STATUS_CODE_UNKNOWN_ERROR,
-                             e.what());
+        m_server.send_response(m_control_conn_fd,
+                               ftr::STATUS_CODE_UNKNOWN_ERROR, e.what());
         return;
     }
 
-    server.send_response(control_conn_fd, ftr::STATUS_CODE_OK, "");
+    m_server.send_response(m_control_conn_fd, ftr::STATUS_CODE_OK, "");
 }
 
-void Session::run_ext_addr_port(std::string cmd_params) {
+void Session::run_ext_addr_port(const std::string &cmd_params) {
     // we are ignoring the address here, just use the port part
     std::vector<std::string> pieces = string::split(cmd_params, "|");
     bool use_ipv6 = false;
@@ -1034,23 +1045,23 @@ void Session::run_ext_addr_port(std::string cmd_params) {
         connect_to_data_conn(port, use_ipv6);
     } catch (std::exception &e) {
         // TODO: log this error
-        server.send_response(control_conn_fd, ftr::STATUS_CODE_UNKNOWN_ERROR,
-                             e.what());
+        m_server.send_response(m_control_conn_fd,
+                               ftr::STATUS_CODE_UNKNOWN_ERROR, e.what());
         return;
     }
 
-    server.send_response(control_conn_fd, ftr::STATUS_CODE_OK, "");
+    m_server.send_response(m_control_conn_fd, ftr::STATUS_CODE_OK, "");
 }
 
-void Session::run_help(std::string cmd_args) {
+void Session::run_help(const std::string &cmd_args) {
     std::stringstream ss;
 
     if (cmd_args == "") {
         ss << "Welcome to FTR, enter a command name to get more information "
               "about it. Current commands: ";
-        ss << server.get_all_commands_help_msg() << '\n';
+        ss << m_server.get_all_commands_help_msg() << '\n';
     } else {
-        std::string help_msg = server.get_command_help_msg(cmd_args);
+        std::string help_msg = m_server.get_command_help_msg(cmd_args);
 
         if (help_msg == "") {
             ss << "Sorry, the command " << cmd_args << " is not implemented\n";
@@ -1059,59 +1070,59 @@ void Session::run_help(std::string cmd_args) {
         }
     }
 
-    server.send_response(control_conn_fd, ftr::STATUS_CODE_HELP_MESSAGE,
-                         ss.str());
+    m_server.send_response(m_control_conn_fd, ftr::STATUS_CODE_HELP_MESSAGE,
+                           ss.str());
 }
 
 void Session::run_noop() {
-    server.send_response(control_conn_fd, ftr::STATUS_CODE_OK, "");
+    m_server.send_response(m_control_conn_fd, ftr::STATUS_CODE_OK, "");
 }
 
 void Session::run_allo() {
-    server.send_response(control_conn_fd, ftr::STATUS_CODE_OK, "");
+    m_server.send_response(m_control_conn_fd, ftr::STATUS_CODE_OK, "");
 }
 
-void Session::run_account(std::string args) {
+void Session::run_account(const std::string &args) {
     if (!is_logged_in()) {
-        server.send_response(control_conn_fd, ftr::STATUS_CODE_NOT_LOGGED_IN,
-                             "");
+        m_server.send_response(m_control_conn_fd,
+                               ftr::STATUS_CODE_NOT_LOGGED_IN, "");
         return;
     }
 
     if (args == "") {
-        server.send_response(control_conn_fd, ftr::STATUS_CODE_BAD_SEQUENCE,
-                             "");
+        m_server.send_response(m_control_conn_fd, ftr::STATUS_CODE_BAD_SEQUENCE,
+                               "");
         return;
     }
 
-    if (session_user.username == args) {
+    if (m_session_user.username == args) {
         std::stringstream ss;
-        ss << "Username: " << session_user.username;
-        ss << ", Root: " << session_user.root << '\n';
+        ss << "Username: " << m_session_user.username;
+        ss << ", Root: " << m_session_user.root << '\n';
 
-        server.send_response(control_conn_fd, ftr::STATUS_CODE_USER_LOGGED_IN,
-                             ss.str());
+        m_server.send_response(m_control_conn_fd,
+                               ftr::STATUS_CODE_USER_LOGGED_IN, ss.str());
         return;
     }
 
-    server.send_response(control_conn_fd, ftr::STATUS_CODE_BAD_SEQUENCE,
-                         "The account was not found");
+    m_server.send_response(m_control_conn_fd, ftr::STATUS_CODE_BAD_SEQUENCE,
+                           "The account was not found");
 }
 
 void Session::run_site() {
-    server.send_response(control_conn_fd, ftr::STATUS_CODE_OK,
-                         "No SITE options for this server");
+    m_server.send_response(m_control_conn_fd, ftr::STATUS_CODE_OK,
+                           "No SITE options for this server");
 }
 
-void Session::run_mode(std::string args) {
+void Session::run_mode(const std::string &args) {
     if (string::to_lower(args) != "s") {
-        server.send_response(control_conn_fd,
-                             ftr::STATUS_CODE_CMD_NOT_IMPLEMENTED_FOR_PARAM,
-                             "");
+        m_server.send_response(m_control_conn_fd,
+                               ftr::STATUS_CODE_CMD_NOT_IMPLEMENTED_FOR_PARAM,
+                               "");
         return;
     }
 
-    server.send_response(control_conn_fd, ftr::STATUS_CODE_OK, "");
+    m_server.send_response(m_control_conn_fd, ftr::STATUS_CODE_OK, "");
 }
 
 void Session::run_abort() {
@@ -1119,32 +1130,32 @@ void Session::run_abort() {
     run_not_implemented();
 }
 
-void Session::run_file_struct(std::string args) {
+void Session::run_file_struct(const std::string &args) {
     if (string::to_lower(args) != "f") {
-        server.send_response(control_conn_fd,
-                             ftr::STATUS_CODE_CMD_NOT_IMPLEMENTED_FOR_PARAM,
-                             "");
+        m_server.send_response(m_control_conn_fd,
+                               ftr::STATUS_CODE_CMD_NOT_IMPLEMENTED_FOR_PARAM,
+                               "");
         return;
     }
 
-    server.send_response(control_conn_fd, ftr::STATUS_CODE_OK, "");
+    m_server.send_response(m_control_conn_fd, ftr::STATUS_CODE_OK, "");
 }
 
-void Session::run_server_status(std::string args) {
+void Session::run_server_status(const std::string args) {
     if (args == "") {
-        server.send_response(control_conn_fd, ftr::STATUS_CODE_SYSTEM_STATUS,
-                             "Server OK");
+        m_server.send_response(m_control_conn_fd,
+                               ftr::STATUS_CODE_SYSTEM_STATUS, "Server OK");
         return;
     }
 
     if (!is_logged_in()) {
-        server.send_response(control_conn_fd, ftr::STATUS_CODE_NOT_LOGGED_IN,
-                             "");
+        m_server.send_response(m_control_conn_fd,
+                               ftr::STATUS_CODE_NOT_LOGGED_IN, "");
         return;
     }
 
-    auto conf = server.get_conf();
-    std::string path_str(conf->get_root() + session_user.root + "/" + cwd +
+    auto conf = m_server.get_conf();
+    std::string path_str(conf->get_root() + m_session_user.root + "/" + m_cwd +
                          "/" + args);
     std::filesystem::path dir_path(path_str);
     std::stringstream dir_data;
@@ -1159,105 +1170,107 @@ void Session::run_server_status(std::string args) {
             dir_data << '\n';
         }
     } catch (std::exception &e) {
-        server.send_response(control_conn_fd,
-                             ftr::STATUS_CODE_FILE_ACTION_NOT_TAKEN, e.what());
+        m_server.send_response(m_control_conn_fd,
+                               ftr::STATUS_CODE_FILE_ACTION_NOT_TAKEN,
+                               e.what());
 
         return;
     }
 
-    server.send_response(control_conn_fd, ftr::STATUS_CODE_SYSTEM_STATUS,
-                         dir_data.str());
+    m_server.send_response(m_control_conn_fd, ftr::STATUS_CODE_SYSTEM_STATUS,
+                           dir_data.str());
 }
 
-void Session::run_rename_from(std::string from) {
+void Session::run_rename_from(const std::string &from) {
     if (!is_logged_in()) {
-        server.send_response(control_conn_fd, ftr::STATUS_CODE_NOT_LOGGED_IN,
-                             "");
+        m_server.send_response(m_control_conn_fd,
+                               ftr::STATUS_CODE_NOT_LOGGED_IN, "");
         return;
     }
 
     if (from == "") {
-        server.send_response(control_conn_fd, ftr::STATUS_CODE_SYNTAX_ERROR,
-                             "A path to rename from is required");
+        m_server.send_response(m_control_conn_fd, ftr::STATUS_CODE_SYNTAX_ERROR,
+                               "A path to rename from is required");
         return;
     }
 
-    rename_from = string::trim_whitespace(from);
-    server.send_response(control_conn_fd,
-                         ftr::STATUS_CODE_REQUESTED_FILE_ACTION, "");
+    m_rename_from = string::trim_whitespace(from);
+    m_server.send_response(m_control_conn_fd,
+                           ftr::STATUS_CODE_REQUESTED_FILE_ACTION, "");
 }
 
-void Session::run_rename_to(std::string new_file) {
+void Session::run_rename_to(const std::string &new_file) {
     if (!is_logged_in()) {
-        server.send_response(control_conn_fd, ftr::STATUS_CODE_NOT_LOGGED_IN,
-                             "");
+        m_server.send_response(m_control_conn_fd,
+                               ftr::STATUS_CODE_NOT_LOGGED_IN, "");
         return;
     }
 
     if (new_file == "") {
-        server.send_response(control_conn_fd, ftr::STATUS_CODE_SYNTAX_ERROR,
-                             "A path to rename to is required");
+        m_server.send_response(m_control_conn_fd, ftr::STATUS_CODE_SYNTAX_ERROR,
+                               "A path to rename to is required");
         return;
     }
 
-    if (rename_from == "") {
-        server.send_response(
-            control_conn_fd, ftr::STATUS_CODE_SYNTAX_ERROR,
+    if (m_rename_from == "") {
+        m_server.send_response(
+            m_control_conn_fd, ftr::STATUS_CODE_SYNTAX_ERROR,
             "Path to rename from not provided, please run RNFR first");
         return;
     }
 
-    auto conf = server.get_conf();
+    auto conf = m_server.get_conf();
     std::string new_file_name = string::trim_whitespace(new_file);
-    std::filesystem::path oldpath(conf->get_root() + session_user.root + "/" +
-                                  cwd + "/" + rename_from);
-    std::filesystem::path newpath(conf->get_root() + session_user.root + "/" +
-                                  cwd + "/" + new_file_name);
+    std::filesystem::path oldpath(conf->get_root() + m_session_user.root + "/" +
+                                  m_cwd + "/" + m_rename_from);
+    std::filesystem::path newpath(conf->get_root() + m_session_user.root + "/" +
+                                  m_cwd + "/" + new_file_name);
 
     try {
         std::filesystem::rename(oldpath, newpath);
     } catch (std::exception &e) {
-        server.send_response(control_conn_fd, ftr::STATUS_CODE_UNKNOWN_ERROR,
-                             e.what());
-        rename_from = "";
+        m_server.send_response(m_control_conn_fd,
+                               ftr::STATUS_CODE_UNKNOWN_ERROR, e.what());
+        m_rename_from = "";
         return;
     }
 
-    rename_from = "";
-    server.send_response(control_conn_fd, ftr::STATUS_CODE_REQUESTED_FILE_OK,
-                         "");
+    m_rename_from = "";
+    m_server.send_response(m_control_conn_fd,
+                           ftr::STATUS_CODE_REQUESTED_FILE_OK, "");
 }
 
 void Session::run_reinit() {
     if (!is_logged_in()) {
-        server.send_response(control_conn_fd, ftr::STATUS_CODE_NOT_LOGGED_IN,
-                             "");
+        m_server.send_response(m_control_conn_fd,
+                               ftr::STATUS_CODE_NOT_LOGGED_IN, "");
         return;
     }
 
     // check if there's a transfer in progress
     // if so, wait until it's done
     while (true) {
-        if (!transfer_in_progress) {
+        if (!m_transfer_in_progress) {
             break;
         }
 
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
 
-    session_user.username = "";
-    session_user.password = "";
-    session_user.root = "";
+    m_session_user.username = "";
+    m_session_user.password = "";
+    m_session_user.root = "";
 
-    transfer_type = "";
-    pass_mode = false;
-    data_conn_fd = -1;
-    data_conn_port = 0;
-    cwd = "";
-    rename_from = "";
-    transfer_in_progress = false;
+    m_transfer_type = "";
+    m_pass_mode = false;
+    m_data_conn_fd = -1;
+    m_data_conn_port = 0;
+    m_cwd = "";
+    m_rename_from = "";
+    m_transfer_in_progress = false;
 
-    server.send_response(control_conn_fd, ftr::STATUS_CODE_SERVICE_READY, "");
+    m_server.send_response(m_control_conn_fd, ftr::STATUS_CODE_SERVICE_READY,
+                           "");
 }
 
 void Session::run_quit() {
@@ -1265,7 +1278,7 @@ void Session::run_quit() {
         // check if there's a transfer in progress
         // if so, wait until it's done
         while (true) {
-            if (!transfer_in_progress) {
+            if (!m_transfer_in_progress) {
                 break;
             }
 
@@ -1273,17 +1286,18 @@ void Session::run_quit() {
         }
     }
 
-    server.send_response(control_conn_fd, ftr::STATUS_CODE_CLOSING_CONTROL_CONN,
-                         "");
+    m_server.send_response(m_control_conn_fd,
+                           ftr::STATUS_CODE_CLOSING_CONTROL_CONN, "");
     end();
 }
 
 void Session::run_not_implemented() {
-    server.send_response(control_conn_fd, ftr::STATUS_CODE_NOT_IMPLEMENTED, "");
+    m_server.send_response(m_control_conn_fd, ftr::STATUS_CODE_NOT_IMPLEMENTED,
+                           "");
 }
 
 bool Session::is_logged_in() {
-    if (session_user.username == "" || session_user.password == "") {
+    if (m_session_user.username == "" || m_session_user.password == "") {
         return false;
     }
     return true;

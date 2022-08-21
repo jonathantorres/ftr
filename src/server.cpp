@@ -23,20 +23,20 @@
 
 using namespace ftr;
 
-void Server::start(std::shared_ptr<ftr::Conf> created_conf) {
+void Server::start(const std::shared_ptr<ftr::Conf> created_conf) {
     std::cout << "server starting...";
 
-    conf = created_conf;
-    host = conf->get_server_name();
-    port = conf->get_port();
+    m_conf = created_conf;
+    m_host = m_conf->get_server_name();
+    m_port = m_conf->get_port();
 
-    ctrl_listener_fd = get_server_ctrl_listener();
+    m_ctrl_listener_fd = get_server_ctrl_listener();
 
-    if (ctrl_listener_fd < 0) {
+    if (m_ctrl_listener_fd < 0) {
         throw ServerError("The hostname could not be resolved");
     }
 
-    int res = listen(ctrl_listener_fd, ftr::BACKLOG);
+    int res = listen(m_ctrl_listener_fd, ftr::BACKLOG);
 
     if (res < 0) {
         throw ServerError(std::strerror(errno));
@@ -46,16 +46,16 @@ void Server::start(std::shared_ptr<ftr::Conf> created_conf) {
     struct sockaddr_storage addr_stor = {};
     struct sockaddr *addr = reinterpret_cast<struct sockaddr *>(&addr_stor);
     socklen_t addr_size = sizeof(addr_stor);
-    int name_res = getsockname(ctrl_listener_fd, addr, &addr_size);
+    int name_res = getsockname(m_ctrl_listener_fd, addr, &addr_size);
 
     if (name_res == 0) {
-        resolved_host = get_addr_string(addr);
+        m_resolved_host = get_addr_string(addr);
     }
 
     std::cout << "OK.\n";
 
     while (true) {
-        int conn_fd = accept(ctrl_listener_fd, nullptr, nullptr);
+        int conn_fd = accept(m_ctrl_listener_fd, nullptr, nullptr);
 
         if (conn_fd < 0) {
             // TODO: log this error
@@ -73,7 +73,7 @@ void Server::start(std::shared_ptr<ftr::Conf> created_conf) {
     }
 }
 
-void Server::handle_conn(int conn_fd) {
+void Server::handle_conn(const int conn_fd) {
     // send welcome message
     send_response(conn_fd, ftr::STATUS_CODE_SERVICE_READY, "");
 
@@ -84,13 +84,13 @@ void Server::handle_conn(int conn_fd) {
     // not sure if using *this over here is the right thing to do
     std::shared_ptr s = std::make_shared<Session>(conn_fd, *this, id);
 
-    sessions[id] = s;
+    m_sessions[id] = s;
     s->start();
-    sessions.erase(id);
+    m_sessions.erase(id);
 }
 
-void Server::send_response(int conn_fd, int status_code,
-                           std::string extra_msg) {
+void Server::send_response(const int conn_fd, const int status_code,
+                           const std::string &extra_msg) {
     std::stringstream resp_msg;
     std::string code_msg = get_status_code_msg(status_code);
     resp_msg << status_code << ' ';
@@ -119,7 +119,7 @@ int Server::find_open_addr(bool use_ipv6) {
         AI_PASSIVE, fam, SOCK_STREAM, 0, 0, nullptr, nullptr, nullptr
     };
 
-    int info_res = getaddrinfo(host.c_str(), "0", &hints, &res);
+    int info_res = getaddrinfo(m_host.c_str(), "0", &hints, &res);
 
     if (info_res != 0) {
         throw ServerError(gai_strerror(info_res));
@@ -144,7 +144,7 @@ int Server::find_open_addr(bool use_ipv6) {
     return fd;
 }
 
-std::string Server::get_status_code_msg(int status_code) {
+std::string Server::get_status_code_msg(const int status_code) {
     auto sc = ftr::status_codes.find(status_code);
 
     if (sc != ftr::status_codes.end()) {
@@ -154,7 +154,7 @@ std::string Server::get_status_code_msg(int status_code) {
     return "";
 }
 
-std::string Server::get_command_help_msg(std::string cmd) {
+std::string Server::get_command_help_msg(const std::string &cmd) {
     auto msg = ftr::help_messages.find(cmd);
 
     if (msg != ftr::help_messages.end()) {
@@ -190,8 +190,8 @@ int Server::get_server_ctrl_listener() {
         0, AF_UNSPEC, SOCK_STREAM, 0, 0, nullptr, nullptr, nullptr
     };
 
-    int info_res =
-        getaddrinfo(host.c_str(), std::to_string(port).c_str(), &hints, &res);
+    int info_res = getaddrinfo(m_host.c_str(), std::to_string(m_port).c_str(),
+                               &hints, &res);
 
     if (info_res != 0) {
         throw ServerError(gai_strerror(info_res));
@@ -275,16 +275,16 @@ std::string Server::get_addr_string(struct sockaddr *addr) {
 }
 
 Server::HostType Server::validate_server_host() {
-    if (ftr::is_ipv4(host)) {
+    if (ftr::is_ipv4(m_host)) {
         // host matches valid ipv4 address
         return Server::HostType::IPv4;
-    } else if (ftr::is_ipv6(host)) {
+    } else if (ftr::is_ipv6(m_host)) {
         // host matches a valid ipv6 address
         return Server::HostType::IPv6;
-    } else if (ftr::is_domain_name(host)) {
+    } else if (ftr::is_domain_name(m_host)) {
         // host matches valid domain name
         return Server::HostType::DomainName;
-    } else if (host == "localhost") {
+    } else if (m_host == "localhost") {
         // TODO: special case for localhost????
         return Server::HostType::DomainName;
     }
