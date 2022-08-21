@@ -110,7 +110,6 @@ void sig_handler(int signum) {
     case SIGTERM:
     case SIGINT:
     case SIGQUIT:
-        // TODO: the server should shutdown gracefully
         server->shutdown();
         break;
     case SIGHUP:
