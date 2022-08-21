@@ -38,6 +38,7 @@ class Session {
 
     void start();
     void end();
+    void quit() { run_quit(); }
 
   private:
     int m_id;

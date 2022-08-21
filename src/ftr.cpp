@@ -10,29 +10,33 @@
 #include <string>
 #include <sys/wait.h>
 
-const std::string VERSION = "0.0.1";
-
-// TODO: this will be changed soon
-std::string prefix = "/home/jonathan/dev/ftr/";
-
 void parse_opts(int argc, char **argv);
 void print_usage();
 void print_version();
 void handle_signals();
 
+const std::string VERSION = "0.0.1";
+
+// TODO: this will be changed soon
+std::string prefix = "/home/jonathan/dev/ftr/";
+
+// TODO: could there be a way that these are not used as globals?
+std::shared_ptr<ftr::Log> serv_log = nullptr;
+std::shared_ptr<ftr::Conf> conf = nullptr;
+std::shared_ptr<ftr::Server> server = nullptr;
+
 int main(int argc, char **argv) {
     // TODO: set the prefix of the server
     // at compile time
-
-    ftr::Log log;
-    std::shared_ptr<ftr::Conf> conf = std::make_shared<ftr::Conf>();
-    std::shared_ptr<ftr::Server> server = std::make_shared<ftr::Server>();
-
     parse_opts(argc, argv);
+
+    conf = std::make_shared<ftr::Conf>();
+    server = std::make_shared<ftr::Server>();
+    serv_log = std::make_shared<ftr::Log>();
 
     try {
         // load and test the configuration file
-        log.init();
+        serv_log->init();
         conf->load(prefix + ftr::DEFAULT_CONF, "");
     } catch (std::exception &e) {
         std::cerr << "server configuration error: " << e.what() << "\n";
@@ -107,12 +111,12 @@ void sig_handler(int signum) {
     case SIGINT:
     case SIGQUIT:
         // TODO: the server should shutdown gracefully
-        std::cerr << "Shutting down server...\n";
-        std::exit(EXIT_SUCCESS);
+        server->shutdown();
         break;
     case SIGHUP:
         // TODO: shutdown the server and restart it with the new configuration
         // file make sure the configuration file is validated first!
+        // TODO: log what happens here
         std::cerr << "Reloading the configuration file...\n";
         std::exit(EXIT_SUCCESS);
         break;
@@ -132,9 +136,11 @@ void handle_signals() {
     if (sigaction(SIGTERM, &act, NULL) == -1) {
         // TODO: log the error
     }
+
     if (sigaction(SIGINT, &act, NULL) == -1) {
         // TODO: log the error
     }
+
     if (sigaction(SIGQUIT, &act, NULL) == -1) {
         // TODO: log the error
     }

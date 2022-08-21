@@ -89,6 +89,30 @@ void Server::handle_conn(const int conn_fd) {
     m_sessions.erase(id);
 }
 
+void Server::shutdown() {
+    // TODO: log what happens here
+    std::cerr << "Shutting down server...\n";
+    m_is_shutting_down = true;
+
+    for (auto it = m_sessions.begin(); it != m_sessions.end(); ++it) {
+        std::shared_ptr<ftr::Session> sess = it->second;
+        sess->quit();
+    }
+
+    if (m_ctrl_listener_fd > 0) {
+        int res = close(m_ctrl_listener_fd);
+
+        if (res < 0) {
+            // TODO: log this
+            std::cerr << "error closing main server listener "
+                      << std::strerror(errno) << '\n';
+        }
+    }
+
+    std::cerr << "Server shutdown complete\n";
+    std::exit(EXIT_SUCCESS);
+}
+
 void Server::send_response(const int conn_fd, const int status_code,
                            const std::string &extra_msg) {
     std::stringstream resp_msg;
