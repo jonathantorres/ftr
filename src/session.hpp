@@ -13,28 +13,28 @@
 #include <sys/types.h>
 
 namespace ftr {
-class Server;
+class server;
 
 // the current user logged in for this session
-struct SessionUser {
+struct session_user {
     std::string username;
     std::string password;
     std::string root;
 };
 
-class Session {
+class session {
   public:
-    Session() = default;
-    ~Session() = default;
-    Session(const int conn_fd, ftr::Server &server, const int id)
+    session() = default;
+    ~session() = default;
+    session(const int conn_fd, ftr::server &server, const int id)
         : m_id{id}, m_control_conn_fd{conn_fd}, m_data_conn_fd{0},
           m_pass_mode{false}, m_transfer_in_progress{false}, m_server{server},
           m_transfer_ready{false}, m_transfer_done{false} {}
 
-    Session(const Session &session) = delete;
-    Session(Session &&session) = delete;
-    Session &operator=(const Session &session) = delete;
-    Session &operator=(Session &&session) = delete;
+    session(const session &session) = delete;
+    session(session &&session) = delete;
+    session &operator=(const session &session) = delete;
+    session &operator=(session &&session) = delete;
 
     void start();
     void end();
@@ -47,8 +47,8 @@ class Session {
     unsigned int m_data_conn_port;
     bool m_pass_mode;
     bool m_transfer_in_progress;
-    SessionUser m_session_user;
-    ftr::Server &m_server;
+    session_user m_session_user;
+    ftr::server &m_server;
     std::string m_transfer_type;
     std::string m_cwd;
     std::string m_rename_from;

@@ -7,15 +7,15 @@
 #include <sys/types.h>
 
 namespace ftr {
-class FileDataLine {
+class file_data_line {
   public:
-    FileDataLine(const std::filesystem::directory_entry &entry);
-    ~FileDataLine() = default;
+    file_data_line(const std::filesystem::directory_entry &entry);
+    ~file_data_line() = default;
 
-    FileDataLine(const FileDataLine &other) = delete;
-    FileDataLine(FileDataLine &&other) = delete;
-    FileDataLine &operator=(const FileDataLine &rhs) = delete;
-    FileDataLine &operator=(FileDataLine &&rhs) = delete;
+    file_data_line(const file_data_line &other) = delete;
+    file_data_line(file_data_line &&other) = delete;
+    file_data_line &operator=(const file_data_line &rhs) = delete;
+    file_data_line &operator=(file_data_line &&rhs) = delete;
 
     std::string get_file_line();
 

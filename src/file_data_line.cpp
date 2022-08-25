@@ -14,7 +14,7 @@
 
 using namespace ftr;
 
-FileDataLine::FileDataLine(const std::filesystem::directory_entry &entry)
+file_data_line::file_data_line(const std::filesystem::directory_entry &entry)
     : m_dir_entry{entry}, m_owner_user_id{0}, m_owner_group_id{0} {
     struct stat file_stat = {};
 
@@ -26,7 +26,7 @@ FileDataLine::FileDataLine(const std::filesystem::directory_entry &entry)
     m_owner_group_id = file_stat.st_gid;
 }
 
-std::string FileDataLine::get_file_line() {
+std::string file_data_line::get_file_line() {
     std::stringstream file_data;
     std::filesystem::file_status entry_status = m_dir_entry.status();
     std::filesystem::perms entry_perms = entry_status.permissions();
@@ -54,7 +54,7 @@ std::string FileDataLine::get_file_line() {
     return file_data.str();
 }
 
-std::string FileDataLine::get_owner_name() {
+std::string file_data_line::get_owner_name() {
     std::string own_name;
 
     if (m_owner_user_id == 0) {
@@ -73,7 +73,7 @@ std::string FileDataLine::get_owner_name() {
     return own_name;
 }
 
-std::string FileDataLine::get_group_name() {
+std::string file_data_line::get_group_name() {
     std::string grp_name;
 
     if (m_owner_group_id == 0) {
@@ -92,9 +92,8 @@ std::string FileDataLine::get_group_name() {
     return grp_name;
 }
 
-std::string
-FileDataLine::get_permissions_line(bool is_directory,
-                                   const std::filesystem::perms &entry_perms) {
+std::string file_data_line::get_permissions_line(
+    bool is_directory, const std::filesystem::perms &entry_perms) {
     std::stringstream perms_data;
 
     if (is_directory) {

@@ -30,7 +30,7 @@
 
 using namespace ftr;
 
-void Session::start() {
+void session::start() {
     while (true) {
         std::array<char, ftr::DEFAULT_CMD_SIZE> client_cmd = {0};
 
@@ -67,7 +67,7 @@ void Session::start() {
 // end the current session, this will assume
 // that the data connection is already closed
 // and that there are no transfers in progress
-void Session::end() {
+void session::end() {
     if (m_control_conn_fd > 0) {
         int res = shutdown(m_control_conn_fd, SHUT_WR);
 
@@ -79,13 +79,13 @@ void Session::end() {
     }
 }
 
-void Session::open_data_conn(const struct sockaddr *conn_addr,
+void session::open_data_conn(const struct sockaddr *conn_addr,
                              socklen_t addr_size) {
     int fd = socket(conn_addr->sa_family, SOCK_STREAM, 0);
 
     if (fd < 0) {
         // TODO: log this error
-        throw SessionError(strerror(errno));
+        throw session_error(strerror(errno));
     }
 
     int opt = 1;
@@ -94,7 +94,7 @@ void Session::open_data_conn(const struct sockaddr *conn_addr,
     if (res < 0) {
         // TODO: log this error
         close(fd);
-        throw SessionError(strerror(errno));
+        throw session_error(strerror(errno));
     }
 
     res = bind(fd, conn_addr, addr_size);
@@ -103,7 +103,7 @@ void Session::open_data_conn(const struct sockaddr *conn_addr,
         // TODO: log this error
         close(fd);
         std::cout << "bind failure\n";
-        throw SessionError(strerror(errno));
+        throw session_error(strerror(errno));
     }
 
     res = listen(fd, ftr::BACKLOG);
@@ -112,15 +112,15 @@ void Session::open_data_conn(const struct sockaddr *conn_addr,
         // TODO: log this error
         close(fd);
         std::cout << "listen failure\n";
-        throw SessionError(strerror(errno));
+        throw session_error(strerror(errno));
     }
 
     // start accepting connections
-    std::thread handle(&Session::accept_on_data_conn, this, fd);
+    std::thread handle(&session::accept_on_data_conn, this, fd);
     handle.detach();
 }
 
-void Session::accept_on_data_conn(int listener_fd) {
+void session::accept_on_data_conn(int listener_fd) {
     int conn_fd = accept(listener_fd, nullptr, nullptr);
 
     if (conn_fd < 0) {
@@ -150,7 +150,7 @@ void Session::accept_on_data_conn(int listener_fd) {
     m_transfer_done = false;
 }
 
-void Session::connect_to_data_conn(const unsigned int port, bool use_ipv6) {
+void session::connect_to_data_conn(const unsigned int port, bool use_ipv6) {
     int res = 0;
     std::string resolved_host = m_server.get_resolved_host();
     sa_family_t fam = AF_INET;
@@ -183,35 +183,35 @@ void Session::connect_to_data_conn(const unsigned int port, bool use_ipv6) {
 
     if (res == 0) {
         // TODO: log this error
-        throw SessionError("The network address is invalid");
+        throw session_error("The network address is invalid");
     } else if (res < 0) {
         // TODO: log this error
-        throw SessionError(strerror(errno));
+        throw session_error(strerror(errno));
     }
 
     int conn_fd = socket(fam, SOCK_STREAM, 0);
 
     if (conn_fd < 0) {
         // TODO: log this error
-        throw SessionError(strerror(errno));
+        throw session_error(strerror(errno));
     }
 
     res = connect(conn_fd, conn_addr, addr_size);
 
     if (res < 0) {
         // TODO: log this error
-        throw SessionError(strerror(errno));
+        throw session_error(strerror(errno));
     }
 
     m_data_conn_fd = conn_fd;
     m_data_conn_port = port;
 
     // create new thread that will handle the transfer
-    std::thread handle(&Session::transfer_on_data_conn, this);
+    std::thread handle(&session::transfer_on_data_conn, this);
     handle.detach();
 }
 
-void Session::transfer_on_data_conn() {
+void session::transfer_on_data_conn() {
     // the connection is now ready to be used
     m_transfer_ready = true;
     m_session_cv.notify_one();
@@ -229,7 +229,7 @@ void Session::transfer_on_data_conn() {
     m_transfer_done = false;
 }
 
-void Session::handle_command(
+void session::handle_command(
     const std::array<char, ftr::DEFAULT_CMD_SIZE> &client_cmd) {
     std::string cmd_string =
         std::string(reinterpret_cast<const char *>(client_cmd.data()));
@@ -259,7 +259,7 @@ void Session::handle_command(
     exec_command(cmd, cmd_params);
 }
 
-void Session::exec_command(const std::string &cmd,
+void session::exec_command(const std::string &cmd,
                            const std::string &cmd_params) {
     // TODO: log the command executed
 
@@ -364,15 +364,15 @@ void Session::exec_command(const std::string &cmd,
     run_not_implemented();
 }
 
-void Session::run_user(const std::string &username) {
+void session::run_user(const std::string &username) {
     bool user_found = false;
-    const std::vector<std::shared_ptr<ftr::User>> users =
+    const std::vector<std::shared_ptr<ftr::user>> users =
         m_server.get_conf()->get_users();
 
     for (auto &u : users) {
         if (u->get_username() == username) {
             user_found = true;
-            SessionUser new_session_user = {
+            session_user new_session_user = {
                 .username = std::string(username),
                 .password = "",
                 .root = "",
@@ -392,10 +392,10 @@ void Session::run_user(const std::string &username) {
                            "");
 }
 
-void Session::run_password(const std::string &password) {
+void session::run_password(const std::string &password) {
     bool pass_found = false;
-    const std::shared_ptr<ftr::Conf> conf = m_server.get_conf();
-    const std::vector<std::shared_ptr<ftr::User>> users = conf->get_users();
+    const std::shared_ptr<ftr::conf> conf = m_server.get_conf();
+    const std::vector<std::shared_ptr<ftr::user>> users = conf->get_users();
 
     for (auto &u : users) {
         if (u->get_username() == m_session_user.username &&
@@ -429,12 +429,12 @@ void Session::run_password(const std::string &password) {
                            "");
 }
 
-void Session::run_print_dir() {
+void session::run_print_dir() {
     m_server.send_response(m_control_conn_fd, ftr::STATUS_CODE_PATH_CREATED,
                            " \"/" + m_cwd + "\" is current directory");
 }
 
-void Session::run_change_dir(const std::string dir) {
+void session::run_change_dir(const std::string dir) {
     if (!is_logged_in()) {
         m_server.send_response(m_control_conn_fd,
                                ftr::STATUS_CODE_NOT_LOGGED_IN, "");
@@ -454,7 +454,7 @@ void Session::run_change_dir(const std::string dir) {
         }
     }
 
-    const std::shared_ptr<ftr::Conf> conf = m_server.get_conf();
+    const std::shared_ptr<ftr::conf> conf = m_server.get_conf();
     std::string path(conf->get_root() + m_session_user.root + "/" + cur_wd);
     int res = chdir(path.c_str());
 
@@ -471,7 +471,7 @@ void Session::run_change_dir(const std::string dir) {
                            " \"" + dir + "\" is current directory");
 }
 
-void Session::run_type(const std::string selected_transfer_type) {
+void session::run_type(const std::string selected_transfer_type) {
     if (selected_transfer_type == ftr::TRANSFER_TYPE_ASCII ||
         selected_transfer_type == TRANSFER_TYPE_IMG) {
         m_transfer_type = selected_transfer_type;
@@ -483,7 +483,7 @@ void Session::run_type(const std::string selected_transfer_type) {
     run_not_implemented();
 }
 
-void Session::run_passive() {
+void session::run_passive() {
     int fd = -1;
 
     try {
@@ -501,7 +501,7 @@ void Session::run_passive() {
     close(fd);
 
     if (name_res < 0) {
-        throw ServerError(strerror(errno));
+        throw server_error(strerror(errno));
     }
 
     std::string addr_str = m_server.get_addr_string(&addr);
@@ -539,7 +539,7 @@ void Session::run_passive() {
                            resp_msg.str());
 }
 
-void Session::run_list(const std::string file) {
+void session::run_list(const std::string file) {
     if (!is_logged_in()) {
         m_server.send_response(m_control_conn_fd,
                                ftr::STATUS_CODE_NOT_LOGGED_IN, "");
@@ -567,7 +567,7 @@ void Session::run_list(const std::string file) {
         std::filesystem::directory_iterator dir_iter(dir_path);
 
         for (auto const &entry : dir_iter) {
-            FileDataLine file_data(entry);
+            file_data_line file_data(entry);
             std::string file_line = file_data.get_file_line();
             dir_data << file_line;
             dir_data << '\n';
@@ -606,7 +606,7 @@ void Session::run_list(const std::string file) {
     m_server.send_response(m_control_conn_fd, ftr::STATUS_CODE_OK, "");
 }
 
-void Session::run_file_names(const std::string file) {
+void session::run_file_names(const std::string file) {
     if (!is_logged_in()) {
         m_server.send_response(m_control_conn_fd,
                                ftr::STATUS_CODE_NOT_LOGGED_IN, "");
@@ -671,7 +671,7 @@ void Session::run_file_names(const std::string file) {
     m_server.send_response(m_control_conn_fd, ftr::STATUS_CODE_OK, "");
 }
 
-void Session::run_retrieve(const std::string filename) {
+void session::run_retrieve(const std::string filename) {
     if (!is_logged_in()) {
         m_server.send_response(m_control_conn_fd,
                                ftr::STATUS_CODE_NOT_LOGGED_IN, "");
@@ -697,7 +697,7 @@ void Session::run_retrieve(const std::string filename) {
         m_session_cv.notify_one();
 
         // TODO: log this error
-        throw SessionError(strerror(errno));
+        throw session_error(strerror(errno));
     }
 
     while (true) {
@@ -749,7 +749,7 @@ void Session::run_retrieve(const std::string filename) {
     m_server.send_response(m_control_conn_fd, ftr::STATUS_CODE_OK, "");
 }
 
-void Session::run_accept_and_store(const std::string filename,
+void session::run_accept_and_store(const std::string filename,
                                    bool append_mode) {
     if (!is_logged_in()) {
         m_server.send_response(m_control_conn_fd,
@@ -782,7 +782,7 @@ void Session::run_accept_and_store(const std::string filename,
         m_session_cv.notify_one();
 
         // TODO: log this error
-        throw SessionError(strerror(errno));
+        throw session_error(strerror(errno));
     }
 
     while (true) {
@@ -815,7 +815,7 @@ void Session::run_accept_and_store(const std::string filename,
             m_session_cv.notify_one();
 
             // TODO: log this error
-            throw SessionError("There was a problem writing to the file");
+            throw session_error("There was a problem writing to the file");
         }
     }
 
@@ -827,12 +827,12 @@ void Session::run_accept_and_store(const std::string filename,
     m_server.send_response(m_control_conn_fd, ftr::STATUS_CODE_OK, "");
 }
 
-void Session::run_system_type() {
+void session::run_system_type() {
     m_server.send_response(m_control_conn_fd, ftr::STATUS_CODE_NAME_SYSTEM,
                            " UNIX Type: L8");
 }
 
-void Session::run_change_parent() {
+void session::run_change_parent() {
     if (!is_logged_in()) {
         m_server.send_response(m_control_conn_fd,
                                ftr::STATUS_CODE_NOT_LOGGED_IN, "");
@@ -850,7 +850,7 @@ void Session::run_change_parent() {
         cur_wd = string::join(pieces, "/");
     }
 
-    const std::shared_ptr<ftr::Conf> conf = m_server.get_conf();
+    const std::shared_ptr<ftr::conf> conf = m_server.get_conf();
     std::string chdir_path =
         conf->get_root() + m_session_user.root + "/" + cur_wd.c_str();
     int res = chdir(chdir_path.c_str());
@@ -870,7 +870,7 @@ void Session::run_change_parent() {
                            "\"" + base + "\" is current directory");
 }
 
-void Session::run_make_dir(const std::string dir_name) {
+void session::run_make_dir(const std::string dir_name) {
     if (!is_logged_in()) {
         m_server.send_response(m_control_conn_fd,
                                ftr::STATUS_CODE_NOT_LOGGED_IN, "");
@@ -878,7 +878,7 @@ void Session::run_make_dir(const std::string dir_name) {
     }
 
     std::string cur_wd = m_cwd;
-    const std::shared_ptr<ftr::Conf> conf = m_server.get_conf();
+    const std::shared_ptr<ftr::conf> conf = m_server.get_conf();
     std::filesystem::path location(conf->get_root() + m_session_user.root +
                                    "/" + cur_wd + "/" + dir_name);
 
@@ -895,7 +895,7 @@ void Session::run_make_dir(const std::string dir_name) {
                            " Directory " + dir_name + " created");
 }
 
-void Session::run_remove_dir(const std::string path) {
+void session::run_remove_dir(const std::string path) {
     if (!is_logged_in()) {
         m_server.send_response(m_control_conn_fd,
                                ftr::STATUS_CODE_NOT_LOGGED_IN, "");
@@ -903,7 +903,7 @@ void Session::run_remove_dir(const std::string path) {
     }
 
     std::string cur_wd = m_cwd;
-    const std::shared_ptr<ftr::Conf> conf = m_server.get_conf();
+    const std::shared_ptr<ftr::conf> conf = m_server.get_conf();
     std::filesystem::path location(conf->get_root() + m_session_user.root +
                                    "/" + cur_wd + "/" + path);
 
@@ -921,7 +921,7 @@ void Session::run_remove_dir(const std::string path) {
                            " Directory " + path + " removed");
 }
 
-void Session::run_delete(const std::string filename) {
+void session::run_delete(const std::string filename) {
     if (!is_logged_in()) {
         m_server.send_response(m_control_conn_fd,
                                ftr::STATUS_CODE_NOT_LOGGED_IN, "");
@@ -929,7 +929,7 @@ void Session::run_delete(const std::string filename) {
     }
 
     std::string cur_wd = m_cwd;
-    const std::shared_ptr<ftr::Conf> conf = m_server.get_conf();
+    const std::shared_ptr<ftr::conf> conf = m_server.get_conf();
     std::filesystem::path location(conf->get_root() + m_session_user.root +
                                    "/" + cur_wd + "/" + filename);
 
@@ -947,7 +947,7 @@ void Session::run_delete(const std::string filename) {
                            " File " + filename + " deleted");
 }
 
-void Session::run_ext_passv_mode(const std::string &cmd_params) {
+void session::run_ext_passv_mode(const std::string &cmd_params) {
     int fd = -1;
 
     if (cmd_params != "") {
@@ -981,7 +981,7 @@ void Session::run_ext_passv_mode(const std::string &cmd_params) {
 
     if (name_res < 0) {
         // TODO: log this error
-        throw ServerError(strerror(errno));
+        throw server_error(strerror(errno));
     }
 
     try {
@@ -1007,7 +1007,7 @@ void Session::run_ext_passv_mode(const std::string &cmd_params) {
                            resp_msg.str());
 }
 
-void Session::run_port(const std::string &cmd_params) {
+void session::run_port(const std::string &cmd_params) {
     // we are ignoring the address here, just use the port part
     std::vector<std::string> pieces = string::split(cmd_params, ",");
 
@@ -1030,7 +1030,7 @@ void Session::run_port(const std::string &cmd_params) {
     m_server.send_response(m_control_conn_fd, ftr::STATUS_CODE_OK, "");
 }
 
-void Session::run_ext_addr_port(const std::string &cmd_params) {
+void session::run_ext_addr_port(const std::string &cmd_params) {
     // we are ignoring the address here, just use the port part
     std::vector<std::string> pieces = string::split(cmd_params, "|");
     bool use_ipv6 = false;
@@ -1053,7 +1053,7 @@ void Session::run_ext_addr_port(const std::string &cmd_params) {
     m_server.send_response(m_control_conn_fd, ftr::STATUS_CODE_OK, "");
 }
 
-void Session::run_help(const std::string &cmd_args) {
+void session::run_help(const std::string &cmd_args) {
     std::stringstream ss;
 
     if (cmd_args == "") {
@@ -1074,15 +1074,15 @@ void Session::run_help(const std::string &cmd_args) {
                            ss.str());
 }
 
-void Session::run_noop() {
+void session::run_noop() {
     m_server.send_response(m_control_conn_fd, ftr::STATUS_CODE_OK, "");
 }
 
-void Session::run_allo() {
+void session::run_allo() {
     m_server.send_response(m_control_conn_fd, ftr::STATUS_CODE_OK, "");
 }
 
-void Session::run_account(const std::string &args) {
+void session::run_account(const std::string &args) {
     if (!is_logged_in()) {
         m_server.send_response(m_control_conn_fd,
                                ftr::STATUS_CODE_NOT_LOGGED_IN, "");
@@ -1109,12 +1109,12 @@ void Session::run_account(const std::string &args) {
                            "The account was not found");
 }
 
-void Session::run_site() {
+void session::run_site() {
     m_server.send_response(m_control_conn_fd, ftr::STATUS_CODE_OK,
                            "No SITE options for this server");
 }
 
-void Session::run_mode(const std::string &args) {
+void session::run_mode(const std::string &args) {
     if (string::to_lower(args) != "s") {
         m_server.send_response(m_control_conn_fd,
                                ftr::STATUS_CODE_CMD_NOT_IMPLEMENTED_FOR_PARAM,
@@ -1125,7 +1125,7 @@ void Session::run_mode(const std::string &args) {
     m_server.send_response(m_control_conn_fd, ftr::STATUS_CODE_OK, "");
 }
 
-void Session::run_abort() {
+void session::run_abort() {
     if (!is_logged_in()) {
         m_server.send_response(m_control_conn_fd,
                                ftr::STATUS_CODE_NOT_LOGGED_IN, "");
@@ -1164,7 +1164,7 @@ void Session::run_abort() {
                            ftr::STATUS_CODE_CLOSING_DATA_CONN, "");
 }
 
-void Session::run_file_struct(const std::string &args) {
+void session::run_file_struct(const std::string &args) {
     if (string::to_lower(args) != "f") {
         m_server.send_response(m_control_conn_fd,
                                ftr::STATUS_CODE_CMD_NOT_IMPLEMENTED_FOR_PARAM,
@@ -1175,7 +1175,7 @@ void Session::run_file_struct(const std::string &args) {
     m_server.send_response(m_control_conn_fd, ftr::STATUS_CODE_OK, "");
 }
 
-void Session::run_server_status(const std::string args) {
+void session::run_server_status(const std::string args) {
     if (args == "") {
         m_server.send_response(m_control_conn_fd,
                                ftr::STATUS_CODE_SYSTEM_STATUS, "Server OK");
@@ -1198,7 +1198,7 @@ void Session::run_server_status(const std::string args) {
         std::filesystem::directory_iterator dir_iter(dir_path);
 
         for (auto const &entry : dir_iter) {
-            FileDataLine file_data(entry);
+            file_data_line file_data(entry);
             std::string file_line = file_data.get_file_line();
             dir_data << file_line;
             dir_data << '\n';
@@ -1215,7 +1215,7 @@ void Session::run_server_status(const std::string args) {
                            dir_data.str());
 }
 
-void Session::run_rename_from(const std::string &from) {
+void session::run_rename_from(const std::string &from) {
     if (!is_logged_in()) {
         m_server.send_response(m_control_conn_fd,
                                ftr::STATUS_CODE_NOT_LOGGED_IN, "");
@@ -1233,7 +1233,7 @@ void Session::run_rename_from(const std::string &from) {
                            ftr::STATUS_CODE_REQUESTED_FILE_ACTION, "");
 }
 
-void Session::run_rename_to(const std::string &new_file) {
+void session::run_rename_to(const std::string &new_file) {
     if (!is_logged_in()) {
         m_server.send_response(m_control_conn_fd,
                                ftr::STATUS_CODE_NOT_LOGGED_IN, "");
@@ -1274,7 +1274,7 @@ void Session::run_rename_to(const std::string &new_file) {
                            ftr::STATUS_CODE_REQUESTED_FILE_OK, "");
 }
 
-void Session::run_reinit() {
+void session::run_reinit() {
     if (!is_logged_in()) {
         m_server.send_response(m_control_conn_fd,
                                ftr::STATUS_CODE_NOT_LOGGED_IN, "");
@@ -1307,7 +1307,7 @@ void Session::run_reinit() {
                            "");
 }
 
-void Session::run_quit() {
+void session::run_quit() {
     if (is_logged_in()) {
         // check if there's a transfer in progress
         // if so, wait until it's done
@@ -1325,12 +1325,12 @@ void Session::run_quit() {
     end();
 }
 
-void Session::run_not_implemented() {
+void session::run_not_implemented() {
     m_server.send_response(m_control_conn_fd, ftr::STATUS_CODE_NOT_IMPLEMENTED,
                            "");
 }
 
-bool Session::is_logged_in() {
+bool session::is_logged_in() {
     if (m_session_user.username == "" || m_session_user.password == "") {
         return false;
     }

@@ -2,10 +2,10 @@
 #define ftr_log_hpp
 
 namespace ftr {
-class Log {
+class log {
   public:
-    Log();
-    ~Log();
+    log();
+    ~log();
 
     void init();
 };

@@ -5,27 +5,27 @@
 
 namespace ftr {
 
-class ConfError : public std::exception {
+class conf_error : public std::exception {
   public:
-    ConfError(const char *what_arg) : what_arg(what_arg) {}
+    conf_error(const char *what_arg) : what_arg(what_arg) {}
     const char *what() const noexcept { return what_arg; }
 
   private:
     const char *what_arg;
 };
 
-class ServerError : public std::exception {
+class server_error : public std::exception {
   public:
-    ServerError(const char *what_arg) : what_arg(what_arg) {}
+    server_error(const char *what_arg) : what_arg(what_arg) {}
     const char *what() const noexcept { return what_arg; }
 
   private:
     const char *what_arg;
 };
 
-class SessionError : public std::exception {
+class session_error : public std::exception {
   public:
-    SessionError(const char *what_arg) : what_arg(what_arg) {}
+    session_error(const char *what_arg) : what_arg(what_arg) {}
     const char *what() const noexcept { return what_arg; }
 
   private:

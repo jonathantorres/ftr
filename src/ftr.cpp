@@ -21,9 +21,9 @@ const std::string VERSION = "0.0.1";
 std::string prefix = "/home/jonathan/dev/ftr/";
 
 // TODO: could there be a way that these are not used as globals?
-std::shared_ptr<ftr::Log> serv_log = nullptr;
-std::shared_ptr<ftr::Conf> conf = nullptr;
-std::shared_ptr<ftr::Server> server = nullptr;
+std::shared_ptr<ftr::log> serv_log = nullptr;
+std::shared_ptr<ftr::conf> conf = nullptr;
+std::shared_ptr<ftr::server> server = nullptr;
 
 int main(int argc, char **argv) {
     // TODO: set the prefix of the server
@@ -33,9 +33,9 @@ int main(int argc, char **argv) {
     handle_signals();
 
     while (true) {
-        conf = std::make_shared<ftr::Conf>();
-        server = std::make_shared<ftr::Server>();
-        serv_log = std::make_shared<ftr::Log>();
+        conf = std::make_shared<ftr::conf>();
+        server = std::make_shared<ftr::server>();
+        serv_log = std::make_shared<ftr::log>();
 
         try {
             // load and test the configuration file

@@ -2,14 +2,14 @@
 
 using namespace ftr;
 
-Log::Log() {
+log::log() {
     // constructor
 }
 
-Log::~Log() {
+log::~log() {
     // destructor
 }
 
-void Log::init() {
+void log::init() {
     // TODO
 }
