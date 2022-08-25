@@ -53,9 +53,15 @@ int main(int argc, char **argv) {
             std::exit(EXIT_FAILURE);
         }
 
+        conf.reset();
+        serv_log.reset();
+
         if (server->is_reloading()) {
+            server.reset();
             continue;
         }
+
+        server.reset();
 
         break;
     }
