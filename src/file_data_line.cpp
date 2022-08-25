@@ -1,7 +1,6 @@
 #include "file_data_line.hpp"
 #include "constants.hpp"
 #include <chrono>
-#include <ctime>
 #include <filesystem>
 #include <grp.h>
 #include <iomanip>
