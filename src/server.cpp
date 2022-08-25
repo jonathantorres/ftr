@@ -7,10 +7,10 @@
 #include <cerrno>
 #include <chrono>
 #include <cstdlib>
-#include <ctime>
 #include <iostream>
 #include <memory>
 #include <netdb.h>
+#include <random>
 #include <regex>
 #include <sstream>
 #include <string>
@@ -83,8 +83,9 @@ void server::handle_conn(const int conn_fd) {
     // send welcome message
     send_response(conn_fd, ftr::STATUS_CODE_SERVICE_READY, "");
 
-    std::srand(std::time(nullptr));
-    int id = std::rand();
+    std::random_device rd;
+    std::uniform_int_distribution<int> dist(1, 1000000);
+    int id = dist(rd);
 
     // TODO: could this be made better
     // not sure if using *this over here is the right thing to do
