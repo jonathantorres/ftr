@@ -166,7 +166,7 @@ int server::find_open_addr(bool use_ipv6) {
         fam = AF_INET6;
     }
 
-    struct addrinfo *res, *res_p = nullptr;
+    struct addrinfo *res, *res_begin = nullptr;
     struct addrinfo hints {
         AI_PASSIVE, fam, SOCK_STREAM, 0, 0, nullptr, nullptr, nullptr
     };
@@ -174,20 +174,21 @@ int server::find_open_addr(bool use_ipv6) {
     int info_res = getaddrinfo(m_host.c_str(), "0", &hints, &res);
 
     if (info_res != 0) {
+        freeaddrinfo(res);
         throw server_error(gai_strerror(info_res));
     }
 
-    res_p = res;
-    while (res_p != NULL) {
-        fd = bind_address(res_p);
+    res_begin = res;
+    while (res != NULL) {
+        fd = bind_address(res);
 
         if (fd > 0) {
             break;
         }
-        res_p = res_p->ai_next;
+        res = res->ai_next;
     }
 
-    freeaddrinfo(res);
+    freeaddrinfo(res_begin);
 
     if (fd < 0) {
         throw server_error("An address to bind could not be found");
@@ -237,7 +238,7 @@ int server::get_server_ctrl_listener() {
         throw server_error("invalid host name");
     }
 
-    struct addrinfo *res, *res_p = nullptr;
+    struct addrinfo *res, *res_begin = nullptr;
     struct addrinfo hints {
         0, AF_UNSPEC, SOCK_STREAM, 0, 0, nullptr, nullptr, nullptr
     };
@@ -246,20 +247,21 @@ int server::get_server_ctrl_listener() {
                                &hints, &res);
 
     if (info_res != 0) {
+        freeaddrinfo(res);
         throw server_error(gai_strerror(info_res));
     }
 
-    res_p = res;
-    while (res_p != NULL) {
-        fd = bind_address(res_p);
+    res_begin = res;
+    while (res != NULL) {
+        fd = bind_address(res);
 
         if (fd > 0) {
             break;
         }
-        res_p = res_p->ai_next;
+        res = res->ai_next;
     }
 
-    freeaddrinfo(res);
+    freeaddrinfo(res_begin);
 
     return fd;
 }
