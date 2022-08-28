@@ -73,6 +73,10 @@ void log::log_err(const std::string msg) {
     }
 }
 
+void log::log_err(const std::string msg1, const std::string msg2) {
+    log_err(msg1 + msg2);
+}
+
 void log::log_acc(const std::string msg) {
     std::string cur_msg = log_msg(msg);
 
@@ -82,6 +86,10 @@ void log::log_acc(const std::string msg) {
     if (m_log_stderr) {
         std::cerr << cur_msg;
     }
+}
+
+void log::log_acc(const std::string msg1, const std::string msg2) {
+    log_acc(msg1 + msg2);
 }
 
 std::string log::log_msg(const std::string msg) {
