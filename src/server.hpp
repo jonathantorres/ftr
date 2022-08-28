@@ -3,6 +3,7 @@
 
 #include "conf.hpp"
 #include "constants.hpp"
+#include "log.hpp"
 #include "session.hpp"
 #include <arpa/inet.h>
 #include <map>
@@ -26,7 +27,8 @@ class server {
     server &operator=(const server &server) = delete;
     server &operator=(server &&server) = delete;
 
-    void start(const std::shared_ptr<ftr::conf> created_conf);
+    void start(const std::shared_ptr<ftr::conf> conf,
+               const std::shared_ptr<ftr::log> log);
     void shutdown();
     void reload(const std::string &prefix);
     void send_response(const int conn_fd, const int status_code,
@@ -45,6 +47,7 @@ class server {
     std::string m_host;
     std::string m_resolved_host;
     std::shared_ptr<ftr::conf> m_conf;
+    std::shared_ptr<ftr::log> m_log;
     std::map<int, std::shared_ptr<ftr::session>> m_sessions;
     int m_port;
     int m_ctrl_listener_fd;

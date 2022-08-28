@@ -38,16 +38,14 @@ void session::start() {
 
         if (res < 0) {
             // an error ocurred
-            // TODO: Log this error
-            std::cerr << "read error: " << strerror(errno) << '\n';
+            m_log->log_err("read error: ", std::strerror(errno));
             m_server.send_response(m_control_conn_fd,
                                    ftr::STATUS_CODE_UNKNOWN_ERROR, "");
             close(m_control_conn_fd);
             break;
         } else if (res == 0) {
             // connection closed
-            // TODO: Log this
-            std::cerr << "connection finished by client\n";
+            m_log->log_err("connection finished by client");
             close(m_control_conn_fd);
             break;
         }
@@ -55,8 +53,7 @@ void session::start() {
         try {
             handle_command(client_cmd);
         } catch (std::exception &e) {
-            // TODO: log this error
-            std::cerr << "error handling the command: " << e.what() << '\n';
+            m_log->log_err("error handling the command", e.what());
             m_server.send_response(m_control_conn_fd,
                                    ftr::STATUS_CODE_UNKNOWN_ERROR, "");
             continue;
@@ -72,9 +69,8 @@ void session::end() {
         int res = shutdown(m_control_conn_fd, SHUT_WR);
 
         if (res < 0) {
-            // TODO: log this error
-            std::cerr << "shutdown error on control connection: "
-                      << std::strerror(errno) << '\n';
+            m_log->log_err("shutdown error on control connection: ",
+                           std::strerror(errno));
         }
     }
 }
@@ -84,35 +80,33 @@ void session::open_data_conn(const struct sockaddr *conn_addr,
     int fd = socket(conn_addr->sa_family, SOCK_STREAM, 0);
 
     if (fd < 0) {
-        // TODO: log this error
-        throw session_error(strerror(errno));
+        m_log->log_err(std::strerror(errno));
+        throw session_error(std::strerror(errno));
     }
 
     int opt = 1;
     int res = setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(int));
 
     if (res < 0) {
-        // TODO: log this error
         close(fd);
-        throw session_error(strerror(errno));
+        m_log->log_err(std::strerror(errno));
+        throw session_error(std::strerror(errno));
     }
 
     res = bind(fd, conn_addr, addr_size);
 
     if (res < 0) {
-        // TODO: log this error
         close(fd);
-        std::cout << "bind failure\n";
-        throw session_error(strerror(errno));
+        m_log->log_err("bind error: ", std::strerror(errno));
+        throw session_error(std::strerror(errno));
     }
 
     res = listen(fd, ftr::BACKLOG);
 
     if (res < 0) {
-        // TODO: log this error
         close(fd);
-        std::cout << "listen failure\n";
-        throw session_error(strerror(errno));
+        m_log->log_err("listen failure: ", std::strerror(errno));
+        throw session_error(std::strerror(errno));
     }
 
     // start accepting connections
@@ -124,9 +118,9 @@ void session::accept_on_data_conn(int listener_fd) {
     int conn_fd = accept(listener_fd, nullptr, nullptr);
 
     if (conn_fd < 0) {
-        // TODO: log this error
         close(listener_fd);
-        std::cout << "accept failure when accepting on the data connection\n";
+        m_log->log_err("accept error on date connection: ",
+                       std::strerror(errno));
         return;
     }
 
@@ -182,25 +176,24 @@ void session::connect_to_data_conn(const unsigned int port, bool use_ipv6) {
     }
 
     if (res == 0) {
-        // TODO: log this error
         throw session_error("The network address is invalid");
     } else if (res < 0) {
-        // TODO: log this error
-        throw session_error(strerror(errno));
+        m_log->log_err(std::strerror(errno));
+        throw session_error(std::strerror(errno));
     }
 
     int conn_fd = socket(fam, SOCK_STREAM, 0);
 
     if (conn_fd < 0) {
-        // TODO: log this error
-        throw session_error(strerror(errno));
+        m_log->log_err(std::strerror(errno));
+        throw session_error(std::strerror(errno));
     }
 
     res = connect(conn_fd, conn_addr, addr_size);
 
     if (res < 0) {
-        // TODO: log this error
-        throw session_error(strerror(errno));
+        m_log->log_err(std::strerror(errno));
+        throw session_error(std::strerror(errno));
     }
 
     m_data_conn_fd = conn_fd;
@@ -261,7 +254,7 @@ void session::handle_command(
 
 void session::exec_command(const std::string &cmd,
                            const std::string &cmd_params) {
-    // TODO: log the command executed
+    m_log->log_acc(cmd + " ", cmd_params);
 
     if (cmd == CMD_USER) {
         run_user(cmd_params);
@@ -414,7 +407,7 @@ void session::run_password(const std::string &password) {
         int res = chdir(path.c_str());
 
         if (res < 0) {
-            // TODO: log this error
+            m_log->log_err("chdir error: ", std::strerror(errno));
             m_server.send_response(m_control_conn_fd,
                                    ftr::STATUS_CODE_FILE_NOT_FOUND, "");
             return;
@@ -459,7 +452,7 @@ void session::run_change_dir(const std::string dir) {
     int res = chdir(path.c_str());
 
     if (res < 0) {
-        // TODO: log this error
+        m_log->log_err("chdir error: ", std::strerror(errno));
         m_server.send_response(m_control_conn_fd,
                                ftr::STATUS_CODE_FILE_NOT_FOUND, "");
         return;
@@ -567,7 +560,7 @@ void session::run_list(const std::string file) {
         std::filesystem::directory_iterator dir_iter(dir_path);
 
         for (auto const &entry : dir_iter) {
-            file_data_line file_data(entry);
+            file_data_line file_data(entry, m_log);
             std::string file_line = file_data.get_file_line();
             dir_data << file_line;
             dir_data << '\n';
@@ -586,7 +579,7 @@ void session::run_list(const std::string file) {
 
     std::string dir_data_str = dir_data.str();
     if (write(m_data_conn_fd, dir_data_str.c_str(), dir_data_str.size()) < 0) {
-        // TODO: log the error
+        m_log->log_err("write error: ", std::strerror(errno));
         m_transfer_in_progress = false;
         m_transfer_done = true;
         m_session_cv.notify_one();
@@ -651,7 +644,7 @@ void session::run_file_names(const std::string file) {
 
     std::string dir_data_str = dir_data.str();
     if (write(m_data_conn_fd, dir_data_str.c_str(), dir_data_str.size()) < 0) {
-        // TODO: log the error
+        m_log->log_err("write error: ", std::strerror(errno));
         m_transfer_in_progress = false;
         m_transfer_done = true;
         m_session_cv.notify_one();
@@ -696,7 +689,8 @@ void session::run_retrieve(const std::string filename) {
         m_transfer_done = true;
         m_session_cv.notify_one();
 
-        // TODO: log this error
+        m_log->log_err(std::strerror(errno));
+
         throw session_error(strerror(errno));
     }
 
@@ -711,9 +705,8 @@ void session::run_retrieve(const std::string filename) {
             bytes_read = file.gcount();
         } else if (file.fail() || file.bad()) {
             // an error ocurred
-            // TODO: Log this error
-            std::cerr << "an error reading the file occurred\n";
-            std::cerr << strerror(errno) << '\n';
+            m_log->log_err("an error reading the file occurred ",
+                           std::strerror(errno));
             m_transfer_in_progress = false;
             m_transfer_done = true;
             m_session_cv.notify_one();
@@ -724,7 +717,7 @@ void session::run_retrieve(const std::string filename) {
         }
 
         if (write(m_data_conn_fd, buf.data(), bytes_read) < 0) {
-            // TODO: log the error
+            m_log->log_err("write error: ", std::strerror(errno));
             m_transfer_in_progress = false;
             m_transfer_done = true;
             m_session_cv.notify_one();
@@ -781,8 +774,9 @@ void session::run_accept_and_store(const std::string filename,
         m_transfer_done = true;
         m_session_cv.notify_one();
 
-        // TODO: log this error
-        throw session_error(strerror(errno));
+        m_log->log_err(std::strerror(errno));
+
+        throw session_error(std::strerror(errno));
     }
 
     while (true) {
@@ -792,8 +786,7 @@ void session::run_accept_and_store(const std::string filename,
 
         if (res < 0) {
             // an error ocurred
-            // TODO: Log this error
-            std::cerr << "read error: " << strerror(errno) << '\n';
+            m_log->log_err("read error: ", std::strerror(errno));
             m_transfer_in_progress = false;
             m_transfer_done = true;
             m_session_cv.notify_one();
@@ -814,7 +807,8 @@ void session::run_accept_and_store(const std::string filename,
             m_transfer_done = true;
             m_session_cv.notify_one();
 
-            // TODO: log this error
+            m_log->log_err(std::strerror(errno));
+
             throw session_error("There was a problem writing to the file");
         }
     }
@@ -856,7 +850,7 @@ void session::run_change_parent() {
     int res = chdir(chdir_path.c_str());
 
     if (res < 0) {
-        // TODO: log this error
+        m_log->log_err("chdir error: ", std::strerror(errno));
         m_server.send_response(m_control_conn_fd,
                                ftr::STATUS_CODE_FILE_NOT_FOUND, "");
         return;
@@ -885,7 +879,7 @@ void session::run_make_dir(const std::string dir_name) {
     try {
         std::filesystem::create_directory(location);
     } catch (std::exception &e) {
-        // TODO: log the error
+        m_log->log_err("create directory error: ", std::strerror(errno));
         m_server.send_response(m_control_conn_fd,
                                ftr::STATUS_CODE_FILE_NOT_FOUND, e.what());
         return;
@@ -910,7 +904,7 @@ void session::run_remove_dir(const std::string path) {
     try {
         std::filesystem::remove_all(location);
     } catch (std::exception &e) {
-        // TODO: log the error
+        m_log->log_err("remove all error: ", std::strerror(errno));
         m_server.send_response(m_control_conn_fd,
                                ftr::STATUS_CODE_FILE_NOT_FOUND, e.what());
         return;
@@ -936,7 +930,7 @@ void session::run_delete(const std::string filename) {
     try {
         std::filesystem::remove(location);
     } catch (std::exception &e) {
-        // TODO: log the error
+        m_log->log_err("remove error: ", std::strerror(errno));
         m_server.send_response(m_control_conn_fd,
                                ftr::STATUS_CODE_FILE_NOT_FOUND, e.what());
         return;
@@ -966,7 +960,8 @@ void session::run_ext_passv_mode(const std::string &cmd_params) {
     try {
         fd = m_server.find_open_addr(true);
     } catch (std::exception &e) {
-        // TODO: log this error
+        m_log->log_err("find_open_addr error: ", e.what());
+
         m_server.send_response(m_control_conn_fd,
                                ftr::STATUS_CODE_CANT_OPEN_DATA_CONN, e.what());
         return;
@@ -980,14 +975,14 @@ void session::run_ext_passv_mode(const std::string &cmd_params) {
     close(fd);
 
     if (name_res < 0) {
-        // TODO: log this error
-        throw server_error(strerror(errno));
+        m_log->log_err("getsockname error: ", std::strerror(errno));
+        throw server_error(std::strerror(errno));
     }
 
     try {
         open_data_conn(addr, addr_size);
     } catch (std::exception &e) {
-        // TODO: log this error
+        m_log->log_err("open_data_conn error: ", e.what());
         m_server.send_response(m_control_conn_fd,
                                ftr::STATUS_CODE_CANT_OPEN_DATA_CONN, e.what());
         return;
@@ -1021,7 +1016,7 @@ void session::run_port(const std::string &cmd_params) {
     try {
         connect_to_data_conn(p, false);
     } catch (std::exception &e) {
-        // TODO: log this error
+        m_log->log_err("connect_to_data_conn error: ", e.what());
         m_server.send_response(m_control_conn_fd,
                                ftr::STATUS_CODE_UNKNOWN_ERROR, e.what());
         return;
@@ -1044,7 +1039,7 @@ void session::run_ext_addr_port(const std::string &cmd_params) {
     try {
         connect_to_data_conn(port, use_ipv6);
     } catch (std::exception &e) {
-        // TODO: log this error
+        m_log->log_err("connect_to_data_conn error: ", e.what());
         m_server.send_response(m_control_conn_fd,
                                ftr::STATUS_CODE_UNKNOWN_ERROR, e.what());
         return;
@@ -1154,9 +1149,8 @@ void session::run_abort() {
         int res = close(m_data_conn_fd);
 
         if (res < 0) {
-            // TODO: log this error
-            std::cerr << "error closing the data connection "
-                      << std::strerror(errno) << '\n';
+            m_log->log_err("error closing the data connection: ",
+                           std::strerror(errno));
         }
     }
 
@@ -1198,12 +1192,13 @@ void session::run_server_status(const std::string args) {
         std::filesystem::directory_iterator dir_iter(dir_path);
 
         for (auto const &entry : dir_iter) {
-            file_data_line file_data(entry);
+            file_data_line file_data(entry, m_log);
             std::string file_line = file_data.get_file_line();
             dir_data << file_line;
             dir_data << '\n';
         }
     } catch (std::exception &e) {
+        m_log->log_err(e.what());
         m_server.send_response(m_control_conn_fd,
                                ftr::STATUS_CODE_FILE_ACTION_NOT_TAKEN,
                                e.what());
@@ -1263,6 +1258,7 @@ void session::run_rename_to(const std::string &new_file) {
     try {
         std::filesystem::rename(oldpath, newpath);
     } catch (std::exception &e) {
+        m_log->log_err("rename error: ", e.what());
         m_server.send_response(m_control_conn_fd,
                                ftr::STATUS_CODE_UNKNOWN_ERROR, e.what());
         m_rename_from = "";

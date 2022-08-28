@@ -2,17 +2,20 @@
 #include "conf.hpp"
 #include "constants.hpp"
 #include "exception.hpp"
+#include "log.hpp"
 #include "util.hpp"
 #include <arpa/inet.h>
 #include <cerrno>
 #include <chrono>
 #include <cstdlib>
+#include <cstring>
 #include <iostream>
 #include <memory>
 #include <netdb.h>
 #include <random>
 #include <regex>
 #include <sstream>
+#include <string.hpp>
 #include <string>
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -23,12 +26,14 @@
 
 using namespace ftr;
 
-void server::start(const std::shared_ptr<ftr::conf> created_conf) {
-    std::cout << "server starting...";
-
-    m_conf = created_conf;
+void server::start(const std::shared_ptr<ftr::conf> conf,
+                   const std::shared_ptr<ftr::log> log) {
+    m_log = log;
+    m_conf = conf;
     m_host = m_conf->get_server_name();
     m_port = m_conf->get_port();
+
+    m_log->log_acc("Server starting...");
 
     m_ctrl_listener_fd = get_server_ctrl_listener();
 
@@ -52,7 +57,7 @@ void server::start(const std::shared_ptr<ftr::conf> created_conf) {
         m_resolved_host = get_addr_string(addr);
     }
 
-    std::cout << "OK.\n";
+    m_log->log_acc("Server started OK.");
 
     while (true) {
         int conn_fd = accept(m_ctrl_listener_fd, nullptr, nullptr);
@@ -63,8 +68,8 @@ void server::start(const std::shared_ptr<ftr::conf> created_conf) {
                 break;
             }
 
-            // TODO: log this error
-            std::cerr << "accept error: " << std::strerror(errno) << '\n';
+            m_log->log_err("accept error: ", std::strerror(errno));
+
             if (errno == EINTR) {
                 // interrupted system call, let's try again
                 continue;
@@ -89,7 +94,7 @@ void server::handle_conn(const int conn_fd) {
 
     // TODO: could this be made better
     // not sure if using *this over here is the right thing to do
-    std::shared_ptr s = std::make_shared<session>(conn_fd, *this, id);
+    std::shared_ptr s = std::make_shared<session>(conn_fd, *this, m_log, id);
 
     m_sessions[id] = s;
     s->start();
@@ -97,8 +102,7 @@ void server::handle_conn(const int conn_fd) {
 }
 
 void server::shutdown() {
-    // TODO: log what happens here
-    std::cerr << "Shutting down server...\n";
+    m_log->log_acc("Shutting down server...");
     m_is_shutting_down = true;
 
     for (auto it = m_sessions.begin(); it != m_sessions.end(); ++it) {
@@ -110,13 +114,12 @@ void server::shutdown() {
         int res = close(m_ctrl_listener_fd);
 
         if (res < 0) {
-            // TODO: log this
-            std::cerr << "error closing main server listener "
-                      << std::strerror(errno) << '\n';
+            m_log->log_err("error closing main server listener ",
+                           std::strerror(errno));
         }
     }
 
-    std::cerr << "Server shutdown complete\n";
+    m_log->log_acc("Server shutdown complete");
 
     if (!m_is_reloading) {
         std::exit(EXIT_SUCCESS);
@@ -124,19 +127,17 @@ void server::shutdown() {
 }
 
 void server::reload(const std::string &prefix) {
-    // TODO: log what happens here
-    std::cerr << "Reloading the configuration file...\n";
+    m_log->log_acc("Reloading the configuration file...");
     auto conf = std::make_shared<ftr::conf>();
 
     try {
         conf->load(prefix + ftr::DEFAULT_CONF, "");
     } catch (std::exception &e) {
-        // TODO: log this
-        std::cerr << "server configuration error: " << e.what() << "\n";
+        m_log->log_err("server Configuration error: ", e.what());
         return;
     }
 
-    std::cerr << "Configuration file OK\n";
+    m_log->log_acc("Configuration file OK");
     m_is_reloading = true;
     shutdown();
 }
@@ -150,11 +151,13 @@ void server::send_response(const int conn_fd, const int status_code,
     resp_msg << extra_msg << '\n';
 
     std::string msg_str = resp_msg.str();
-    // TODO: log the response message
+
+    m_log->log_acc(string::trim_whitespace(msg_str));
 
     if (write(conn_fd, msg_str.c_str(), msg_str.size()) < 0) {
-        // TODO: log the error
-        throw server_error(strerror(errno));
+        m_log->log_err(std::strerror(errno));
+
+        throw server_error(std::strerror(errno));
     }
 }
 
@@ -268,7 +271,8 @@ int server::get_server_ctrl_listener() {
 
 int server::bind_address(const struct addrinfo *addr_info) {
     if (!addr_info) {
-        // TODO: log this error
+        m_log->log_err("The addr_info pointer is NULL");
+
         return -1;
     }
 
@@ -276,7 +280,8 @@ int server::bind_address(const struct addrinfo *addr_info) {
                     addr_info->ai_protocol);
 
     if (fd < 0) {
-        // TODO: log this error
+        m_log->log_err(std::strerror(errno));
+
         return -1;
     }
 
@@ -284,16 +289,18 @@ int server::bind_address(const struct addrinfo *addr_info) {
     int res = setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(int));
 
     if (res < 0) {
-        // TODO: log this error
+        m_log->log_err(std::strerror(errno));
         close(fd);
+
         return -1;
     }
 
     res = bind(fd, addr_info->ai_addr, addr_info->ai_addrlen);
 
     if (res < 0) {
-        // TODO: log this error
+        m_log->log_err(std::strerror(errno));
         close(fd);
+
         return -1;
     }
 
