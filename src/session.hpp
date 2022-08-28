@@ -2,10 +2,12 @@
 #define ftr_session_hpp
 
 #include "constants.hpp"
+#include "log.hpp"
 #include <arpa/inet.h>
 #include <array>
 #include <condition_variable>
 #include <filesystem>
+#include <memory>
 #include <mutex>
 #include <netdb.h>
 #include <string>
@@ -26,10 +28,11 @@ class session {
   public:
     session() = default;
     ~session() = default;
-    session(const int conn_fd, ftr::server &server, const int id)
+    session(const int conn_fd, ftr::server &server,
+            std::shared_ptr<ftr::log> log, const int id)
         : m_id{id}, m_control_conn_fd{conn_fd}, m_data_conn_fd{0},
           m_pass_mode{false}, m_transfer_in_progress{false}, m_server{server},
-          m_transfer_ready{false}, m_transfer_done{false} {}
+          m_log{log}, m_transfer_ready{false}, m_transfer_done{false} {}
 
     session(const session &session) = delete;
     session(session &&session) = delete;
@@ -49,6 +52,7 @@ class session {
     bool m_transfer_in_progress;
     session_user m_session_user;
     ftr::server &m_server;
+    std::shared_ptr<ftr::log> m_log;
     std::string m_transfer_type;
     std::string m_cwd;
     std::string m_rename_from;

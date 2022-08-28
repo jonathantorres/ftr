@@ -1,9 +1,13 @@
 #include "file_data_line.hpp"
 #include "constants.hpp"
+#include "log.hpp"
+#include <cerrno>
 #include <chrono>
+#include <cstring>
 #include <filesystem>
 #include <grp.h>
 #include <iomanip>
+#include <memory>
 #include <pwd.h>
 #include <sstream>
 #include <string>
@@ -13,8 +17,9 @@
 
 using namespace ftr;
 
-file_data_line::file_data_line(const std::filesystem::directory_entry &entry)
-    : m_dir_entry{entry}, m_owner_user_id{0}, m_owner_group_id{0} {
+file_data_line::file_data_line(const std::filesystem::directory_entry &entry,
+                               std::shared_ptr<ftr::log> log)
+    : m_dir_entry{entry}, m_owner_user_id{0}, m_owner_group_id{0}, m_log{log} {
     struct stat file_stat = {};
 
     if (stat(m_dir_entry.path().c_str(), &file_stat) < 0) {
@@ -63,7 +68,7 @@ std::string file_data_line::get_owner_name() {
     struct passwd *pass_data = getpwuid(m_owner_user_id);
 
     if (pass_data == nullptr) {
-        // TODO: Log this error
+        m_log->log_err("getpwuid error: ", std::strerror(errno));
         return own_name;
     }
 
@@ -82,7 +87,7 @@ std::string file_data_line::get_group_name() {
     struct group *grp_data = getgrgid(m_owner_group_id);
 
     if (grp_data == nullptr) {
-        // TODO: log this error
+        m_log->log_err("getgrgid error: ", std::strerror(errno));
         return grp_name;
     }
 

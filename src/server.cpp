@@ -15,6 +15,7 @@
 #include <random>
 #include <regex>
 #include <sstream>
+#include <string.hpp>
 #include <string>
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -93,7 +94,7 @@ void server::handle_conn(const int conn_fd) {
 
     // TODO: could this be made better
     // not sure if using *this over here is the right thing to do
-    std::shared_ptr s = std::make_shared<session>(conn_fd, *this, id);
+    std::shared_ptr s = std::make_shared<session>(conn_fd, *this, m_log, id);
 
     m_sessions[id] = s;
     s->start();
@@ -151,7 +152,7 @@ void server::send_response(const int conn_fd, const int status_code,
 
     std::string msg_str = resp_msg.str();
 
-    m_log->log_acc(msg_str);
+    m_log->log_acc(string::trim_whitespace(msg_str));
 
     if (write(conn_fd, msg_str.c_str(), msg_str.size()) < 0) {
         m_log->log_err(std::strerror(errno));
