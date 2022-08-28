@@ -44,14 +44,15 @@ int main(int argc, char **argv) {
             conf->load(prefix + ftr::DEFAULT_CONF, "");
             serv_log->init(prefix, conf, log_stderr);
         } catch (std::exception &e) {
-            std::cerr << "server configuration error: " << e.what() << "\n";
+            std::cerr << "server configuration error: " << e.what() << '\n';
             std::exit(EXIT_FAILURE);
         }
 
         try {
             server->start(conf, serv_log);
         } catch (std::exception &e) {
-            std::cerr << "server error: " << e.what() << "\n";
+            serv_log->log_err("server error: ", e.what());
+
             std::exit(EXIT_FAILURE);
         }
 
