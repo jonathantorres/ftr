@@ -2,6 +2,7 @@
 #include "conf.hpp"
 #include "constants.hpp"
 #include "exception.hpp"
+#include "log.hpp"
 #include "util.hpp"
 #include <arpa/inet.h>
 #include <cerrno>
@@ -23,10 +24,10 @@
 
 using namespace ftr;
 
-void server::start(const std::shared_ptr<ftr::conf> created_conf) {
-    std::cout << "server starting...";
-
-    m_conf = created_conf;
+void server::start(const std::shared_ptr<ftr::conf> conf,
+                   const std::shared_ptr<ftr::log> log) {
+    m_log = log;
+    m_conf = conf;
     m_host = m_conf->get_server_name();
     m_port = m_conf->get_port();
 

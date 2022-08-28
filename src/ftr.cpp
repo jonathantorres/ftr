@@ -30,24 +30,26 @@ int main(int argc, char **argv) {
     // at compile time
     parse_opts(argc, argv);
 
+    bool log_stderr = true;
+
     handle_signals();
 
     while (true) {
         conf = std::make_shared<ftr::conf>();
-        server = std::make_shared<ftr::server>();
         serv_log = std::make_shared<ftr::log>();
+        server = std::make_shared<ftr::server>();
 
         try {
             // load and test the configuration file
-            serv_log->init();
             conf->load(prefix + ftr::DEFAULT_CONF, "");
+            serv_log->init(prefix, conf, log_stderr);
         } catch (std::exception &e) {
             std::cerr << "server configuration error: " << e.what() << "\n";
             std::exit(EXIT_FAILURE);
         }
 
         try {
-            server->start(conf);
+            server->start(conf, serv_log);
         } catch (std::exception &e) {
             std::cerr << "server error: " << e.what() << "\n";
             std::exit(EXIT_FAILURE);
