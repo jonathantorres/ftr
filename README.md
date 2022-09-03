@@ -1,4 +1,6 @@
 # ftr
+[![Tests](https://github.com/jonathantorres/ftr/actions/workflows/tests.yml/badge.svg)](https://github.com/jonathantorres/ftr/actions/workflows/tests.yml)
+
 FTR (File Transfer) is an FTP server.
 
 ## Installing/Building from source
