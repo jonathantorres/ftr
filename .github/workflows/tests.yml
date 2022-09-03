@@ -33,8 +33,8 @@ jobs:
       # Build your program with the given configuration
     - name: Build and Test
       run: |
-        cd build
-        cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+        cd ${{github.workspace}}/build
+        cmake --build . --config ${{env.BUILD_TYPE}}
 
   clang_tests:
     name: Clang ${{ matrix.ver }}
@@ -58,5 +58,5 @@ jobs:
 
     - name: Build and Test
       run: |
-        cd build
-        cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+        cd ${{github.workspace}}/build
+        cmake --build . --config ${{env.BUILD_TYPE}}
