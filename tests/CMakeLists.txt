@@ -4,11 +4,11 @@ add_executable(conf_test
     ../src/util.cpp
 )
 
-add_custom_command(TARGET conf_test
-    POST_BUILD
-    COMMAND ${CMAKE_CURRENT_BINARY_DIR}/conf_test
-    VERBATIM
-)
+# add_custom_command(TARGET conf_test
+#     POST_BUILD
+#     COMMAND ${CMAKE_CURRENT_BINARY_DIR}/conf_test
+#     VERBATIM
+# )
 
 target_link_libraries(conf_test PRIVATE Catch2::Catch2WithMain PUBLIC string)
 
