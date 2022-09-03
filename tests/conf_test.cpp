@@ -7,7 +7,7 @@
 using namespace ftr;
 
 TEST_CASE("load configuration file") {
-    const std::string conf_file = "testdata/basic.conf";
+    const std::string conf_file = "../../tests/confs/basic.conf";
     conf c;
     c.load(conf_file, "");
 
@@ -20,7 +20,7 @@ TEST_CASE("load configuration file") {
 }
 
 TEST_CASE("higly commented conf file is properly parsed") {
-    const std::string conf_file = "testdata/commented.conf";
+    const std::string conf_file = "../../tests/confs/commented.conf";
     conf c;
     c.load(conf_file, "");
 
@@ -34,7 +34,7 @@ TEST_CASE("higly commented conf file is properly parsed") {
 }
 
 TEST_CASE("configuration with no users") {
-    const std::string conf_file = "testdata/no_users.conf";
+    const std::string conf_file = "../../tests/confs/no_users.conf";
     conf c;
     c.load(conf_file, "");
 
@@ -47,7 +47,7 @@ TEST_CASE("configuration with no users") {
 }
 
 TEST_CASE("users are created") {
-    const std::string conf_file = "testdata/multiple_users.conf";
+    const std::string conf_file = "../../tests/confs/multiple_users.conf";
     conf c;
     c.load(conf_file, "");
 

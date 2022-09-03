@@ -365,11 +365,10 @@ void session::run_user(const std::string &username) {
     for (auto &u : users) {
         if (u->get_username() == username) {
             user_found = true;
-            session_user new_session_user = {
-                .username = std::string(username),
-                .password = "",
-                .root = "",
-            };
+            session_user new_session_user = {};
+            new_session_user.username = std::string(username);
+            new_session_user.password = "";
+            new_session_user.root = "";
             m_session_user = new_session_user;
             break;
         }

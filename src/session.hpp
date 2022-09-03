@@ -26,13 +26,13 @@ struct session_user {
 
 class session {
   public:
-    session() = default;
+    session() = delete;
     ~session() = default;
     session(const int conn_fd, ftr::server &server,
-            std::shared_ptr<ftr::log> log, const int id)
-        : m_id{id}, m_control_conn_fd{conn_fd}, m_data_conn_fd{0},
-          m_pass_mode{false}, m_transfer_in_progress{false}, m_server{server},
-          m_log{log}, m_transfer_ready{false}, m_transfer_done{false} {}
+            std::shared_ptr<ftr::log> log)
+        : m_control_conn_fd{conn_fd}, m_data_conn_fd{0}, m_pass_mode{false},
+          m_transfer_in_progress{false}, m_server{server}, m_log{log},
+          m_transfer_ready{false}, m_transfer_done{false} {}
 
     session(const session &session) = delete;
     session(session &&session) = delete;
@@ -44,7 +44,6 @@ class session {
     void quit() { run_quit(); }
 
   private:
-    int m_id;
     int m_control_conn_fd;
     int m_data_conn_fd;
     unsigned int m_data_conn_port;

@@ -48,9 +48,13 @@ std::string file_data_line::get_file_line() {
         file_data << m_dir_entry.file_size() << ' ';
     }
 
-    std::chrono::sys_time system_time =
-        std::chrono::file_clock::to_sys(m_dir_entry.last_write_time());
-    std::time_t cur_time = std::chrono::system_clock::to_time_t(system_time);
+    // TODO: do a bit of more research on how to do this better
+    auto sys_time =
+        std::chrono::time_point_cast<std::chrono::system_clock::duration>(
+            m_dir_entry.last_write_time() -
+            std::filesystem::file_time_type::clock::now() +
+            std::chrono::system_clock::now());
+    std::time_t cur_time = std::chrono::system_clock::to_time_t(sys_time);
     file_data << std::put_time(std::localtime(&cur_time), "%h %d %H:%M");
     file_data << ' ';
     file_data << m_dir_entry.path().filename().string();
