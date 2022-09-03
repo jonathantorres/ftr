@@ -94,7 +94,7 @@ void server::handle_conn(const int conn_fd) {
 
     // TODO: could this be made better
     // not sure if using *this over here is the right thing to do
-    std::shared_ptr s = std::make_shared<session>(conn_fd, *this, m_log, id);
+    std::shared_ptr s = std::make_shared<session>(conn_fd, *this, m_log);
 
     m_sessions[id] = s;
     s->start();

@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.13.4)
+set(CMAKE_CXX_COMPILER clang++)
 project(ftr
     VERSION 0.0.0
     LANGUAGES CXX
