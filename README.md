@@ -2,15 +2,18 @@
 FTR (File Transfer) is an FTP server.
 
 ## Installing/Building from source
-In order to build from source, make sure to use `git` to clone the repository, once done you can use the `make` utility to compile the source code:
+In order to build from source, make sure to use `git` to clone the repository, once done you can use `cmake` to compile the source code:
 ```bash
-make
+cmake -S . -B build
+cd build
+cmake --build .
 ```
 
 ## Running tests
-Use `make` to run all of the tests:
+Use `cmake` to build and run all of the tests:
 ```bash
-make test
+cd build
+cmake --build .
 ```
 
 ## Configuration
