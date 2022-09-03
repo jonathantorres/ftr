@@ -26,7 +26,7 @@ struct session_user {
 
 class session {
   public:
-    session() = default;
+    session() = delete;
     ~session() = default;
     session(const int conn_fd, ftr::server &server,
             std::shared_ptr<ftr::log> log, const int id)
