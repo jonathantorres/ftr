@@ -27,6 +27,7 @@ std::shared_ptr<ftr::conf> conf = nullptr;
 std::shared_ptr<ftr::server> server = nullptr;
 std::string conf_file_opt = "";
 std::string prefix_path_opt = "";
+bool run_daemon_opt = false;
 
 int main(int argc, const char **argv) {
     // TODO: set the prefix of the server
@@ -45,6 +46,11 @@ int main(int argc, const char **argv) {
     // user provided a specific conf file on the command line
     if (conf_file_opt.size() > 0) {
         conf_file_loc = conf_file_opt;
+    }
+
+    // run as a daemon
+    if (run_daemon_opt) {
+        // TODO:
     }
 
     handle_signals();
@@ -96,6 +102,7 @@ void parse_opts(int argc, const char **argv) {
     c.add_flag('v', print_version);
     c.add_flag('h', print_help);
     c.add_flag('t', test_conf);
+    c.add_flag('d', run_daemon_opt);
     c.add_option('c', conf_file_opt);
     c.add_option('p', prefix_path_opt);
     c.parse();
@@ -198,6 +205,7 @@ void print_usage() {
     std::cerr << "  -h\t\t: This help menu\n";
     std::cerr << "  -v\t\t: Show server version and exit\n";
     std::cerr << "  -t\t\t: Test the configuration file and exit\n";
+    std::cerr << "  -d\t\t: Run the server in the background (as a daemon)\n";
     std::cerr << "  -p prefix\t: Set the path of the prefix\n";
     std::cerr << "  -c filename\t: Use the specified configuration file\n";
     std::exit(EXIT_SUCCESS);
