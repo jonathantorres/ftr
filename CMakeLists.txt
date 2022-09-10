@@ -28,6 +28,12 @@ FetchContent_Declare(
     GIT_TAG 40ba67be6741327e35000816526441a6d12466ed
 )
 
+FetchContent_Declare(
+    daemon
+    GIT_REPOSITORY https://github.com/jonathantorres/daemon.git
+    GIT_TAG e04d1e6774643cc35328c471e264f8c33baa7a66
+)
+
 if (${CMAKE_VERSION} VERSION_LESS 3.14)
     FetchContent_GetProperties(Catch2)
     if (NOT Catch2_POPULATED)
@@ -46,8 +52,14 @@ if (${CMAKE_VERSION} VERSION_LESS 3.14)
         FetchContent_Populate(cmd)
         add_subdirectory(${cmd_SOURCE_DIR} ${cmd_BINARY_DIR})
     endif()
+
+    FetchContent_GetProperties(daemon)
+    if (NOT daemon_POPULATED)
+        FetchContent_Populate(daemon)
+        add_subdirectory(${daemon_SOURCE_DIR} ${daemon_BINARY_DIR})
+    endif()
 else()
-    FetchContent_MakeAvailable(Catch2 string cmd)
+    FetchContent_MakeAvailable(Catch2 string cmd daemon)
 endif()
 
 add_compile_options(-Wall -Wextra -Wpedantic -Werror)
