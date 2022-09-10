@@ -10,6 +10,11 @@ set(CMAKE_CXX_EXTENSIONS False)
 
 add_compile_options(-Wall -Wextra -Wpedantic -Werror)
 
+configure_file(
+    ${PROJECT_SOURCE_DIR}/src/config.hpp.in
+    ${PROJECT_SOURCE_DIR}/src/config.hpp
+)
+
 include(FetchContent)
 
 FetchContent_Declare(

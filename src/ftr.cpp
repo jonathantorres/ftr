@@ -3,12 +3,14 @@
 #include "log.hpp"
 #include "server.hpp"
 #include <cmd.hpp>
+#include <config.hpp>
 #include <cstdlib>
 #include <daemon.hpp>
 #include <exception>
 #include <iostream>
 #include <memory>
 #include <signal.h>
+#include <string.hpp>
 #include <string>
 #include <sys/wait.h>
 
@@ -17,11 +19,10 @@ void print_usage();
 void print_ftr_version();
 void handle_signals();
 
-const std::string VERSION = "0.0.1";
-const std::string PROG_NAME = "ftr";
+const std::string VERSION(FTR_VERSION);
+const std::string PROG_NAME(FTR_PROG_NAME);
 
-// TODO: this will be changed soon
-std::string prefix = "/home/jonathan/dev/ftr/";
+std::string prefix(FTR_PREFIX);
 
 // TODO: could there be a way that these are not used as globals?
 std::shared_ptr<ftr::log> serv_log = nullptr;
@@ -32,8 +33,6 @@ std::string prefix_path_opt = "";
 bool run_daemon_opt = false;
 
 int main(int argc, const char **argv) {
-    // TODO: set the prefix of the server
-    // at compile time
     parse_opts(argc, argv);
 
     bool log_stderr = true;
@@ -41,6 +40,11 @@ int main(int argc, const char **argv) {
     // user provided a specific prefix on the command line
     if (prefix_path_opt.size() > 0) {
         prefix = prefix_path_opt;
+    }
+
+    // make sure the prefix path ends with "/"
+    if (!string::ends_with(prefix, "/")) {
+        prefix.append(1, '/');
     }
 
     std::string conf_file_loc = prefix + ftr::DEFAULT_CONF;
