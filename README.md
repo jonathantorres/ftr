@@ -15,7 +15,7 @@ sudo make install
 ## Development build and running tests
 Use `cmake` to build the development version, for code changes and bugfixes, and also to build and run all of the tests.
 ```bash
-cmake -S . -B build
+cmake -S . -B build -DCMAKE_INSTALL_PREFIX={your git clone location}
 cd build
 cmake --build .
 ```
