@@ -140,6 +140,11 @@ void parse_opts(int argc, const char **argv) {
         std::cerr << "Testing the configuration file...";
         conf = std::make_shared<ftr::conf>();
 
+        // make sure the prefix path ends with "/"
+        if (!string::ends_with(prefix, "/")) {
+            prefix.append(1, '/');
+        }
+
         try {
             conf->load(prefix + ftr::DEFAULT_CONF, "");
             std::cerr << "OK.\n";
