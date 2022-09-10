@@ -40,7 +40,10 @@ jobs:
   clang_tests:
     name: Clang ${{ matrix.ver }}
     runs-on: ubuntu-latest
-    container: silkeh/clang:${{ matrix.ver }}
+    container:
+      image: silkeh/clang:${{ matrix.ver }}
+      volumes:
+        - ${{github.workspace}}:${{github.workspace}}
     strategy:
       matrix:
         ver: [11, 12, 13, 14]
