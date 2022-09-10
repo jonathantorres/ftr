@@ -4,6 +4,7 @@
 #include "server.hpp"
 #include <cmd.hpp>
 #include <cstdlib>
+#include <daemon.hpp>
 #include <exception>
 #include <iostream>
 #include <memory>
@@ -17,6 +18,7 @@ void print_ftr_version();
 void handle_signals();
 
 const std::string VERSION = "0.0.1";
+const std::string PROG_NAME = "ftr";
 
 // TODO: this will be changed soon
 std::string prefix = "/home/jonathan/dev/ftr/";
@@ -50,7 +52,12 @@ int main(int argc, const char **argv) {
 
     // run as a daemon
     if (run_daemon_opt) {
-        // TODO:
+        log_stderr = false;
+        net::daemonize(PROG_NAME);
+
+        if (net::daemon_is_running(PROG_NAME, prefix + PROG_NAME + ".pid")) {
+            std::exit(EXIT_FAILURE);
+        }
     }
 
     handle_signals();
