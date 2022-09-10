@@ -131,7 +131,7 @@ void server::reload(const std::string &prefix) {
     auto conf = std::make_shared<ftr::conf>();
 
     try {
-        conf->load(prefix + ftr::DEFAULT_CONF, "");
+        conf->load(prefix + ftr::DEFAULT_CONF);
     } catch (std::exception &e) {
         m_log->log_err("server Configuration error: ", e.what());
         return;

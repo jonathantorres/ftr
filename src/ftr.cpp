@@ -73,7 +73,7 @@ int main(int argc, const char **argv) {
 
         try {
             // load and test the configuration file
-            conf->load(conf_file_loc, "");
+            conf->load(conf_file_loc);
             serv_log->init(prefix, conf, log_stderr);
         } catch (std::exception &e) {
             std::cerr << "server configuration error: " << e.what() << '\n';
@@ -146,7 +146,7 @@ void parse_opts(int argc, const char **argv) {
         }
 
         try {
-            conf->load(prefix + ftr::DEFAULT_CONF, "");
+            conf->load(prefix + ftr::DEFAULT_CONF);
             std::cerr << "OK.\n";
             conf.reset();
             std::exit(EXIT_SUCCESS);
