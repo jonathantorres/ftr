@@ -14,7 +14,10 @@ jobs:
   gcc_tests:
     name: GCC ${{ matrix.ver }}
     runs-on: ubuntu-latest
-    container: gcc:${{ matrix.ver }}
+    container:
+      image: gcc:${{ matrix.ver }}
+      volumes:
+        - ${{github.workspace}}:${{github.workspace}}
     strategy:
       matrix:
         ver: [9, 10, 11, 12]
