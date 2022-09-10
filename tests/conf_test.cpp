@@ -11,6 +11,7 @@ std::string prefix(FTR_PREFIX);
 
 TEST_CASE("load configuration file") {
     const std::string conf_file(prefix + "/tests/confs/basic.conf");
+    std::cerr << "path: " << prefix + "/tests/confs/basic.conf\n";
     conf c;
     c.load(conf_file);
 
