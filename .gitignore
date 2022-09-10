@@ -3,3 +3,4 @@
 *.h.gch
 *.hpp.gch
 /build
+/release
