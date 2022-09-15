@@ -120,10 +120,6 @@ void server::shutdown() {
     }
 
     m_log->log_acc("Server shutdown complete");
-
-    if (!m_is_reloading) {
-        std::exit(EXIT_SUCCESS);
-    }
 }
 
 void server::reload(const std::string &prefix) {
