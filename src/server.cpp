@@ -230,10 +230,10 @@ std::string server::get_all_commands_help_msg() {
 }
 
 int server::get_server_ctrl_listener() {
-    server::HostType host_type = validate_server_host();
+    server::host_type server_host_type = validate_server_host();
     int fd = -1;
 
-    if (host_type == server::HostType::Invalid) {
+    if (server_host_type == server::host_type::invalid) {
         throw server_error("invalid host name");
     }
 
@@ -331,20 +331,20 @@ std::string server::get_addr_string(struct sockaddr *addr) {
     return std::string("unknown address family");
 }
 
-server::HostType server::validate_server_host() {
+server::host_type server::validate_server_host() {
     if (ftr::is_ipv4(m_host)) {
         // host matches valid ipv4 address
-        return server::HostType::IPv4;
+        return server::host_type::ipv4;
     } else if (ftr::is_ipv6(m_host)) {
         // host matches a valid ipv6 address
-        return server::HostType::IPv6;
+        return server::host_type::ipv6;
     } else if (ftr::is_domain_name(m_host)) {
         // host matches valid domain name
-        return server::HostType::DomainName;
+        return server::host_type::domain_name;
     } else if (m_host == "localhost") {
         // TODO: special case for localhost????
-        return server::HostType::DomainName;
+        return server::host_type::domain_name;
     }
 
-    return server::HostType::Invalid;
+    return server::host_type::invalid;
 }

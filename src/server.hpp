@@ -54,15 +54,15 @@ class server {
     bool m_is_reloading;
     bool m_is_shutting_down;
 
-    enum class HostType {
-        DomainName,
-        IPv4,
-        IPv6,
-        Invalid,
+    enum class host_type {
+        domain_name,
+        ipv4,
+        ipv6,
+        invalid,
     };
 
     int get_server_ctrl_listener();
-    HostType validate_server_host();
+    host_type validate_server_host();
     int bind_address(const struct addrinfo *addr_info);
     void handle_conn(const int conn_fd);
 };
