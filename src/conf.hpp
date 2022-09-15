@@ -36,7 +36,7 @@ class conf {
     conf &operator=(conf &&rhs) = delete;
     conf &operator=(const conf &rhs) = delete;
 
-    void load(const std::string &path, const std::string &prefix);
+    void load(const std::string &path);
     const std::vector<std::shared_ptr<ftr::user>> &get_users() const {
         return m_users;
     }

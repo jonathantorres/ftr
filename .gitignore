@@ -2,4 +2,6 @@
 *.o
 *.h.gch
 *.hpp.gch
+src/config.hpp
 /build
+/release

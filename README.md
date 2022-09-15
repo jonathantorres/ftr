@@ -1,16 +1,23 @@
 # ftr
+[![Tests](https://github.com/jonathantorres/ftr/actions/workflows/tests.yml/badge.svg)](https://github.com/jonathantorres/ftr/actions/workflows/tests.yml)
+
 FTR (File Transfer) is an FTP server.
 
 ## Installing/Building from source
-In order to build from source, make sure to use `git` to clone the repository, once done you can use the `make` utility to compile the source code:
+In order to build a release from source, make sure to use `git` to clone the repository, once done you can use `cmake` and `make` to compile the source code. We recommend using the `CMAKE_INSTALL_PREFIX` to select the location in which to install, the suggested location is `/usr/local/ftr`.
 ```bash
-make
+cmake -S . -B release -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local/ftr
+cd release
+make ftr
+sudo make install
 ```
 
-## Running tests
-Use `make` to run all of the tests:
+## Development build and running tests
+Use `cmake` to build the development version, for code changes and bugfixes, and also to build and run all of the tests.
 ```bash
-make test
+cmake -S . -B build -DCMAKE_INSTALL_PREFIX={your git clone location}
+cd build
+cmake --build .
 ```
 
 ## Configuration

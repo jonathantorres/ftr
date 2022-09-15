@@ -8,13 +8,16 @@ on:
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
-  BUILD_TYPE: Release
+  BUILD_TYPE: Debug
 
 jobs:
   gcc_tests:
     name: GCC ${{ matrix.ver }}
     runs-on: ubuntu-latest
-    container: gcc:${{ matrix.ver }}
+    container:
+      image: gcc:${{ matrix.ver }}
+      volumes:
+        - ${{github.workspace}}:${{github.workspace}}
     strategy:
       matrix:
         ver: [9, 10, 11, 12]
@@ -28,18 +31,19 @@ jobs:
       run: apt-get update && apt-get -y install cmake
 
     - name: Configure CMake
-      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX=${{github.workspace}}
 
       # Build your program with the given configuration
     - name: Build and Test
-      run: |
-        cd ${{github.workspace}}/build
-        cmake --build . --config ${{env.BUILD_TYPE}}
+      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
 
   clang_tests:
     name: Clang ${{ matrix.ver }}
     runs-on: ubuntu-latest
-    container: silkeh/clang:${{ matrix.ver }}
+    container:
+      image: silkeh/clang:${{ matrix.ver }}
+      volumes:
+        - ${{github.workspace}}:${{github.workspace}}
     strategy:
       matrix:
         ver: [11, 12, 13, 14]
@@ -54,12 +58,10 @@ jobs:
       run: apt-get update && apt-get -y install cmake
 
     - name: Configure CMake
-      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX=${{github.workspace}}
 
     - name: Build and Test
-      run: |
-        cd ${{github.workspace}}/build
-        cmake --build . --config ${{env.BUILD_TYPE}}
+      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
 
   macos_tests:
     name: MacOS
@@ -72,9 +74,7 @@ jobs:
     - uses: actions/checkout@v2
     
     - name: Configure CMake
-      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX=${{github.workspace}}
     
     - name: Build and Test
-      run: |
-        cd ${{github.workspace}}/build
-        cmake --build . --config ${{env.BUILD_TYPE}}
+      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}

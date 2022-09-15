@@ -2,35 +2,67 @@
 #include "constants.hpp"
 #include "log.hpp"
 #include "server.hpp"
+#include <cmd.hpp>
+#include <config.hpp>
 #include <cstdlib>
+#include <daemon.hpp>
 #include <exception>
 #include <iostream>
 #include <memory>
 #include <signal.h>
+#include <string.hpp>
 #include <string>
 #include <sys/wait.h>
 
-void parse_opts(int argc, char **argv);
+void parse_opts(int argc, const char **argv);
 void print_usage();
-void print_version();
+void print_ftr_version();
 void handle_signals();
 
-const std::string VERSION = "0.0.1";
+const std::string VERSION(FTR_VERSION);
+const std::string PROG_NAME(FTR_PROG_NAME);
 
-// TODO: this will be changed soon
-std::string prefix = "/home/jonathan/dev/ftr/";
+std::string prefix(FTR_PREFIX);
 
 // TODO: could there be a way that these are not used as globals?
 std::shared_ptr<ftr::log> serv_log = nullptr;
 std::shared_ptr<ftr::conf> conf = nullptr;
 std::shared_ptr<ftr::server> server = nullptr;
+std::string conf_file_opt = "";
+std::string prefix_path_opt = "";
+bool run_daemon_opt = false;
 
-int main(int argc, char **argv) {
-    // TODO: set the prefix of the server
-    // at compile time
+int main(int argc, const char **argv) {
     parse_opts(argc, argv);
 
     bool log_stderr = true;
+
+    // user provided a specific prefix on the command line
+    if (prefix_path_opt.size() > 0) {
+        prefix = prefix_path_opt;
+    }
+
+    // make sure the prefix path ends with "/"
+    if (!string::ends_with(prefix, "/")) {
+        prefix.append(1, '/');
+    }
+
+    std::string conf_file_loc = prefix + ftr::DEFAULT_CONF;
+
+    // user provided a specific conf file on the command line
+    if (conf_file_opt.size() > 0) {
+        conf_file_loc = conf_file_opt;
+    }
+
+    // run as a daemon
+    if (run_daemon_opt) {
+        log_stderr = false;
+        net::daemonize(PROG_NAME);
+
+        if (net::daemon_is_running(PROG_NAME, prefix + PROG_NAME + ".pid")) {
+            std::exit(EXIT_FAILURE);
+        }
+    }
 
     handle_signals();
 
@@ -41,7 +73,7 @@ int main(int argc, char **argv) {
 
         try {
             // load and test the configuration file
-            conf->load(prefix + ftr::DEFAULT_CONF, "");
+            conf->load(conf_file_loc);
             serv_log->init(prefix, conf, log_stderr);
         } catch (std::exception &e) {
             std::cerr << "server configuration error: " << e.what() << '\n';
@@ -72,42 +104,56 @@ int main(int argc, char **argv) {
     return 0;
 }
 
-void parse_opts(int argc, char **argv) {
-    if (argc <= 1) {
-        return;
+void parse_opts(int argc, const char **argv) {
+    cmd::command c{argc, argv};
+    bool print_version = false;
+    bool print_help = false;
+    bool test_conf = false;
+
+    c.add_flag('v', print_version);
+    c.add_flag('h', print_help);
+    c.add_flag('t', test_conf);
+    c.add_flag('d', run_daemon_opt);
+    c.add_option('c', conf_file_opt);
+    c.add_option('p', prefix_path_opt);
+    c.parse();
+
+    // user provided something we don't have an option for
+    if (c.unknown_value_found()) {
+        std::cerr << "Unknown option \"" << c.unknown_flag()
+                  << "\" please try again\n";
+        std::exit(EXIT_FAILURE);
     }
 
-    for (int i = 1; i < argc; i++) {
-        std::string cur_arg(argv[i]);
-        if (cur_arg == "-v") {
-            // print version and exit
-            print_version();
-        } else if (cur_arg == "-h") {
-            // print help and exit
-            print_usage();
-        } else if (cur_arg == "-t") {
-            // TODO: test the configuration file
-            std::cerr << "Testing the configuration file...\n";
+    // print version and exit
+    if (print_version) {
+        print_ftr_version();
+    }
+
+    // print help and exit
+    if (print_help) {
+        print_usage();
+    }
+
+    // test the configuration file and exit
+    if (test_conf) {
+        std::cerr << "Testing the configuration file...";
+        conf = std::make_shared<ftr::conf>();
+
+        // make sure the prefix path ends with "/"
+        if (!string::ends_with(prefix, "/")) {
+            prefix.append(1, '/');
+        }
+
+        try {
+            conf->load(prefix + ftr::DEFAULT_CONF);
+            std::cerr << "OK.\n";
+            conf.reset();
             std::exit(EXIT_SUCCESS);
-        } else if (cur_arg == "-c") {
-            i++;
-            if (argv[i] == NULL) {
-                std::cerr << "Error! a configuration file is required\n";
-                std::exit(EXIT_FAILURE);
-            }
-            // TODO: a configuration file was specified
-            std::cout << "using conf file: " << argv[i] << "\n";
-        } else if (cur_arg == "-p") {
-            i++;
-            if (argv[i] == NULL) {
-                std::cerr << "Error! the path of the new prefix is required\n";
-                std::exit(EXIT_FAILURE);
-            }
-            // TODO: a new prefix was specified
-            std::cout << "using prefix: " << argv[i] << "\n";
-        } else {
-            std::cerr << "Unknown option \"" << argv[i]
-                      << "\" please try again\n";
+        } catch (std::exception &e) {
+            std::cerr << "Failed. ";
+            std::cerr << e.what();
+            std::cerr << '\n';
             std::exit(EXIT_FAILURE);
         }
     }
@@ -175,12 +221,13 @@ void print_usage() {
     std::cerr << "  -h\t\t: This help menu\n";
     std::cerr << "  -v\t\t: Show server version and exit\n";
     std::cerr << "  -t\t\t: Test the configuration file and exit\n";
+    std::cerr << "  -d\t\t: Run the server in the background (as a daemon)\n";
     std::cerr << "  -p prefix\t: Set the path of the prefix\n";
     std::cerr << "  -c filename\t: Use the specified configuration file\n";
     std::exit(EXIT_SUCCESS);
 }
 
-void print_version() {
+void print_ftr_version() {
     std::cerr << "ftr version v" << VERSION << "\n";
     std::exit(EXIT_SUCCESS);
 }

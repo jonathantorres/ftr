@@ -1,7 +1,9 @@
 #include "conf.hpp"
 #include "exception.hpp"
 #include "util.hpp"
+#include <cerrno>
 #include <cstdlib>
+#include <cstring>
 #include <fstream>
 #include <ios>
 #include <iostream>
@@ -12,15 +14,10 @@
 
 using namespace ftr;
 
-void conf::load(const std::string &path, const std::string &prefix) {
-    if (prefix == "") {
-        // TODO: do something with the prefix
-    }
-
+void conf::load(const std::string &path) {
     std::vector<std::string> conf_file_lines = open_and_strip_comments(path);
 
     if (conf_file_lines.empty()) {
-        // TODO: maybe log this?
         throw ftr::conf_error("there are no lines in the configuration");
     }
 
@@ -97,7 +94,7 @@ conf::open_and_strip_comments(const std::string &path) {
     std::vector<std::string> conf_file_lines;
 
     if (!fs.is_open() || !fs.good()) {
-        throw conf_error("There was a problem opening the file");
+        throw conf_error(std::strerror(errno));
     }
 
     std::string line;
