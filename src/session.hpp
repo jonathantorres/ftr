@@ -30,9 +30,15 @@ class session {
     ~session() = default;
     session(const int conn_fd, ftr::server &server,
             std::shared_ptr<ftr::log> log)
-        : m_control_conn_fd{conn_fd}, m_data_conn_fd{0}, m_pass_mode{false},
-          m_transfer_in_progress{false}, m_server{server}, m_log{log},
-          m_transfer_ready{false}, m_transfer_done{false} {}
+        : m_control_conn_fd{conn_fd},
+          m_data_conn_fd{0},
+          m_data_conn_port{0},
+          m_pass_mode{false},
+          m_transfer_in_progress{false},
+          m_server{server},
+          m_log{log},
+          m_transfer_ready{false},
+          m_transfer_done{false} {}
 
     session(const session &session) = delete;
     session(session &&session) = delete;

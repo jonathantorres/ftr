@@ -18,8 +18,12 @@ namespace ftr {
 class server {
   public:
     server()
-        : m_conf{nullptr}, m_port{0}, m_ctrl_listener_fd{0},
-          m_is_reloading{false}, m_is_shutting_down{false} {};
+        : m_conf{nullptr},
+          m_log{nullptr},
+          m_port{0},
+          m_ctrl_listener_fd{0},
+          m_is_reloading{false},
+          m_is_shutting_down{false} {};
     ~server() = default;
 
     server(const server &server) = delete;

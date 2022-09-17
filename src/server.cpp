@@ -129,7 +129,7 @@ void server::reload(const std::string &prefix) {
     try {
         conf->load(prefix + ftr::DEFAULT_CONF);
     } catch (std::exception &e) {
-        m_log->log_err("server Configuration error: ", e.what());
+        m_log->log_err("server configuration error: ", e.what());
         return;
     }
 

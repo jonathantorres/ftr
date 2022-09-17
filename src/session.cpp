@@ -724,7 +724,6 @@ void session::run_retrieve(const std::string filename) {
             m_server.send_response(m_control_conn_fd,
                                    ftr::STATUS_CODE_FILE_ACTION_NOT_TAKEN,
                                    strerror(errno));
-
             return;
         }
 
