@@ -78,27 +78,42 @@ void server::start(const std::shared_ptr<ftr::conf> conf,
             break;
         }
 
+        // create session id
+        std::random_device rd;
+        std::uniform_int_distribution<int> dist(1, 1000000);
+        int id = dist(rd);
+
         // handle the client
-        std::thread handle(&server::handle_conn, this, conn_fd);
-        handle.detach();
+        std::thread client_thrd(&server::handle_conn, this, conn_fd, id);
+        m_session_threads[id] = std::move(client_thrd);
     }
 }
 
-void server::handle_conn(const int conn_fd) {
+void server::handle_conn(const int conn_fd, const int session_id) {
     // send welcome message
     send_response(conn_fd, ftr::STATUS_CODE_SERVICE_READY, "");
-
-    std::random_device rd;
-    std::uniform_int_distribution<int> dist(1, 1000000);
-    int id = dist(rd);
 
     // TODO: could this be made better
     // not sure if using *this over here is the right thing to do
     std::shared_ptr s = std::make_shared<session>(conn_fd, *this, m_log);
 
-    m_sessions[id] = s;
+    m_sessions[session_id] = s;
     s->start();
-    m_sessions.erase(id);
+
+    // client finished normally (not from a shutdown)
+    // remove this session from the map of sessions
+    if (!m_is_shutting_down) {
+        m_sessions.erase(session_id);
+
+        // extract and cleanup thread object
+        auto node_handle = m_session_threads.extract(session_id);
+
+        if (!node_handle.empty()) {
+            if (node_handle.mapped().joinable()) {
+                node_handle.mapped().detach();
+            }
+        }
+    }
 }
 
 void server::shutdown() {
@@ -108,6 +123,13 @@ void server::shutdown() {
     for (auto it = m_sessions.begin(); it != m_sessions.end(); ++it) {
         std::shared_ptr<ftr::session> sess = it->second;
         sess->quit();
+    }
+
+    for (auto it = m_session_threads.begin(); it != m_session_threads.end();
+         ++it) {
+        if (it->second.joinable()) {
+            it->second.join();
+        }
     }
 
     if (m_ctrl_listener_fd > 0) {

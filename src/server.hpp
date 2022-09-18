@@ -12,6 +12,7 @@
 #include <string>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <thread>
 
 namespace ftr {
 
@@ -53,6 +54,7 @@ class server {
     std::shared_ptr<ftr::conf> m_conf;
     std::shared_ptr<ftr::log> m_log;
     std::map<int, std::shared_ptr<ftr::session>> m_sessions;
+    std::map<int, std::thread> m_session_threads;
     int m_port;
     int m_ctrl_listener_fd;
     bool m_is_reloading;
@@ -68,7 +70,7 @@ class server {
     int get_server_ctrl_listener();
     host_type validate_server_host();
     int bind_address(const struct addrinfo *addr_info);
-    void handle_conn(const int conn_fd);
+    void handle_conn(const int conn_fd, const int session_id);
 };
 
 } // namespace ftr
