@@ -159,15 +159,6 @@ void parse_opts(int argc, const char **argv) {
     }
 }
 
-void wait_for_children() {
-    int status;
-    while (waitpid(-1, &status, WNOHANG) > 0) {
-        // do nothing for now
-        // maybe we should log this
-    }
-    return;
-}
-
 void sig_handler(int signum) {
     switch (signum) {
     case SIGTERM:
@@ -177,9 +168,6 @@ void sig_handler(int signum) {
         break;
     case SIGHUP:
         server->reload(prefix);
-        break;
-    case SIGCHLD:
-        wait_for_children();
         break;
     }
 }
