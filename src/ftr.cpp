@@ -195,11 +195,6 @@ void handle_signals() {
     if (sigaction(SIGHUP, &act, NULL) == -1) {
         // TODO: log the error
     }
-
-    // handling of terminated children
-    if (sigaction(SIGCHLD, &act, NULL) == -1) {
-        // TODO: log the error
-    }
 }
 
 void print_usage() {
