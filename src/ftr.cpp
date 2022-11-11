@@ -43,7 +43,7 @@ int main(int argc, const char **argv) {
     }
 
     // make sure the prefix path ends with "/"
-    if (!string::ends_with(prefix, "/")) {
+    if (!xtd::ends_with(prefix, "/")) {
         prefix.append(1, '/');
     }
 
@@ -57,9 +57,9 @@ int main(int argc, const char **argv) {
     // run as a daemon
     if (run_daemon_opt) {
         log_stderr = false;
-        net::daemonize(PROG_NAME);
+        xtd::daemonize(PROG_NAME);
 
-        if (net::daemon_is_running(PROG_NAME, prefix + PROG_NAME + ".pid")) {
+        if (xtd::daemon_is_running(PROG_NAME, prefix + PROG_NAME + ".pid")) {
             std::exit(EXIT_FAILURE);
         }
     }
@@ -105,7 +105,7 @@ int main(int argc, const char **argv) {
 }
 
 void parse_opts(int argc, const char **argv) {
-    cmd::command c{argc, argv};
+    xtd::command c{argc, argv};
     bool print_version = false;
     bool print_help = false;
     bool test_conf = false;
@@ -141,7 +141,7 @@ void parse_opts(int argc, const char **argv) {
         conf = std::make_shared<ftr::conf>();
 
         // make sure the prefix path ends with "/"
-        if (!string::ends_with(prefix, "/")) {
+        if (!xtd::ends_with(prefix, "/")) {
             prefix.append(1, '/');
         }
 

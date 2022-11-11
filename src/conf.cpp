@@ -41,10 +41,9 @@ void conf::build(const std::vector<std::string> &conf_vec) {
         if ((eq_pos = line.find_first_of(ftr::conf::EQUAL_SIGN)) !=
             std::string::npos) {
             // this is a line with an option
-            std::string op_name =
-                string::trim_whitespace(line.substr(0, eq_pos));
+            std::string op_name = xtd::trim_whitespace(line.substr(0, eq_pos));
             std::string op_value =
-                string::trim_whitespace(line.substr(eq_pos + 1));
+                xtd::trim_whitespace(line.substr(eq_pos + 1));
 
             if (inside_usr_cmd) {
                 // option for the current user

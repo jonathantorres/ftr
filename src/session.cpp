@@ -226,7 +226,7 @@ void session::handle_command(
     const std::array<char, ftr::DEFAULT_CMD_SIZE> &client_cmd) {
     std::string cmd_string =
         std::string(reinterpret_cast<const char *>(client_cmd.data()));
-    cmd_string = string::trim_whitespace(cmd_string);
+    cmd_string = xtd::trim_whitespace(cmd_string);
     std::string cmd;
     std::string cmd_params;
     bool found_first_space = false;
@@ -832,14 +832,14 @@ void session::run_change_parent() {
     }
 
     std::string cur_wd = m_cwd;
-    std::vector<std::string> pieces = string::split(m_cwd, "/");
+    std::vector<std::string> pieces = xtd::split(m_cwd, "/");
 
     if (pieces.size() <= 1) {
         cur_wd = "";
     } else {
         pieces.pop_back();
 
-        cur_wd = string::join(pieces, "/");
+        cur_wd = xtd::join(pieces, "/");
     }
 
     const std::shared_ptr<ftr::conf> conf = m_server.get_conf();
@@ -1002,10 +1002,10 @@ void session::run_ext_passv_mode(const std::string &cmd_params) {
 
 void session::run_port(const std::string &cmd_params) {
     // we are ignoring the address here, just use the port part
-    std::vector<std::string> pieces = string::split(cmd_params, ",");
+    std::vector<std::string> pieces = xtd::split(cmd_params, ",");
 
-    unsigned long p1 = std::stoul(string::trim_whitespace(pieces[4]));
-    unsigned long p2 = std::stoul(string::trim_whitespace(pieces[5]));
+    unsigned long p1 = std::stoul(xtd::trim_whitespace(pieces[4]));
+    unsigned long p2 = std::stoul(xtd::trim_whitespace(pieces[5]));
 
     unsigned int p = static_cast<unsigned int>(p1);
     p <<= 8;
@@ -1025,14 +1025,14 @@ void session::run_port(const std::string &cmd_params) {
 
 void session::run_ext_addr_port(const std::string &cmd_params) {
     // we are ignoring the address here, just use the port part
-    std::vector<std::string> pieces = string::split(cmd_params, "|");
+    std::vector<std::string> pieces = xtd::split(cmd_params, "|");
     bool use_ipv6 = false;
 
     if (pieces[1] == "2") {
         use_ipv6 = true;
     }
 
-    unsigned long port = std::stoul(string::trim_whitespace(pieces[3]));
+    unsigned long port = std::stoul(xtd::trim_whitespace(pieces[3]));
 
     try {
         connect_to_data_conn(port, use_ipv6);
@@ -1059,7 +1059,7 @@ void session::run_help(const std::string &cmd_args) {
         if (help_msg == "") {
             ss << "Sorry, the command " << cmd_args << " is not implemented\n";
         } else {
-            ss << string::to_upper(cmd_args) << ": " << help_msg << '\n';
+            ss << xtd::to_upper(cmd_args) << ": " << help_msg << '\n';
         }
     }
 
@@ -1108,7 +1108,7 @@ void session::run_site() {
 }
 
 void session::run_mode(const std::string &args) {
-    if (string::to_lower(args) != "s") {
+    if (xtd::to_lower(args) != "s") {
         m_server.send_response(m_control_conn_fd,
                                ftr::STATUS_CODE_CMD_NOT_IMPLEMENTED_FOR_PARAM,
                                "");
@@ -1157,7 +1157,7 @@ void session::run_abort() {
 }
 
 void session::run_file_struct(const std::string &args) {
-    if (string::to_lower(args) != "f") {
+    if (xtd::to_lower(args) != "f") {
         m_server.send_response(m_control_conn_fd,
                                ftr::STATUS_CODE_CMD_NOT_IMPLEMENTED_FOR_PARAM,
                                "");
@@ -1221,7 +1221,7 @@ void session::run_rename_from(const std::string &from) {
         return;
     }
 
-    m_rename_from = string::trim_whitespace(from);
+    m_rename_from = xtd::trim_whitespace(from);
     m_server.send_response(m_control_conn_fd,
                            ftr::STATUS_CODE_REQUESTED_FILE_ACTION, "");
 }
@@ -1247,7 +1247,7 @@ void session::run_rename_to(const std::string &new_file) {
     }
 
     auto conf = m_server.get_conf();
-    std::string new_file_name = string::trim_whitespace(new_file);
+    std::string new_file_name = xtd::trim_whitespace(new_file);
     std::filesystem::path oldpath(conf->get_root() + m_session_user.root + "/" +
                                   m_cwd + "/" + m_rename_from);
     std::filesystem::path newpath(conf->get_root() + m_session_user.root + "/" +
