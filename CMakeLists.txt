@@ -20,7 +20,7 @@ include(FetchContent)
 FetchContent_Declare(
     xtd
     GIT_REPOSITORY https://github.com/jonathantorres/xtd.git
-    GIT_TAG 963d95353d2db2bc5d1b8f21502f3d8095b2614f
+    GIT_TAG 17366c048dee10d748b3c3fd7fea908c9716a899
 )
 
 if (${CMAKE_VERSION} VERSION_LESS 3.14)
