@@ -28,7 +28,7 @@ add_custom_command(TARGET conf_test
     VERBATIM
 )
 
-target_link_libraries(conf_test PRIVATE Catch2::Catch2WithMain PUBLIC string)
+target_link_libraries(conf_test PRIVATE Catch2::Catch2WithMain)
 
 add_executable(util_test
     util_test.cpp
