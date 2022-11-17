@@ -8,8 +8,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/jonathantorres/ftr/internal/conf"
-	"github.com/jonathantorres/ftr/internal/logger"
+	"github.com/jonathantorres/ftpd/internal/conf"
+	"github.com/jonathantorres/ftpd/internal/logger"
 )
 
 var Prefix = ""
@@ -17,7 +17,7 @@ var Prefix = ""
 const (
 	ControlPort                    = 21
 	DefaultName                    = "localhost"
-	DefaultConf                    = "ftr.conf"
+	DefaultConf                    = "ftpd.conf"
 	defaultCmdSize                 = 512
 	TransferTypeAscii TransferType = "A"
 	TransferTypeImage TransferType = "I"

@@ -1,10 +1,10 @@
-# ftr
-FTR (File Transfer) is an FTP server.
+# ftpd
+ftpd is an FTP server.
 
 ## Installing
 Install the binary with `go get`:
 ```bash
-go get -u github.com/jonathantorres/ftr
+go get -u github.com/jonathantorres/ftpd
 ```
 
 ## Build from source
@@ -20,7 +20,7 @@ make test
 ```
 
 ## Configuration
-You can see an example configuration file in `ftr.conf`, in here you can customize the users for the server along with their passwords and root directories. Every configuration option is explained below.
+You can see an example configuration file in `ftpd.conf`, in here you can customize the users for the server along with their passwords and root directories. Every configuration option is explained below.
 
 - `server`: Specify an IP address or domain name in which the server will listen to requests from clients
 - `port`: Port in which to run the server
@@ -35,5 +35,5 @@ You can see an example configuration file in `ftr.conf`, in here you can customi
 ## Command Line options
 You can use the `-h` flag to see all of the command line options in which the server can run
 ```bash
-ftr -h
+ftpd -h
 ```

@@ -383,7 +383,7 @@ func runCommandHelp(s *Session, cmdArgs string) error {
 	var resp bytes.Buffer
 
 	if cmdArgs == "" {
-		var welcome = "Welcome to FTR, enter a command name to get more information about it. Current commands: "
+		var welcome = "Welcome to FTPD, enter a command name to get more information about it. Current commands: "
 		resp.WriteString(welcome)
 		resp.WriteString(getAllCommandsHelpMessage())
 		resp.WriteString("\n")

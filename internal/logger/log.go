@@ -5,10 +5,10 @@ import (
 	"log"
 	"os"
 
-	"github.com/jonathantorres/ftr/internal/conf"
+	"github.com/jonathantorres/ftpd/internal/conf"
 )
 
-const Prefix = "ftr:"
+const Prefix = "ftpd:"
 
 type Log struct {
 	l         *log.Logger
