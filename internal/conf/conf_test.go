@@ -80,7 +80,7 @@ func TestServerConfIsBuilt(t *testing.T) {
 		if err != nil {
 			t.Errorf("%s", err)
 		}
-		conf, err := buildServerConf(file)
+		conf, err := buildServerConf(file, "")
 		if err != nil {
 			t.Errorf("%s", err)
 		}
