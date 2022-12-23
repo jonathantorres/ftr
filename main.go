@@ -59,23 +59,11 @@ func parseFlags() string {
 		prefixF  string
 		confF    string
 	)
-	const (
-		versionD = "Print the server version and exit"
-		helpD    = "Print the help contents and exit"
-		testD    = "Test the configuration file and exit"
-		prefixD  = "Set the prefix path"
-		confD    = "Set the configuration file"
-	)
-	flag.BoolVar(&versionF, "version", false, versionD)
-	flag.BoolVar(&versionF, "v", false, versionD)
-	flag.BoolVar(&helpF, "help", false, helpD)
-	flag.BoolVar(&helpF, "h", false, helpD)
-	flag.BoolVar(&testF, "test", false, testD)
-	flag.BoolVar(&testF, "t", false, testD)
-	flag.StringVar(&prefixF, "prefix", server.Prefix, prefixD)
-	flag.StringVar(&prefixF, "p", server.Prefix, prefixD)
-	flag.StringVar(&confF, "conf", server.Prefix+server.DefaultConf, confD)
-	flag.StringVar(&confF, "c", server.Prefix+server.DefaultConf, confD)
+	flag.BoolVar(&versionF, "v", false, "Print the server version and exit")
+	flag.BoolVar(&helpF, "h", false, "Print the help contents and exit")
+	flag.BoolVar(&testF, "t", false, "Test the configuration file and exit")
+	flag.StringVar(&prefixF, "p", server.Prefix, "Set the prefix path")
+	flag.StringVar(&confF, "c", server.Prefix+server.DefaultConf, "Set the configuration file")
 	flag.Usage = usage
 	flag.Parse()
 
@@ -94,10 +82,11 @@ func parseFlags() string {
 	var prefixUsed bool
 
 	flag.Visit(func(f *flag.Flag) {
-		if f.Name == "prefix" || f.Name == "p" {
+		if f.Name == "p" {
 			prefixUsed = true
 		}
 	})
+
 	// if prefix was set on the command line,
 	// then the location of the configuration
 	// will be based on this prefix
@@ -142,6 +131,12 @@ func handleSignals(serv *server.Server) {
 }
 
 func usage() {
-	fmt.Fprintf(os.Stderr, "Usage: ftpd -[htv] [-p prefix] [-c conf]\n")
-	flag.PrintDefaults()
+	fmt.Fprintf(os.Stderr, "Usage: ftpd -[htv] [-p prefix] [-c conf]\n\n")
+	fmt.Fprintf(os.Stderr, "Options:\n")
+	fmt.Fprintf(os.Stderr, "  -h\t\t: This help menu\n")
+	fmt.Fprintf(os.Stderr, "  -v\t\t: Show server version and exit\n")
+	fmt.Fprintf(os.Stderr, "  -t\t\t: Test the configuration file and exit\n")
+	fmt.Fprintf(os.Stderr, "  -d\t\t: Run the server in the background (as a daemon)\n")
+	fmt.Fprintf(os.Stderr, "  -p prefix\t: Set the path of the prefix\n")
+	fmt.Fprintf(os.Stderr, "  -c filename\t: Use the specified configuration file\n")
 }
