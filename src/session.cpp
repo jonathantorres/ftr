@@ -423,7 +423,7 @@ void session::run_password(const std::string &password) {
 
 void session::run_print_dir() {
     m_server.send_response(m_control_conn_fd, ftr::STATUS_CODE_PATH_CREATED,
-                           " \"/" + m_cwd + "\" is current directory");
+                           "\"/" + m_cwd + "\" is current directory");
 }
 
 void session::run_change_dir(const std::string dir) {
@@ -460,7 +460,7 @@ void session::run_change_dir(const std::string dir) {
     m_cwd = cur_wd;
     m_server.send_response(m_control_conn_fd,
                            ftr::STATUS_CODE_REQUESTED_FILE_OK,
-                           " \"" + dir + "\" is current directory");
+                           "\"" + dir + "\" is current directory");
 }
 
 void session::run_type(const std::string selected_transfer_type) {
@@ -468,7 +468,7 @@ void session::run_type(const std::string selected_transfer_type) {
         selected_transfer_type == TRANSFER_TYPE_IMG) {
         m_transfer_type = selected_transfer_type;
         m_server.send_response(m_control_conn_fd, ftr::STATUS_CODE_OK,
-                               " Transfer Type OK");
+                               "Transfer Type OK");
         return;
     }
 
@@ -821,7 +821,7 @@ void session::run_accept_and_store(const std::string filename,
 
 void session::run_system_type() {
     m_server.send_response(m_control_conn_fd, ftr::STATUS_CODE_NAME_SYSTEM,
-                           " UNIX Type: L8");
+                           "UNIX Type: L8");
 }
 
 void session::run_change_parent() {
@@ -884,7 +884,7 @@ void session::run_make_dir(const std::string dir_name) {
     }
 
     m_server.send_response(m_control_conn_fd, ftr::STATUS_CODE_OK,
-                           " Directory " + dir_name + " created");
+                           "Directory " + dir_name + " created");
 }
 
 void session::run_remove_dir(const std::string path) {
@@ -910,7 +910,7 @@ void session::run_remove_dir(const std::string path) {
 
     m_server.send_response(m_control_conn_fd,
                            ftr::STATUS_CODE_REQUESTED_FILE_OK,
-                           " Directory " + path + " removed");
+                           "Directory " + path + " removed");
 }
 
 void session::run_delete(const std::string filename) {
@@ -936,7 +936,7 @@ void session::run_delete(const std::string filename) {
 
     m_server.send_response(m_control_conn_fd,
                            ftr::STATUS_CODE_REQUESTED_FILE_OK,
-                           " File " + filename + " deleted");
+                           "File " + filename + " deleted");
 }
 
 void session::run_ext_passv_mode(const std::string &cmd_params) {

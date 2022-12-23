@@ -165,8 +165,13 @@ void server::send_response(const int conn_fd, const int status_code,
     std::stringstream resp_msg;
     std::string code_msg = get_status_code_msg(status_code);
     resp_msg << status_code << ' ';
-    resp_msg << code_msg << ' ';
-    resp_msg << extra_msg << '\n';
+    resp_msg << code_msg;
+
+    if (extra_msg != "") {
+        resp_msg << ' ' << extra_msg;
+    }
+
+    resp_msg << '\n';
 
     std::string msg_str = resp_msg.str();
 
