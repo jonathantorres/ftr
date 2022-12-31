@@ -59,11 +59,11 @@ func parseFlags() string {
 		prefixF  string
 		confF    string
 	)
-	flag.BoolVar(&versionF, "v", false, "Print the server version and exit")
-	flag.BoolVar(&helpF, "h", false, "Print the help contents and exit")
+	flag.BoolVar(&versionF, "v", false, "Show the server version and exit")
+	flag.BoolVar(&helpF, "h", false, "Show the help contents and exit")
 	flag.BoolVar(&testF, "t", false, "Test the configuration file and exit")
-	flag.StringVar(&prefixF, "p", server.Prefix, "Set the prefix path")
-	flag.StringVar(&confF, "c", server.Prefix+server.DefaultConf, "Set the configuration file")
+	flag.StringVar(&prefixF, "p", server.Prefix, "Set the path of the prefix")
+	flag.StringVar(&confF, "c", server.Prefix+server.DefaultConf, "Use the specified configuration file")
 	flag.Usage = usage
 	flag.Parse()
 
