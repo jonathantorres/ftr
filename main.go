@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/exec"
 	"os/signal"
 	"strings"
 	"syscall"
@@ -56,12 +57,14 @@ func parseFlags() string {
 		versionF bool
 		helpF    bool
 		testF    bool
+		daemonF  bool
 		prefixF  string
 		confF    string
 	)
 	flag.BoolVar(&versionF, "v", false, "Show the server version and exit")
 	flag.BoolVar(&helpF, "h", false, "Show the help contents and exit")
 	flag.BoolVar(&testF, "t", false, "Test the configuration file and exit")
+	flag.BoolVar(&daemonF, "d", false, "Run the server in the background (as a daemon)")
 	flag.StringVar(&prefixF, "p", server.Prefix, "Set the path of the prefix")
 	flag.StringVar(&confF, "c", server.Prefix+server.DefaultConf, "Use the specified configuration file")
 	flag.Usage = usage
@@ -106,6 +109,17 @@ func parseFlags() string {
 		fmt.Fprintf(os.Stderr, "OK.\n")
 		os.Exit(0)
 	}
+
+	// run as a daemon
+	if daemonF {
+		cmd := exec.Command(os.Args[0])
+		err := cmd.Start()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "there was a problem starting the daemon: %s\n")
+			os.Exit(1)
+		}
+		os.Exit(0)
+	}
 	return confF
 }
 
@@ -131,7 +145,7 @@ func handleSignals(serv *server.Server) {
 }
 
 func usage() {
-	fmt.Fprintf(os.Stderr, "Usage: ftpd -[htv] [-p prefix] [-c conf]\n\n")
+	fmt.Fprintf(os.Stderr, "Usage: ftpd -[dhtv] [-p prefix] [-c conf]\n\n")
 	fmt.Fprintf(os.Stderr, "Options:\n")
 	fmt.Fprintf(os.Stderr, "  -h\t\t: This help menu\n")
 	fmt.Fprintf(os.Stderr, "  -v\t\t: Show server version and exit\n")
