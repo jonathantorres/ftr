@@ -143,7 +143,7 @@ inline bool daemon_is_running(const std::string cmd,
     }
 
     ftruncate(fd, 0);
-    sprintf(buf.data(), "%ld\n", static_cast<long>(getpid()));
+    snprintf(buf.data(), buf.max_size(), "%ld\n", static_cast<long>(getpid()));
     write(fd, buf.data(), std::strlen(buf.data()));
 
     return false;
