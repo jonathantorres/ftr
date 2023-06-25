@@ -54,8 +54,8 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: Install CMake
-      run: apt-get update && apt-get -y install cmake
+    - name: Install CMake and git
+      run: apt-get update && apt-get -y install cmake git
 
     - name: Configure CMake
       run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX=${{github.workspace}}
