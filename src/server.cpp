@@ -3,6 +3,7 @@
 #include "constants.hpp"
 #include "exception.hpp"
 #include "log.hpp"
+#include "string.hpp"
 #include "util.hpp"
 #include <arpa/inet.h>
 #include <cerrno>
@@ -15,7 +16,6 @@
 #include <random>
 #include <regex>
 #include <sstream>
-#include <string.hpp>
 #include <string>
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -175,7 +175,7 @@ void server::send_response(const int conn_fd, const int status_code,
 
     std::string msg_str = resp_msg.str();
 
-    m_log->log_acc(xtd::trim_whitespace(msg_str));
+    m_log->log_acc(ftr::trim_whitespace(msg_str));
 
     if (write(conn_fd, msg_str.c_str(), msg_str.size()) < 0) {
         m_log->log_err(std::strerror(errno));

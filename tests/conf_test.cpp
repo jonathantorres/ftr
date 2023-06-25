@@ -15,10 +15,10 @@ TEST_CASE("load configuration file") {
     c.load(conf_file);
 
     REQUIRE(c.get_server_name() == std::string("localhost"));
-    REQUIRE(c.get_root() == std::string("/Users/jonathantorres/ftr_test"));
+    REQUIRE(c.get_root() == std::string("/Users/jonathantorres/ftrd_test"));
     REQUIRE(c.get_port() == 20);
-    REQUIRE(c.get_error_log() == std::string("/etc/log/ftr/errors.log"));
-    REQUIRE(c.get_access_log() == std::string("/etc/log/ftr/access.log"));
+    REQUIRE(c.get_error_log() == std::string("/etc/log/ftrd/errors.log"));
+    REQUIRE(c.get_access_log() == std::string("/etc/log/ftrd/access.log"));
     REQUIRE(c.get_users().size() != 0);
 }
 
@@ -28,10 +28,10 @@ TEST_CASE("higly commented conf file is properly parsed") {
     c.load(conf_file);
 
     REQUIRE(c.get_server_name() == std::string("localhost"));
-    REQUIRE(c.get_root() == std::string("/home/jt/ftr_test"));
+    REQUIRE(c.get_root() == std::string("/home/jt/ftrd_test"));
     REQUIRE(c.get_port() == 20);
-    REQUIRE(c.get_error_log() == std::string("/etc/log/ftr/errors.log"));
-    REQUIRE(c.get_access_log() == std::string("/etc/log/ftr/access.log"));
+    REQUIRE(c.get_error_log() == std::string("/etc/log/ftrd/errors.log"));
+    REQUIRE(c.get_access_log() == std::string("/etc/log/ftrd/access.log"));
     REQUIRE(c.get_users().size() != 0);
     REQUIRE(c.get_users().size() == 3);
 }
@@ -42,10 +42,10 @@ TEST_CASE("configuration with no users") {
     c.load(conf_file);
 
     REQUIRE(c.get_server_name() == std::string("127.0.0.1"));
-    REQUIRE(c.get_root() == std::string("/home/jt/ftr_test"));
+    REQUIRE(c.get_root() == std::string("/home/jt/ftrd_test"));
     REQUIRE(c.get_port() == 21);
-    REQUIRE(c.get_error_log() == std::string("/etc/log/ftr/errors.log"));
-    REQUIRE(c.get_access_log() == std::string("/etc/log/ftr/access.log"));
+    REQUIRE(c.get_error_log() == std::string("/etc/log/ftrd/errors.log"));
+    REQUIRE(c.get_access_log() == std::string("/etc/log/ftrd/access.log"));
     REQUIRE(c.get_users().size() == 0);
 }
 

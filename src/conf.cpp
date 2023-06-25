@@ -1,5 +1,6 @@
 #include "conf.hpp"
 #include "exception.hpp"
+#include "string.hpp"
 #include "util.hpp"
 #include <cerrno>
 #include <cstdlib>
@@ -8,7 +9,6 @@
 #include <ios>
 #include <iostream>
 #include <memory>
-#include <string.hpp>
 #include <string>
 #include <vector>
 
@@ -41,9 +41,9 @@ void conf::build(const std::vector<std::string> &conf_vec) {
         if ((eq_pos = line.find_first_of(ftr::conf::EQUAL_SIGN)) !=
             std::string::npos) {
             // this is a line with an option
-            std::string op_name = xtd::trim_whitespace(line.substr(0, eq_pos));
+            std::string op_name = ftr::trim_whitespace(line.substr(0, eq_pos));
             std::string op_value =
-                xtd::trim_whitespace(line.substr(eq_pos + 1));
+                ftr::trim_whitespace(line.substr(eq_pos + 1));
 
             if (inside_usr_cmd) {
                 // option for the current user

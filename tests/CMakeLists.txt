@@ -22,17 +22,37 @@ add_executable(conf_test
     ../src/util.cpp
 )
 
+add_executable(string_test
+    string_test.cpp
+    ../src/string.hpp
+)
+
+add_executable(string_benchmarks
+    string_benchmarks.cpp
+    ../src/string.hpp
+)
+
+add_executable(util_test
+    util_test.cpp
+    ../src/util.cpp
+)
+
 add_custom_command(TARGET conf_test
     POST_BUILD
     COMMAND ${CMAKE_CURRENT_BINARY_DIR}/conf_test
     VERBATIM
 )
 
-target_link_libraries(conf_test PRIVATE Catch2::Catch2WithMain PUBLIC xtd)
+add_custom_command(TARGET string_test
+    POST_BUILD
+    COMMAND ${CMAKE_CURRENT_BINARY_DIR}/string_test
+    VERBATIM
+)
 
-add_executable(util_test
-    util_test.cpp
-    ../src/util.cpp
+add_custom_command(TARGET string_benchmarks
+    POST_BUILD
+    COMMAND ${CMAKE_CURRENT_BINARY_DIR}/string_benchmarks
+    VERBATIM
 )
 
 add_custom_command(TARGET util_test
@@ -41,4 +61,8 @@ add_custom_command(TARGET util_test
     VERBATIM
 )
 
+target_link_libraries(conf_test PRIVATE Catch2::Catch2WithMain)
+target_link_libraries(string_test PRIVATE Catch2::Catch2WithMain)
+target_link_libraries(string_benchmarks PRIVATE Catch2::Catch2WithMain)
 target_link_libraries(util_test PRIVATE Catch2::Catch2WithMain)
+
