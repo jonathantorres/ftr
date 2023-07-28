@@ -1,6 +1,5 @@
 #include "server.hpp"
 #include "conf.hpp"
-#include "constants.hpp"
 #include "exception.hpp"
 #include "log.hpp"
 #include "string.hpp"

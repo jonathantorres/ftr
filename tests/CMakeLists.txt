@@ -20,16 +20,17 @@ add_executable(conf_test
     conf_test.cpp
     ../src/conf.cpp
     ../src/util.cpp
+    ../src/string.cpp
 )
 
 add_executable(string_test
     string_test.cpp
-    ../src/string.hpp
+    ../src/string.cpp
 )
 
 add_executable(string_benchmarks
     string_benchmarks.cpp
-    ../src/string.hpp
+    ../src/string.cpp
 )
 
 add_executable(util_test

@@ -1,9 +1,12 @@
 set(SOURCES
+    cmd.cpp
     conf.cpp
+    daemon.cpp
     file_data_line.cpp
     log.cpp
     server.cpp
     session.cpp
+    string.cpp
     util.cpp
 )
 

@@ -1,7 +1,7 @@
 #ifndef ftr_session_hpp
 #define ftr_session_hpp
 
-#include "constants.hpp"
+#include "ftrd.hpp"
 #include "log.hpp"
 #include <arpa/inet.h>
 #include <array>

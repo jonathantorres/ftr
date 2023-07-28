@@ -1,5 +1,5 @@
-#ifndef ftr_status_codes_hpp
-#define ftr_status_codes_hpp
+#ifndef ftrd_hpp
+#define ftrd_hpp
 
 #include <map>
 #include <string>

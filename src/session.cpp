@@ -1,6 +1,5 @@
 #include "session.hpp"
 #include "conf.hpp"
-#include "constants.hpp"
 #include "exception.hpp"
 #include "file_data_line.hpp"
 #include "server.hpp"

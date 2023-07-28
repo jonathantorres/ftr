@@ -2,7 +2,6 @@
 #define ftr_server_hpp
 
 #include "conf.hpp"
-#include "constants.hpp"
 #include "log.hpp"
 #include "session.hpp"
 #include <arpa/inet.h>
