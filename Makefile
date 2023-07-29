@@ -1,6 +1,6 @@
-PROG := ftpd
-PREFIX := /usr/local/ftpd
-PKG := github.com/jonathantorres/ftpd
+PROG := ftr
+PREFIX := /usr/local/ftr
+PKG := github.com/jonathantorres/ftr
 
 # compile program
 $(PROG):
@@ -13,7 +13,7 @@ install:
 	mkdir -p $(PREFIX)
 	mkdir -p $(PREFIX)/bin
 	cp ./bin/$(PROG) $(PREFIX)/bin/$(PROG)
-	cp ftpd.conf $(PREFIX)
+	cp ftr.conf $(PREFIX)
 
 # Run tests
 .PHONY: test

@@ -47,9 +47,9 @@ func TestServerConfIsBuilt(t *testing.T) {
 	wantConf := Conf{
 		ServerName: "localhost",
 		Port:       20,
-		Root:       "/home/jt/ftpd_test",
-		ErrorLog:   "/etc/log/ftpd/errors.log",
-		AccessLog:  "/etc/log/ftpd/access.log",
+		Root:       "/home/jt/ftr_test",
+		ErrorLog:   "/etc/log/ftr/errors.log",
+		AccessLog:  "/etc/log/ftr/access.log",
 		Users: []User{
 			{
 				Username: "test1",

@@ -10,9 +10,9 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/jonathantorres/ftpd/internal/conf"
-	"github.com/jonathantorres/ftpd/internal/logger"
-	"github.com/jonathantorres/ftpd/internal/server"
+	"github.com/jonathantorres/ftr/internal/conf"
+	"github.com/jonathantorres/ftr/internal/logger"
+	"github.com/jonathantorres/ftr/internal/server"
 )
 
 const version = "0.1.0"
@@ -72,7 +72,7 @@ func parseFlags() string {
 
 	// just print the version and exit
 	if versionF {
-		fmt.Fprintf(os.Stderr, "ftpd version v%s\n", version)
+		fmt.Fprintf(os.Stderr, "ftr version v%s\n", version)
 		os.Exit(0)
 	}
 
@@ -145,7 +145,7 @@ func handleSignals(serv *server.Server) {
 }
 
 func usage() {
-	fmt.Fprintf(os.Stderr, "Usage: ftpd -[dhtv] [-p prefix] [-c conf]\n\n")
+	fmt.Fprintf(os.Stderr, "Usage: ftr -[dhtv] [-p prefix] [-c conf]\n\n")
 	fmt.Fprintf(os.Stderr, "Options:\n")
 	fmt.Fprintf(os.Stderr, "  -h\t\t: This help menu\n")
 	fmt.Fprintf(os.Stderr, "  -v\t\t: Show server version and exit\n")
