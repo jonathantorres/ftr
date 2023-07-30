@@ -1,10 +1,19 @@
 PROG := ftr
-PREFIX := /usr/local/ftr
 PKG := github.com/jonathantorres/ftr
+PREFIX := $(shell pwd)
+LDFLAGS := -X '$(PKG)/internal/server.Prefix=$(PREFIX)'
+
+# Add another variable (if necessary)
+# LDFLAGS += -X 'main.foo=bar'
 
 # compile program
 $(PROG):
-	go build -o bin/$(PROG) -ldflags="-X '$(PKG)/internal/server.Prefix=$(PREFIX)'" $(PKG)
+	go build -o bin/$(PROG) -ldflags="$(LDFLAGS)" $(PKG)
+
+# create release version
+.PHONY: release
+release:
+	go build -o bin/$(PROG) -ldflags="-s -w $(LDFLAGS)" $(PKG)
 
 # install binary and server files
 .PHONY: install
