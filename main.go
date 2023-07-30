@@ -22,6 +22,7 @@ func main() {
 	if !strings.HasSuffix(server.Prefix, "/") {
 		server.Prefix += "/"
 	}
+
 	confF := parseFlags()
 	log.SetPrefix(logger.Prefix)
 
@@ -30,24 +31,29 @@ func main() {
 		if err != nil {
 			log.Fatalf("server configuration error: %s", err)
 		}
+
 		logE, logA, err := logger.Load(config)
 		if err != nil {
 			log.Fatalf("server logging error: %s", err)
 		}
+
 		s := &server.Server{
 			Conf: config,
 			LogA: logA,
 			LogE: logE,
 		}
+
 		go handleSignals(s)
 
 		err = s.Start()
 		if err != nil {
 			log.Fatalf("server error: %s", err)
 		}
+
 		if s.IsReloading {
 			continue
 		}
+
 		break
 	}
 }
@@ -61,6 +67,7 @@ func parseFlags() string {
 		prefixF  string
 		confF    string
 	)
+
 	flag.BoolVar(&versionF, "v", false, "Show the server version and exit")
 	flag.BoolVar(&helpF, "h", false, "Show the help contents and exit")
 	flag.BoolVar(&testF, "t", false, "Test the configuration file and exit")
@@ -101,11 +108,13 @@ func parseFlags() string {
 	// test the configuration file and exit
 	if testF {
 		fmt.Fprintf(os.Stderr, "testing configuration file...")
+
 		_, err := conf.Load(confF, server.Prefix)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "failed: %s\n", err)
 			os.Exit(1)
 		}
+
 		fmt.Fprintf(os.Stderr, "OK.\n")
 		os.Exit(0)
 	}
@@ -114,12 +123,15 @@ func parseFlags() string {
 	if daemonF {
 		cmd := exec.Command(os.Args[0])
 		err := cmd.Start()
+
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "there was a problem starting the daemon: %s\n")
 			os.Exit(1)
 		}
+
 		os.Exit(0)
 	}
+
 	return confF
 }
 
@@ -128,6 +140,7 @@ func handleSignals(serv *server.Server) {
 	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGHUP)
 
 	s := <-sig
+
 	switch s {
 	case syscall.SIGINT,
 		syscall.SIGTERM,
