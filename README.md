@@ -1,5 +1,5 @@
 # ftr
-FTR (File Transfer) is an FTP server.
+ftr (File Transfer) is an FTP server daemon (Go port)
 
 ## Installing
 Install the binary with `go get`:
