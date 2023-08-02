@@ -1,4 +1,6 @@
 # ftr
+[![Tests](https://github.com/jonathantorres/ftr/actions/workflows/tests.yml/badge.svg)](https://github.com/jonathantorres/ftr/actions/workflows/tests.yml)
+
 ftr (File Transfer) is an FTP server daemon (Go port)
 
 ## Installing
