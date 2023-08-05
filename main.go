@@ -37,15 +37,15 @@ func main() {
 			log.Fatalf("server configuration error: %s", err)
 		}
 
-		logE, logA, err := logger.Load(config)
+		logErr, logAcc, err := logger.Load(config)
 		if err != nil {
 			log.Fatalf("server logging error: %s", err)
 		}
 
 		s := &server.Server{
-			Conf: config,
-			LogA: logA,
-			LogE: logE,
+			Conf:   config,
+			LogAcc: logAcc,
+			LogErr: logErr,
 		}
 
 		go handleSignals(s)

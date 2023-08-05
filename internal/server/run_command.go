@@ -132,7 +132,7 @@ func runCommandList(s *Session, file string) error {
 	}
 	files, err := ioutil.ReadDir(path)
 	if err != nil {
-		s.server.LogE.Printf("failed listing directory: %s", err)
+		s.server.LogErr.Printf("failed listing directory: %s", err)
 		return s.server.sendResponse(s.controlConn, StatusCodeFileActionNotTaken, "")
 	}
 	dirFiles := make([]string, 0)
@@ -143,7 +143,7 @@ func runCommandList(s *Session, file string) error {
 	dirData := strings.Join(dirFiles, "\n")
 	_, err = s.dataConn.Write([]byte(dirData))
 	if err != nil {
-		s.server.LogE.Printf("failed writing data: %s", err)
+		s.server.LogErr.Printf("failed writing data: %s", err)
 		return s.server.sendResponse(s.controlConn, StatusCodeFileActionNotTaken, "")
 	}
 	var sig struct{}
@@ -169,7 +169,7 @@ func runCommandFileNames(s *Session, file string) error {
 	}
 	files, err := ioutil.ReadDir(path)
 	if err != nil {
-		s.server.LogE.Printf("failed listing directory: %s", err)
+		s.server.LogErr.Printf("failed listing directory: %s", err)
 		return s.server.sendResponse(s.controlConn, StatusCodeFileActionNotTaken, "")
 	}
 	dirFiles := make([]string, 0, 10)
@@ -179,7 +179,7 @@ func runCommandFileNames(s *Session, file string) error {
 	dirData := strings.Join(dirFiles, "\n")
 	_, err = s.dataConn.Write([]byte(dirData))
 	if err != nil {
-		s.server.LogE.Printf("failed writing data: %s", err)
+		s.server.LogErr.Printf("failed writing data: %s", err)
 		return s.server.sendResponse(s.controlConn, StatusCodeFileActionNotTaken, "")
 	}
 	var sig struct{}
@@ -200,13 +200,13 @@ func runCommandRetrieve(s *Session, filename string) error {
 	path := s.server.Conf.Root + s.user.Root + "/" + s.cwd + "/" + filename
 	file, err := os.Open(path)
 	if err != nil {
-		s.server.LogE.Printf("error opening file: %s", err)
+		s.server.LogErr.Printf("error opening file: %s", err)
 		return s.server.sendResponse(s.controlConn, StatusCodeFileActionNotTaken, "")
 	}
 	defer file.Close()
 	_, err = io.Copy(s.dataConn, file)
 	if err != nil {
-		s.server.LogE.Printf("error transferring file: %s\n", err)
+		s.server.LogErr.Printf("error transferring file: %s\n", err)
 		return s.server.sendResponse(s.controlConn, StatusCodeFileActionNotTaken, "")
 	}
 	var sig struct{}
@@ -227,7 +227,7 @@ func runCommandAcceptAndStore(s *Session, filename string, appendMode bool) erro
 	path := s.server.Conf.Root + s.user.Root + "/" + s.cwd + "/" + filename
 	fileData, err := ioutil.ReadAll(s.dataConn)
 	if err != nil {
-		s.server.LogE.Printf("error receiving file: %s", err)
+		s.server.LogErr.Printf("error receiving file: %s", err)
 		return s.server.sendResponse(s.controlConn, StatusCodeFileActionNotTaken, "")
 	}
 	var file *os.File
@@ -237,13 +237,13 @@ func runCommandAcceptAndStore(s *Session, filename string, appendMode bool) erro
 		file, err = os.Create(path)
 	}
 	if err != nil {
-		s.server.LogE.Printf("error creating file: %s", err)
+		s.server.LogErr.Printf("error creating file: %s", err)
 		return s.server.sendResponse(s.controlConn, StatusCodeFileActionNotTaken, "")
 	}
 	defer file.Close()
 	_, err = file.Write(fileData)
 	if err != nil {
-		s.server.LogE.Printf("error writing bytes to new file: %s", err)
+		s.server.LogErr.Printf("error writing bytes to new file: %s", err)
 		return s.server.sendResponse(s.controlConn, StatusCodeFileActionNotTaken, "")
 	}
 	var sig struct{}
@@ -268,7 +268,7 @@ func runCommandChangeParent(s *Session) error {
 	}
 	err := os.Chdir(s.server.Conf.Root + s.user.Root + "/" + cwd)
 	if err != nil {
-		s.server.LogE.Printf("err chdir: %s\n", err)
+		s.server.LogErr.Printf("err chdir: %s\n", err)
 		return s.server.sendResponse(s.controlConn, StatusCodeFileNotFound, "")
 	}
 	s.cwd = cwd
@@ -283,7 +283,7 @@ func runCommandMakeDir(s *Session, dirName string) error {
 	cwd := s.cwd
 	err := os.Mkdir(s.server.Conf.Root+s.user.Root+"/"+cwd+"/"+dirName, 0777)
 	if err != nil {
-		s.server.LogE.Printf("err mkdir: %s", err)
+		s.server.LogErr.Printf("err mkdir: %s", err)
 		return s.server.sendResponse(s.controlConn, StatusCodeFileNotFound, "")
 	}
 	return s.server.sendResponse(s.controlConn, StatusCodeOk, fmt.Sprintf(" Directory %s created", dirName))
@@ -293,7 +293,7 @@ func runCommandRemoveDir(s *Session, path string) error {
 	cwd := s.cwd
 	err := os.RemoveAll(s.server.Conf.Root + s.user.Root + "/" + cwd + "/" + path)
 	if err != nil {
-		s.server.LogE.Printf("error removing directory: %s", err)
+		s.server.LogErr.Printf("error removing directory: %s", err)
 		return s.server.sendResponse(s.controlConn, StatusCodeFileNotFound, "")
 	}
 	return s.server.sendResponse(s.controlConn, StatusCodeRequestedFileOk, fmt.Sprintf("Directory %s removed", path))
@@ -306,7 +306,7 @@ func runCommandDelete(s *Session, filename string) error {
 	cwd := s.cwd
 	err := os.Remove(s.server.Conf.Root + s.user.Root + "/" + cwd + "/" + filename)
 	if err != nil {
-		s.server.LogE.Printf("err remove file: %s", err)
+		s.server.LogErr.Printf("err remove file: %s", err)
 		return s.server.sendResponse(s.controlConn, StatusCodeFileNotFound, "")
 	}
 	return s.server.sendResponse(s.controlConn, StatusCodeOk, fmt.Sprintf(" File %s deleted", filename))
@@ -323,12 +323,12 @@ func runCommandExtPassMode(s *Session, cmdArgs string) error {
 	s.passMode = true
 	addr, err := s.server.findOpenAddr(true)
 	if err != nil {
-		s.server.LogE.Printf("error finding an open address: %s", err)
+		s.server.LogErr.Printf("error finding an open address: %s", err)
 		return s.server.sendResponse(s.controlConn, StatusCodeUnknownErr, "")
 	}
 	p := uint16(addr.Port)
 	if err = s.openDataConn(p, true); err != nil {
-		s.server.LogE.Printf("error opening data connection: %s", err)
+		s.server.LogErr.Printf("error opening data connection: %s", err)
 		return s.server.sendResponse(s.controlConn, StatusCodeCantOpenDataConn, "")
 	}
 	return s.server.sendResponse(s.controlConn, StatusCodeEnterExtPassMode, fmt.Sprintf(" (|||%d|)", p))
@@ -341,19 +341,19 @@ func runCommandPort(s *Session, cmdArgs string) error {
 	portParts := addrParts[4:]
 	p1, err := strconv.ParseUint(portParts[0], 10, 8)
 	if err != nil {
-		s.server.LogE.Printf("error converting port: %s", err)
+		s.server.LogErr.Printf("error converting port: %s", err)
 		return s.server.sendResponse(s.controlConn, StatusCodeUnknownErr, "")
 	}
 	p2, err := strconv.ParseUint(portParts[1], 10, 8)
 	if err != nil {
-		s.server.LogE.Printf("error converting port: %s", err)
+		s.server.LogErr.Printf("error converting port: %s", err)
 		return s.server.sendResponse(s.controlConn, StatusCodeUnknownErr, "")
 	}
 	p := uint16(p1)
 	p <<= 8
 	p |= uint16(p2)
 	if err = s.connectToDataConn(p, false); err != nil {
-		s.server.LogE.Printf("error connecting to data connection: %s", err)
+		s.server.LogErr.Printf("error connecting to data connection: %s", err)
 		return s.server.sendResponse(s.controlConn, StatusCodeUnknownErr, "")
 	}
 	return s.server.sendResponse(s.controlConn, StatusCodeOk, "")
@@ -369,11 +369,11 @@ func runCommandExtPort(s *Session, cmdArgs string) error {
 	}
 	p, err := strconv.Atoi(cmdParts[3])
 	if err != nil {
-		s.server.LogE.Printf("error converting port: %s", err)
+		s.server.LogErr.Printf("error converting port: %s", err)
 		return s.server.sendResponse(s.controlConn, StatusCodeUnknownErr, "")
 	}
 	if err = s.connectToDataConn(uint16(p), useIPv6); err != nil {
-		s.server.LogE.Printf("error connecting to data connection: %s\n", err)
+		s.server.LogErr.Printf("error connecting to data connection: %s\n", err)
 		return s.server.sendResponse(s.controlConn, StatusCodeUnknownErr, "")
 	}
 	return s.server.sendResponse(s.controlConn, StatusCodeOk, "")
@@ -450,7 +450,7 @@ func runCommandServerStatus(s *Session, cmdArgs string) error {
 	path := s.server.Conf.Root + s.user.Root + "/" + s.cwd + "/" + cmdArgs
 	files, err := ioutil.ReadDir(path)
 	if err != nil {
-		s.server.LogE.Printf("failed listing directory: %s", err)
+		s.server.LogErr.Printf("failed listing directory: %s", err)
 		return s.server.sendResponse(s.controlConn, StatusCodeFileActionNotTaken, "")
 	}
 	dirFiles := make([]string, 0, 10)
@@ -513,7 +513,7 @@ func runCommandAbort(s *Session) error {
 	if s.dataConn != nil {
 		err := s.dataConn.Close()
 		if err != nil {
-			s.server.LogE.Printf("error closing the data connection: %s", err)
+			s.server.LogErr.Printf("error closing the data connection: %s", err)
 		}
 	}
 	return s.server.sendResponse(s.controlConn, StatusCodeClosingDataConn, "")

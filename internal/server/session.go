@@ -35,9 +35,9 @@ func (s *Session) start() {
 		_, err := s.controlConn.Read(clientCmd)
 		if err != nil {
 			if err == io.EOF {
-				s.server.LogA.Printf("connection finished by client %s", err)
+				s.server.LogAcc.Printf("connection finished by client %s", err)
 			} else {
-				s.server.LogE.Printf("read error: %s", err)
+				s.server.LogErr.Printf("read error: %s", err)
 				s.server.sendResponse(s.controlConn, StatusCodeUnknownErr, "")
 			}
 			s.controlConn.Close()
@@ -58,7 +58,7 @@ func (s *Session) end() {
 	if s.controlConn != nil {
 		err := s.controlConn.CloseWrite()
 		if err != nil {
-			s.server.LogE.Printf("error when closing the control connection: %s", err)
+			s.server.LogErr.Printf("error when closing the control connection: %s", err)
 		}
 	}
 }
@@ -77,7 +77,7 @@ func (s *Session) openDataConn(port uint16, useIPv6 bool) error {
 	go func() {
 		conn, err := l.Accept()
 		if err != nil {
-			s.server.LogE.Printf("data conn: accept error: %s", err)
+			s.server.LogErr.Printf("data conn: accept error: %s", err)
 			return
 		}
 		go s.handleDataTransfer(conn, l)
@@ -158,7 +158,7 @@ func (s *Session) handleCommand(clientCmd []byte) error {
 
 func (s *Session) execCommand(cmd string, cmdArgs string) error {
 	var err error = nil
-	s.server.LogA.Printf("%s %s\n", cmd, cmdArgs)
+	s.server.LogAcc.Printf("%s %s\n", cmd, cmdArgs)
 	switch cmd {
 	case CommandUser:
 		err = runCommandUser(s, cmdArgs)
