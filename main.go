@@ -26,6 +26,11 @@ func main() {
 	confF := parseFlags()
 	log.SetPrefix(logger.Prefix)
 
+	err := openPidFile()
+	if err != nil {
+		log.Fatalf("error opening pid file: %s", err)
+	}
+
 	for {
 		config, err := conf.Load(confF, server.Prefix)
 		if err != nil {
@@ -121,11 +126,9 @@ func parseFlags() string {
 
 	// run as a daemon
 	if daemonF {
-		cmd := exec.Command(os.Args[0])
-		err := cmd.Start()
-
+		err := runDaemon()
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "there was a problem starting the daemon: %s\n")
+			fmt.Fprintf(os.Stderr, "there was a problem starting the daemon: %s\n", err)
 			os.Exit(1)
 		}
 
@@ -133,6 +136,45 @@ func parseFlags() string {
 	}
 
 	return confF
+}
+
+func runDaemon() error {
+	args := os.Args
+	prog := args[0]
+
+	// remove the -d option
+	for i, arg := range args {
+		if arg == "-d" {
+			args = append(args[:i], args[i+1:]...)
+			break
+		}
+	}
+
+	cmd := exec.Command(prog)
+	err := cmd.Start()
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func openPidFile() error {
+	filename := server.Prefix + "/ftr.pid"
+	file, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
+	if err != nil {
+		return err
+	}
+
+	defer file.Close()
+
+	_, err = file.WriteString(fmt.Sprintf("%d\n", os.Getpid()))
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func handleSignals(serv *server.Server) {
