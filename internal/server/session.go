@@ -35,14 +35,16 @@ func (s *Session) start() {
 		_, err := s.controlConn.Read(clientCmd)
 		if err != nil {
 			if err == io.EOF {
-				s.server.LogAcc.Printf("connection finished by client %s", err)
+				s.server.LogAcc("connection finished by client %s", err)
 			} else {
-				s.server.LogErr.Printf("read error: %s", err)
+				s.server.LogErr("read error: %s", err)
 				s.server.sendResponse(s.controlConn, StatusCodeUnknownErr, "")
 			}
+
 			s.controlConn.Close()
 			break
 		}
+
 		err = s.handleCommand(clientCmd)
 		if err != nil {
 			s.server.sendResponse(s.controlConn, StatusCodeUnknownErr, "")
@@ -58,7 +60,7 @@ func (s *Session) end() {
 	if s.controlConn != nil {
 		err := s.controlConn.CloseWrite()
 		if err != nil {
-			s.server.LogErr.Printf("error when closing the control connection: %s", err)
+			s.server.LogErr("error when closing the control connection: %s", err)
 		}
 	}
 }
@@ -68,20 +70,25 @@ func (s *Session) openDataConn(port uint16, useIPv6 bool) error {
 	if useIPv6 {
 		proto += "6"
 	}
+
 	l, err := net.Listen(proto, fmt.Sprintf("%s:%d", s.server.Host, port))
 	if err != nil {
 		return err
 	}
+
 	s.dataConnPort = port
 	s.dataConnChan = make(chan struct{})
+
 	go func() {
 		conn, err := l.Accept()
 		if err != nil {
-			s.server.LogErr.Printf("data conn: accept error: %s", err)
+			s.server.LogErr("data conn: accept error: %s", err)
 			return
 		}
+
 		go s.handleDataTransfer(conn, l)
 	}()
+
 	return nil
 }
 
@@ -90,10 +97,12 @@ func (s *Session) connectToDataConn(port uint16, useIPv6 bool) error {
 	if useIPv6 {
 		proto += "6"
 	}
+
 	c, err := net.Dial(proto, fmt.Sprintf("%s:%d", s.server.Host, port))
 	if err != nil {
 		return err
 	}
+
 	s.dataConn = c
 	s.dataConnPort = port
 	s.dataConnChan = make(chan struct{})
@@ -112,6 +121,7 @@ func (s *Session) connectToDataConn(port uint16, useIPv6 bool) error {
 
 		defer c.Close()
 	}()
+
 	return nil
 }
 
@@ -128,6 +138,7 @@ func (s *Session) handleDataTransfer(conn net.Conn, l net.Listener) {
 	s.dataConn = nil
 	s.dataConnPort = 0
 	s.dataConnChan = nil
+
 	defer conn.Close()
 	defer l.Close()
 }
@@ -137,28 +148,33 @@ func (s *Session) handleCommand(clientCmd []byte) error {
 	cmd := ""
 	cmdParams := ""
 	foundFirstSpace := false
+
 	for _, r := range clientCmdStr {
 		if !foundFirstSpace && r == ' ' {
 			foundFirstSpace = true
 			continue
 		}
+
 		if foundFirstSpace {
 			cmdParams += string(r)
 		} else {
 			cmd += string(r)
 		}
 	}
+
 	if cmdParams == "" {
 		return s.execCommand(cmd, "")
 	} else {
 		return s.execCommand(cmd, cmdParams)
 	}
+
 	return s.server.sendResponse(s.controlConn, StatusCodeUnknownErr, "")
 }
 
 func (s *Session) execCommand(cmd string, cmdArgs string) error {
 	var err error = nil
-	s.server.LogAcc.Printf("%s %s\n", cmd, cmdArgs)
+	s.server.LogAcc("%s %s\n", cmd, cmdArgs)
+
 	switch cmd {
 	case CommandUser:
 		err = runCommandUser(s, cmdArgs)
@@ -227,6 +243,7 @@ func (s *Session) execCommand(cmd string, cmdArgs string) error {
 	default:
 		err = runUninmplemented(s)
 	}
+
 	return err
 }
 
@@ -234,5 +251,6 @@ func (s *Session) loggedIn() bool {
 	if s.user == nil {
 		return false
 	}
+
 	return true
 }

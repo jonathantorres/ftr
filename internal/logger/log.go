@@ -17,17 +17,26 @@ type Log struct {
 
 func (l *Log) Printf(format string, v ...interface{}) {
 	l.l.Printf(format, v...)
-	l.stderrLog.Printf(format, v...)
+
+	if l.stderrLog != nil {
+		l.stderrLog.Printf(format, v...)
+	}
 }
 
 func (l *Log) Print(v ...interface{}) {
 	l.l.Print(v...)
-	l.stderrLog.Print(v...)
+
+	if l.stderrLog != nil {
+		l.stderrLog.Print(v...)
+	}
 }
 
 func (l *Log) Println(v ...interface{}) {
 	l.l.Println(v...)
-	l.stderrLog.Println(v...)
+
+	if l.stderrLog != nil {
+		l.stderrLog.Println(v...)
+	}
 }
 
 func Load(config *conf.Conf) (*Log, *Log, error) {
@@ -54,15 +63,15 @@ func Load(config *conf.Conf) (*Log, *Log, error) {
 	}
 
 	stderrLog := log.New(os.Stderr, Prefix, log.LstdFlags)
-	logE := &Log{
+	errLog := &Log{
 		l:         log.New(fe, Prefix, log.LstdFlags),
 		stderrLog: stderrLog,
 	}
 
-	logA := &Log{
+	accessLog := &Log{
 		l:         log.New(fa, Prefix, log.LstdFlags),
 		stderrLog: stderrLog,
 	}
 
-	return logE, logA, nil
+	return errLog, accessLog, nil
 }
