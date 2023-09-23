@@ -1,5 +1,5 @@
 #include "ftrd.hpp"
-#include "cmd.hpp"
+#include "command.hpp"
 #include "conf.hpp"
 #include "config.hpp"
 #include "daemon.hpp"
@@ -26,9 +26,9 @@ const std::string PROG_NAME(FTR_PROG_NAME);
 std::string prefix(FTR_PREFIX);
 
 // TODO: could there be a way that these are not used as globals?
-std::shared_ptr<ftr::log> serv_log = nullptr;
-std::shared_ptr<ftr::conf> conf = nullptr;
-std::shared_ptr<ftr::server> server = nullptr;
+std::shared_ptr<ftr::Log> serv_log = nullptr;
+std::shared_ptr<ftr::Conf> conf = nullptr;
+std::shared_ptr<ftr::Server> server = nullptr;
 std::string conf_file_opt = "";
 std::string prefix_path_opt = "";
 bool run_daemon_opt = false;
@@ -68,9 +68,9 @@ int main(int argc, const char **argv) {
     handle_signals();
 
     while (true) {
-        conf = std::make_shared<ftr::conf>();
-        serv_log = std::make_shared<ftr::log>();
-        server = std::make_shared<ftr::server>();
+        conf = std::make_shared<ftr::Conf>();
+        serv_log = std::make_shared<ftr::Log>();
+        server = std::make_shared<ftr::Server>();
 
         try {
             // load and test the configuration file
@@ -106,7 +106,7 @@ int main(int argc, const char **argv) {
 }
 
 void parse_opts(int argc, const char **argv) {
-    ftr::command c{argc, argv};
+    ftr::Command c{argc, argv};
     bool print_version = false;
     bool print_help = false;
     bool test_conf = false;
@@ -139,7 +139,7 @@ void parse_opts(int argc, const char **argv) {
     // test the configuration file and exit
     if (test_conf) {
         std::cerr << "Testing the configuration file...";
-        conf = std::make_shared<ftr::conf>();
+        conf = std::make_shared<ftr::Conf>();
 
         // make sure the prefix path ends with "/"
         if (!ftr::ends_with(prefix, "/")) {

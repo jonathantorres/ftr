@@ -1,8 +1,8 @@
 set(SOURCES
-    cmd.cpp
+    command.cpp
     conf.cpp
     daemon.cpp
-    file_data_line.cpp
+    file_data.cpp
     log.cpp
     server.cpp
     session.cpp

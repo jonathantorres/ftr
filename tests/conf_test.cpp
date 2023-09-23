@@ -11,7 +11,7 @@ std::string prefix(FTR_PREFIX);
 
 TEST_CASE("load configuration file") {
     const std::string conf_file(prefix + "/tests/confs/basic.conf");
-    conf c;
+    Conf c;
     c.load(conf_file);
 
     REQUIRE(c.get_server_name() == std::string("localhost"));
@@ -24,7 +24,7 @@ TEST_CASE("load configuration file") {
 
 TEST_CASE("higly commented conf file is properly parsed") {
     const std::string conf_file(prefix + "/tests/confs/commented.conf");
-    conf c;
+    Conf c;
     c.load(conf_file);
 
     REQUIRE(c.get_server_name() == std::string("localhost"));
@@ -38,7 +38,7 @@ TEST_CASE("higly commented conf file is properly parsed") {
 
 TEST_CASE("configuration with no users") {
     const std::string conf_file(prefix + "/tests/confs/no_users.conf");
-    conf c;
+    Conf c;
     c.load(conf_file);
 
     REQUIRE(c.get_server_name() == std::string("127.0.0.1"));
@@ -51,7 +51,7 @@ TEST_CASE("configuration with no users") {
 
 TEST_CASE("users are created") {
     const std::string conf_file(prefix + "/tests/confs/multiple_users.conf");
-    conf c;
+    Conf c;
     c.load(conf_file);
 
     REQUIRE(c.get_users().size() == 5);

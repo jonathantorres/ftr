@@ -7,17 +7,17 @@
 #include <string>
 
 namespace ftr {
-class log {
+class Log {
   public:
-    log() : m_log_stderr{false} {};
-    ~log();
+    Log() : m_log_stderr{false} {};
+    ~Log();
 
-    log(const ftr::log &log) = delete;
-    log(ftr::log &&log) = delete;
-    ftr::log &operator=(const ftr::log &rhs) = delete;
-    ftr::log &operator=(ftr::log &&rhs) = delete;
+    Log(const ftr::Log &log) = delete;
+    Log(ftr::Log &&log) = delete;
+    ftr::Log &operator=(const ftr::Log &rhs) = delete;
+    ftr::Log &operator=(ftr::Log &&rhs) = delete;
 
-    void init(const std::string prefix, std::shared_ptr<ftr::conf> conf,
+    void init(const std::string prefix, std::shared_ptr<ftr::Conf> conf,
               bool log_stderr);
     void log_err(const std::string msg);
     void log_acc(const std::string msg);

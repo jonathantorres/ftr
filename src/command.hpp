@@ -1,5 +1,5 @@
-#ifndef cmd_hpp
-#define cmd_hpp
+#ifndef ftr_command_hpp
+#define ftr_command_hpp
 
 #include <functional>
 #include <string>
@@ -8,14 +8,14 @@
 
 namespace ftr {
 
-class command {
+class Command {
   public:
-    command(const int argc, const char *argv[]) : m_argc{argc}, m_argv{argv} {};
-    ~command() = default;
-    command(const ftr::command &other) = delete;
-    command(ftr::command &&other) = delete;
-    ftr::command &operator=(const ftr::command &rhs) = delete;
-    ftr::command &operator=(ftr::command &&rhs) = delete;
+    Command(const int argc, const char *argv[]) : m_argc{argc}, m_argv{argv} {};
+    ~Command() = default;
+    Command(const ftr::Command &other) = delete;
+    Command(ftr::Command &&other) = delete;
+    ftr::Command &operator=(const ftr::Command &rhs) = delete;
+    ftr::Command &operator=(ftr::Command &&rhs) = delete;
 
     bool unknown_value_found() noexcept;
     std::string unknown_flag() noexcept;

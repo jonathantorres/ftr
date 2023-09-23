@@ -1,4 +1,4 @@
-#include "cmd.hpp"
+#include "command.hpp"
 #include <catch2/catch_test_macros.hpp>
 #include <string>
 
@@ -14,7 +14,7 @@ TEST_CASE("parse command line flags") {
     bool foo;
     bool bar;
 
-    ftr::command c{argc_, argv_};
+    ftr::Command c{argc_, argv_};
     c.add_flag('a', a);
     c.add_flag("foo", foo);
     c.add_flag(std::string("bar"), bar);
@@ -35,7 +35,7 @@ TEST_CASE("parse command line options") {
     std::string two;
     std::string another;
 
-    ftr::command c{argc_, argv_};
+    ftr::Command c{argc_, argv_};
     c.add_option('a', another);
     c.add_option("one", one);
     c.add_option("two", two);
@@ -55,7 +55,7 @@ TEST_CASE("unknown flag is found") {
     };
 
     bool foo;
-    ftr::command c{argc_, argv_};
+    ftr::Command c{argc_, argv_};
     c.add_flag("foo", foo);
     c.parse();
 

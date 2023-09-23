@@ -7,14 +7,14 @@
 
 namespace ftr {
 
-class user {
+class User {
   public:
-    user() = default;
-    ~user() = default;
-    user(const user &u) = delete;
-    user(user &&u) = delete;
-    user &operator=(const user &rhs) = delete;
-    user &operator=(user &&rhs) = delete;
+    User() = default;
+    ~User() = default;
+    User(const User &u) = delete;
+    User(User &&u) = delete;
+    User &operator=(const User &rhs) = delete;
+    User &operator=(User &&rhs) = delete;
 
     void add_option(const std::string &op_name, const std::string &op_value);
     const std::string get_username() { return m_username; }
@@ -27,17 +27,17 @@ class user {
     std::string m_root;
 };
 
-class conf {
+class Conf {
   public:
-    conf() : m_port{0} {};
-    ~conf() = default;
-    conf(const conf &conf) = delete;
-    conf(conf &&conf) = delete;
-    conf &operator=(conf &&rhs) = delete;
-    conf &operator=(const conf &rhs) = delete;
+    Conf() : m_port{0} {};
+    ~Conf() = default;
+    Conf(const Conf &conf) = delete;
+    Conf(Conf &&conf) = delete;
+    Conf &operator=(Conf &&rhs) = delete;
+    Conf &operator=(const Conf &rhs) = delete;
 
     void load(const std::string &path);
-    const std::vector<std::shared_ptr<ftr::user>> &get_users() const {
+    const std::vector<std::shared_ptr<ftr::User>> &get_users() const {
         return m_users;
     }
     const std::string get_root() { return m_root; }
@@ -67,7 +67,7 @@ class conf {
     std::string m_root;
     std::string m_error_log;
     std::string m_access_log;
-    std::vector<std::shared_ptr<ftr::user>> m_users;
+    std::vector<std::shared_ptr<ftr::User>> m_users;
     int m_port;
 
     void add_option(const std::string &op_name, const std::string &op_value);

@@ -15,21 +15,21 @@
 #include <sys/types.h>
 
 namespace ftr {
-class server;
+class Server;
 
 // the current user logged in for this session
-struct session_user {
+struct SessionUser {
     std::string username;
     std::string password;
     std::string root;
 };
 
-class session {
+class Session {
   public:
-    session() = delete;
-    ~session() = default;
-    session(const int conn_fd, ftr::server &server,
-            std::shared_ptr<ftr::log> log)
+    Session() = delete;
+    ~Session() = default;
+    Session(const int conn_fd, ftr::Server &server,
+            std::shared_ptr<ftr::Log> log)
         : m_control_conn_fd{conn_fd},
           m_data_conn_fd{0},
           m_data_conn_port{0},
@@ -40,10 +40,10 @@ class session {
           m_transfer_ready{false},
           m_transfer_done{false} {}
 
-    session(const session &session) = delete;
-    session(session &&session) = delete;
-    session &operator=(const session &session) = delete;
-    session &operator=(session &&session) = delete;
+    Session(const Session &session) = delete;
+    Session(Session &&session) = delete;
+    Session &operator=(const Session &session) = delete;
+    Session &operator=(Session &&session) = delete;
 
     void start();
     void end();
@@ -55,9 +55,9 @@ class session {
     unsigned int m_data_conn_port;
     bool m_pass_mode;
     bool m_transfer_in_progress;
-    session_user m_session_user;
-    ftr::server &m_server;
-    std::shared_ptr<ftr::log> m_log;
+    SessionUser m_session_user;
+    ftr::Server &m_server;
+    std::shared_ptr<ftr::Log> m_log;
     std::string m_transfer_type;
     std::string m_cwd;
     std::string m_rename_from;

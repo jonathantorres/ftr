@@ -11,23 +11,23 @@
 
 using namespace ftr;
 
-void log::init(const std::string prefix, std::shared_ptr<ftr::conf> conf,
+void Log::init(const std::string prefix, std::shared_ptr<ftr::Conf> conf,
                bool log_stderr) {
     if (conf == nullptr) {
-        throw server_error("A conf object must be provided");
+        throw ServerError("A conf object must be provided");
     }
 
     const std::string err_log_path = conf->get_error_log();
 
     if (err_log_path == "") {
-        throw server_error(
+        throw ServerError(
             "A path to the location of the error log must be provided");
     }
 
     const std::string acc_log_path = conf->get_access_log();
 
     if (acc_log_path == "") {
-        throw server_error(
+        throw ServerError(
             "A path to the location of the access log must be provided");
     }
 
@@ -38,13 +38,13 @@ void log::init(const std::string prefix, std::shared_ptr<ftr::conf> conf,
     m_err_log_stream.open(prefix + err_log_path, mode);
 
     if (!m_err_log_stream.is_open()) {
-        throw server_error(std::strerror(errno));
+        throw ServerError(std::strerror(errno));
     }
 
     m_acc_log_stream.open(prefix + acc_log_path, mode);
 
     if (!m_acc_log_stream.is_open()) {
-        throw server_error(std::strerror(errno));
+        throw ServerError(std::strerror(errno));
     }
 
     if (log_stderr) {
@@ -52,7 +52,7 @@ void log::init(const std::string prefix, std::shared_ptr<ftr::conf> conf,
     }
 }
 
-log::~log() {
+Log::~Log() {
     if (m_acc_log_stream.is_open()) {
         m_acc_log_stream.close();
     }
@@ -62,7 +62,7 @@ log::~log() {
     }
 }
 
-void log::log_err(const std::string msg) {
+void Log::log_err(const std::string msg) {
     std::string cur_msg = log_msg(msg);
 
     m_err_log_stream.write(cur_msg.c_str(), cur_msg.size());
@@ -73,11 +73,11 @@ void log::log_err(const std::string msg) {
     }
 }
 
-void log::log_err(const std::string msg1, const std::string msg2) {
+void Log::log_err(const std::string msg1, const std::string msg2) {
     log_err(msg1 + msg2);
 }
 
-void log::log_acc(const std::string msg) {
+void Log::log_acc(const std::string msg) {
     std::string cur_msg = log_msg(msg);
 
     m_acc_log_stream.write(cur_msg.c_str(), cur_msg.size());
@@ -88,11 +88,11 @@ void log::log_acc(const std::string msg) {
     }
 }
 
-void log::log_acc(const std::string msg1, const std::string msg2) {
+void Log::log_acc(const std::string msg1, const std::string msg2) {
     log_acc(msg1 + msg2);
 }
 
-std::string log::log_msg(const std::string msg) {
+std::string Log::log_msg(const std::string msg) {
     std::time_t cur_time =
         std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
     std::ostringstream ss;

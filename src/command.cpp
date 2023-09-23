@@ -1,4 +1,4 @@
-#include "cmd.hpp"
+#include "command.hpp"
 
 #include <functional>
 #include <string>
@@ -7,46 +7,48 @@
 
 using namespace ftr;
 
-bool command::unknown_value_found() noexcept {
+bool Command::unknown_value_found() noexcept {
     if (m_unknowns.size() > 0) {
         return true;
     }
+
     return false;
 }
 
-std::string command::unknown_flag() noexcept {
+std::string Command::unknown_flag() noexcept {
     if (m_unknowns.size() > 0) {
         return m_unknowns.at(0);
     }
+
     return "";
 }
 
-void command::add_flag(const char flag, bool &val) noexcept {
+void Command::add_flag(const char flag, bool &val) noexcept {
     std::string s_flag(1, flag);
     m_flags.push_back(std::make_pair(s_flag, std::ref(val)));
 }
 
-void command::add_flag(const std::string flag, bool &val) noexcept {
+void Command::add_flag(const std::string flag, bool &val) noexcept {
     std::string s_flag(flag);
     m_flags.push_back(std::make_pair(s_flag, std::ref(val)));
 }
 
-void command::add_flag(const char *flag, bool &val) noexcept {
+void Command::add_flag(const char *flag, bool &val) noexcept {
     std::string s_flag(flag);
     m_flags.push_back(std::make_pair(s_flag, std::ref(val)));
 }
 
-void command::add_option(const char opt, std::string &val) noexcept {
+void Command::add_option(const char opt, std::string &val) noexcept {
     std::string s_opt(1, opt);
     m_options.push_back(std::make_pair(s_opt, std::ref(val)));
 }
 
-void command::add_option(const std::string opt, std::string &val) noexcept {
+void Command::add_option(const std::string opt, std::string &val) noexcept {
     std::string s_opt(opt);
     m_options.push_back(std::make_pair(s_opt, std::ref(val)));
 }
 
-void command::parse() {
+void Command::parse() {
     if (m_argc <= 1) {
         return;
     }

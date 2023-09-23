@@ -25,8 +25,8 @@
 
 using namespace ftr;
 
-void server::start(const std::shared_ptr<ftr::conf> conf,
-                   const std::shared_ptr<ftr::log> log) {
+void Server::start(const std::shared_ptr<ftr::Conf> conf,
+                   const std::shared_ptr<ftr::Log> log) {
     m_log = log;
     m_conf = conf;
     m_host = m_conf->get_server_name();
@@ -37,13 +37,13 @@ void server::start(const std::shared_ptr<ftr::conf> conf,
     m_ctrl_listener_fd = get_server_ctrl_listener();
 
     if (m_ctrl_listener_fd < 0) {
-        throw server_error("The hostname could not be resolved");
+        throw ServerError("The hostname could not be resolved");
     }
 
     int res = listen(m_ctrl_listener_fd, ftr::BACKLOG);
 
     if (res < 0) {
-        throw server_error(std::strerror(errno));
+        throw ServerError(std::strerror(errno));
     }
 
     // save the resolved address
@@ -83,18 +83,18 @@ void server::start(const std::shared_ptr<ftr::conf> conf,
         int id = dist(rd);
 
         // handle the client
-        std::thread client_thrd(&server::handle_conn, this, conn_fd, id);
+        std::thread client_thrd(&Server::handle_conn, this, conn_fd, id);
         m_session_threads[id] = std::move(client_thrd);
     }
 }
 
-void server::handle_conn(const int conn_fd, const int session_id) {
+void Server::handle_conn(const int conn_fd, const int session_id) {
     // send welcome message
     send_response(conn_fd, ftr::STATUS_CODE_SERVICE_READY, "");
 
     // TODO: could this be made better
     // not sure if using *this over here is the right thing to do
-    std::shared_ptr s = std::make_shared<session>(conn_fd, *this, m_log);
+    std::shared_ptr s = std::make_shared<Session>(conn_fd, *this, m_log);
 
     m_sessions[session_id] = s;
     s->start();
@@ -115,12 +115,12 @@ void server::handle_conn(const int conn_fd, const int session_id) {
     }
 }
 
-void server::shutdown() {
+void Server::shutdown() {
     m_log->log_acc("Shutting down server...");
     m_is_shutting_down = true;
 
     for (auto it = m_sessions.begin(); it != m_sessions.end(); ++it) {
-        std::shared_ptr<ftr::session> sess = it->second;
+        std::shared_ptr<ftr::Session> sess = it->second;
         sess->quit();
     }
 
@@ -143,9 +143,9 @@ void server::shutdown() {
     m_log->log_acc("Server shutdown complete");
 }
 
-void server::reload(const std::string &prefix) {
+void Server::reload(const std::string &prefix) {
     m_log->log_acc("Reloading the configuration file...");
-    auto conf = std::make_shared<ftr::conf>();
+    auto conf = std::make_shared<ftr::Conf>();
 
     try {
         conf->load(prefix + ftr::DEFAULT_CONF);
@@ -159,7 +159,7 @@ void server::reload(const std::string &prefix) {
     shutdown();
 }
 
-void server::send_response(const int conn_fd, const int status_code,
+void Server::send_response(const int conn_fd, const int status_code,
                            const std::string &extra_msg) {
     std::stringstream resp_msg;
     std::string code_msg = get_status_code_msg(status_code);
@@ -179,11 +179,11 @@ void server::send_response(const int conn_fd, const int status_code,
     if (write(conn_fd, msg_str.c_str(), msg_str.size()) < 0) {
         m_log->log_err(std::strerror(errno));
 
-        throw server_error(std::strerror(errno));
+        throw ServerError(std::strerror(errno));
     }
 }
 
-int server::find_open_addr(bool use_ipv6) {
+int Server::find_open_addr(bool use_ipv6) {
     sa_family_t fam = AF_INET;
     int fd = -1;
 
@@ -200,7 +200,7 @@ int server::find_open_addr(bool use_ipv6) {
 
     if (info_res != 0) {
         freeaddrinfo(res);
-        throw server_error(gai_strerror(info_res));
+        throw ServerError(gai_strerror(info_res));
     }
 
     res_begin = res;
@@ -216,13 +216,13 @@ int server::find_open_addr(bool use_ipv6) {
     freeaddrinfo(res_begin);
 
     if (fd < 0) {
-        throw server_error("An address to bind could not be found");
+        throw ServerError("An address to bind could not be found");
     }
 
     return fd;
 }
 
-std::string server::get_status_code_msg(const int status_code) {
+std::string Server::get_status_code_msg(const int status_code) {
     auto sc = ftr::status_codes.find(status_code);
 
     if (sc != ftr::status_codes.end()) {
@@ -232,7 +232,7 @@ std::string server::get_status_code_msg(const int status_code) {
     return "";
 }
 
-std::string server::get_command_help_msg(const std::string &cmd) {
+std::string Server::get_command_help_msg(const std::string &cmd) {
     auto msg = ftr::help_messages.find(cmd);
 
     if (msg != ftr::help_messages.end()) {
@@ -242,7 +242,7 @@ std::string server::get_command_help_msg(const std::string &cmd) {
     return "";
 }
 
-std::string server::get_all_commands_help_msg() {
+std::string Server::get_all_commands_help_msg() {
     std::stringstream buf;
 
     for (auto it = ftr::help_messages.begin(); it != ftr::help_messages.end();
@@ -252,15 +252,16 @@ std::string server::get_all_commands_help_msg() {
         buf << it->second;
         buf << " ";
     }
+
     return buf.str();
 }
 
-int server::get_server_ctrl_listener() {
-    server::host_type server_host_type = validate_server_host();
+int Server::get_server_ctrl_listener() {
+    Server::host_type server_host_type = validate_server_host();
     int fd = -1;
 
-    if (server_host_type == server::host_type::invalid) {
-        throw server_error("invalid host name");
+    if (server_host_type == Server::host_type::invalid) {
+        throw ServerError("invalid host name");
     }
 
     struct addrinfo *res, *res_begin = nullptr;
@@ -273,7 +274,7 @@ int server::get_server_ctrl_listener() {
 
     if (info_res != 0) {
         freeaddrinfo(res);
-        throw server_error(gai_strerror(info_res));
+        throw ServerError(gai_strerror(info_res));
     }
 
     res_begin = res;
@@ -291,7 +292,7 @@ int server::get_server_ctrl_listener() {
     return fd;
 }
 
-int server::bind_address(const struct addrinfo *addr_info) {
+int Server::bind_address(const struct addrinfo *addr_info) {
     if (!addr_info) {
         m_log->log_err("The addr_info pointer is NULL");
 
@@ -329,7 +330,7 @@ int server::bind_address(const struct addrinfo *addr_info) {
     return fd;
 }
 
-std::string server::get_addr_string(struct sockaddr *addr) {
+std::string Server::get_addr_string(struct sockaddr *addr) {
     char buf[INET6_ADDRSTRLEN] = {0};
 
     if (!addr) {
@@ -357,20 +358,20 @@ std::string server::get_addr_string(struct sockaddr *addr) {
     return std::string("unknown address family");
 }
 
-server::host_type server::validate_server_host() {
+Server::host_type Server::validate_server_host() {
     if (ftr::is_ipv4(m_host)) {
         // host matches valid ipv4 address
-        return server::host_type::ipv4;
+        return Server::host_type::ipv4;
     } else if (ftr::is_ipv6(m_host)) {
         // host matches a valid ipv6 address
-        return server::host_type::ipv6;
+        return Server::host_type::ipv6;
     } else if (ftr::is_domain_name(m_host)) {
         // host matches valid domain name
-        return server::host_type::domain_name;
+        return Server::host_type::domain_name;
     } else if (m_host == "localhost") {
         // TODO: special case for localhost????
-        return server::host_type::domain_name;
+        return Server::host_type::domain_name;
     }
 
-    return server::host_type::invalid;
+    return Server::host_type::invalid;
 }

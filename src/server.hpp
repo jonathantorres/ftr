@@ -15,24 +15,24 @@
 
 namespace ftr {
 
-class server {
+class Server {
   public:
-    server()
+    Server()
         : m_conf{nullptr},
           m_log{nullptr},
           m_port{0},
           m_ctrl_listener_fd{0},
           m_is_reloading{false},
           m_is_shutting_down{false} {};
-    ~server() = default;
+    ~Server() = default;
 
-    server(const server &server) = delete;
-    server(server &&server) = delete;
-    server &operator=(const server &server) = delete;
-    server &operator=(server &&server) = delete;
+    Server(const Server &server) = delete;
+    Server(Server &&server) = delete;
+    Server &operator=(const Server &server) = delete;
+    Server &operator=(Server &&server) = delete;
 
-    void start(const std::shared_ptr<ftr::conf> conf,
-               const std::shared_ptr<ftr::log> log);
+    void start(const std::shared_ptr<ftr::Conf> conf,
+               const std::shared_ptr<ftr::Log> log);
     void shutdown();
     void reload(const std::string &prefix);
     void send_response(const int conn_fd, const int status_code,
@@ -43,23 +43,23 @@ class server {
     std::string get_command_help_msg(const std::string &cmd);
     std::string get_all_commands_help_msg();
     bool is_reloading() { return m_is_reloading; }
-    const std::shared_ptr<ftr::conf> get_conf() { return m_conf; }
+    const std::shared_ptr<ftr::Conf> get_conf() { return m_conf; }
     int find_open_addr(bool use_ipv6);
     std::string get_addr_string(struct sockaddr *addr);
 
   private:
     std::string m_host;
     std::string m_resolved_host;
-    std::shared_ptr<ftr::conf> m_conf;
-    std::shared_ptr<ftr::log> m_log;
-    std::map<int, std::shared_ptr<ftr::session>> m_sessions;
+    std::shared_ptr<ftr::Conf> m_conf;
+    std::shared_ptr<ftr::Log> m_log;
+    std::map<int, std::shared_ptr<ftr::Session>> m_sessions;
     std::map<int, std::thread> m_session_threads;
     int m_port;
     int m_ctrl_listener_fd;
     bool m_is_reloading;
     bool m_is_shutting_down;
 
-    enum class host_type {
+    enum class host_type { // TODO: fix this
         domain_name,
         ipv4,
         ipv6,
