@@ -59,7 +59,7 @@ class Server {
     bool m_is_reloading;
     bool m_is_shutting_down;
 
-    enum class host_type { // TODO: fix this
+    enum class HostType {
         domain_name,
         ipv4,
         ipv6,
@@ -67,7 +67,7 @@ class Server {
     };
 
     int get_server_ctrl_listener();
-    host_type validate_server_host();
+    HostType validate_server_host();
     int bind_address(const struct addrinfo *addr_info);
     void handle_conn(const int conn_fd, const int session_id);
 };
