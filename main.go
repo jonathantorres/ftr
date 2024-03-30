@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"log/syslog"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -26,20 +27,33 @@ func main() {
 	confF := parseFlags()
 	log.SetPrefix(logger.Prefix)
 
-	err := openPidFile()
+	// connect to system log
+	sys, err := syslog.New(syslog.LOG_ERR|syslog.LOG_DAEMON, strings.TrimRight(logger.Prefix, ":"))
 	if err != nil {
-		log.Fatalf("error opening pid file: %s", err)
+		log.Fatalf("error connecting to syslog: %s\n", err)
+	}
+	defer sys.Close()
+
+	err = openPidFile()
+	if err != nil {
+		msg := fmt.Sprintf("error opening pid file: %s\n", err)
+		sys.Err(msg)
+		log.Fatal(msg)
 	}
 
 	for {
 		config, err := conf.Load(confF, server.Prefix)
 		if err != nil {
-			log.Fatalf("server configuration error: %s", err)
+			msg := fmt.Sprintf("server configuration error: %s\n", err)
+			sys.Err(msg)
+			log.Fatal(msg)
 		}
 
 		errLog, accessLog, err := logger.Load(config)
 		if err != nil {
-			log.Fatalf("server logging error: %s", err)
+			msg := fmt.Sprintf("server logging error: %s\n", err)
+			sys.Err(msg)
+			log.Fatal(msg)
 		}
 
 		s := &server.Server{
