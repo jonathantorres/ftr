@@ -216,10 +216,10 @@ func handleSignals(serv *server.Server) {
 func usage() {
 	fmt.Fprintf(os.Stderr, "Usage: ftr -[dhtv] [-p prefix] [-c conf]\n\n")
 	fmt.Fprintf(os.Stderr, "Options:\n")
-	fmt.Fprintf(os.Stderr, "  -h\t\t: This help menu\n")
-	fmt.Fprintf(os.Stderr, "  -v\t\t: Show server version and exit\n")
-	fmt.Fprintf(os.Stderr, "  -t\t\t: Test the configuration file and exit\n")
-	fmt.Fprintf(os.Stderr, "  -d\t\t: Run the server in the background (as a daemon)\n")
-	fmt.Fprintf(os.Stderr, "  -p prefix\t: Set the path of the prefix\n")
 	fmt.Fprintf(os.Stderr, "  -c filename\t: Use the specified configuration file\n")
+	fmt.Fprintf(os.Stderr, "  -d\t\t: Run the server in the background (as a daemon)\n")
+	fmt.Fprintf(os.Stderr, "  -h\t\t: This help menu\n")
+	fmt.Fprintf(os.Stderr, "  -p prefix\t: Set the path of the prefix\n")
+	fmt.Fprintf(os.Stderr, "  -t\t\t: Test the configuration file and exit\n")
+	fmt.Fprintf(os.Stderr, "  -v\t\t: Show server version and exit\n")
 }
