@@ -247,6 +247,7 @@ fn strip_comment_from_line<'a>(line: &'a str) -> &'a str {
     line
 }
 
+#[cfg(test)]
 mod tests {
     use conf::*;
 
