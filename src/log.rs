@@ -36,9 +36,7 @@ impl Log {
 
     pub fn log_err(&mut self, msg: &str) {
         let cur_msg = self.log_msg(msg);
-        if let Err(err) = self.err_log_handle.write(cur_msg.as_bytes()) {
-            // TODO: maybe write to syslog if this happens?
-        }
+        let _ = self.err_log_handle.write(cur_msg.as_bytes());
 
         if self.log_stderr {
             eprint!("{}", cur_msg);
@@ -47,9 +45,7 @@ impl Log {
 
     pub fn log_acc(&mut self, msg: &str) {
         let cur_msg = self.log_msg(msg);
-        if let Err(err) = self.acc_log_handle.write(cur_msg.as_bytes()) {
-            // TODO: maybe write to syslog if this happens?
-        }
+        let _ = self.acc_log_handle.write(cur_msg.as_bytes());
 
         if self.log_stderr {
             eprint!("{}", cur_msg);
