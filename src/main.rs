@@ -1,3 +1,9 @@
+extern crate libc;
+extern crate nix;
+
+use nix::sys::signal::{sigaction, SaFlags, SigAction, SigHandler, SigSet, Signal};
+use std::convert::TryFrom;
+
 mod conf;
 mod ftr;
 mod log;
@@ -37,7 +43,8 @@ fn main() {
         std::process::exit(0);
     }
 
-    // TODO: call handle_signals
+    // install signals
+    handle_signals();
 
     loop {
         // TODO: create server object (this might have to be global)
@@ -101,11 +108,56 @@ fn parse_opts(conf_file_opt: &mut String, prefix_path_opt: &mut String, run_daem
 }
 
 fn handle_signals() {
-    unimplemented!();
+    let action = SigAction::new(
+        SigHandler::Handler(sig_handler),
+        SaFlags::SA_RESTART,
+        SigSet::empty(),
+    );
+
+    unsafe {
+        if let Err(err) = sigaction(Signal::SIGTERM, &action) {
+            println!("error installing SIGINT signal: {}", err);
+            std::process::exit(1);
+        }
+
+        if let Err(err) = sigaction(Signal::SIGINT, &action) {
+            println!("error installing SIGINT signal: {}", err);
+            std::process::exit(1);
+        }
+
+        if let Err(err) = sigaction(Signal::SIGQUIT, &action) {
+            println!("error installing SIGQUIT signal: {}", err);
+            std::process::exit(1);
+        }
+
+        if let Err(err) = sigaction(Signal::SIGHUP, &action) {
+            println!("error installing SIGQUIT signal: {}", err);
+            std::process::exit(1);
+        }
+    }
 }
 
-fn sig_handler() {
-    unimplemented!();
+extern "C" fn sig_handler(signum: libc::c_int) {
+    let sig = match Signal::try_from(signum) {
+        Ok(sig) => sig,
+        Err(err) => {
+            panic!("unknown signal found: {}", err);
+        }
+    };
+
+    match sig {
+        Signal::SIGTERM | Signal::SIGINT | Signal::SIGQUIT => {
+            println!("shutting down the server...");
+            std::process::exit(0);
+        }
+        Signal::SIGHUP => {
+            println!("reloading configuration file and restarting the server....");
+            std::process::exit(0);
+        }
+        _ => {
+            panic!("unknown signal catched: {}", sig);
+        }
+    }
 }
 
 fn test_conf() {
