@@ -79,6 +79,7 @@ fn main() {
 }
 
 // TODO: update this function, parsing cmd line options like this is terrible
+// take a look at getopts: https://crates.io/crates/getopts
 fn parse_opts(conf_file_opt: &mut String, prefix_path_opt: &mut String, run_daemon_opt: &mut bool) {
     let mut inp = false;
     let mut inc = false;
