@@ -7,3 +7,5 @@ edition = "2015"
 
 [dependencies]
 chrono = "0.4.38"
+libc = "0.2.158"
+nix = "0.26.2"
