@@ -1,5 +1,6 @@
 pub use conf::Conf;
 pub use log::Log;
+pub use server::Server;
 
 pub const VERSION: &str = "0.0.1";
 pub const PROG_NAME: &str = "ftr";

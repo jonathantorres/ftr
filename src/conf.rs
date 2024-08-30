@@ -51,11 +51,11 @@ impl User {
 }
 
 pub struct Conf {
-    server_name: String,
-    root: String,
     pub error_log: String,
     pub access_log: String,
-    port: i32,
+    pub server_name: String,
+    pub port: i32,
+    root: String,
     users: Vec<User>,
 }
 

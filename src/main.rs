@@ -7,6 +7,7 @@ use std::convert::TryFrom;
 mod conf;
 mod ftr;
 mod log;
+mod server;
 
 fn main() {
     let mut prefix = String::from("/home/jonathan/dev/ftrd/");
@@ -65,11 +66,14 @@ fn main() {
             }
         };
 
-        // TODO: initialize logging
-        // TODO: start the server
-        log.log_acc("starting server...");
-        log.log_acc(&format!("prefix: {}", prefix));
-        log.log_acc(&format!("conf file: {}", conf_file_loc));
+        let mut server = ftr::Server::new(conf, log);
+        if let Err(err) = server.start() {
+            eprintln!("error starting the server: {}", err);
+            std::process::exit(1);
+        }
+
+        // log.log_acc(&format!("prefix: {}", prefix));
+        // log.log_acc(&format!("conf file: {}", conf_file_loc));
         break;
     }
 }
