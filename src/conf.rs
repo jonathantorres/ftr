@@ -114,7 +114,7 @@ impl Conf {
                         return Err(err);
                     }
                 }
-            } else if line.contains(USER_OPT) {
+            } else if line.contains(USER_OPT) && line.contains(OPEN_BRACKET) {
                 // this is a line with a user command
                 inside_usr_cmd = true;
                 cur_usr = Some(User::new());
