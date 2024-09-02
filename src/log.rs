@@ -4,11 +4,12 @@ use self::chrono::Local;
 use ftr::Conf;
 use std::fs::{File, OpenOptions};
 use std::io::Write;
+use std::sync::Mutex;
 
 pub struct Log {
     log_stderr: bool,
-    acc_log_handle: File,
-    err_log_handle: File,
+    acc_log_handle: Mutex<File>,
+    err_log_handle: Mutex<File>,
 }
 
 impl Log {
@@ -29,23 +30,35 @@ impl Log {
 
         Ok(Log {
             log_stderr: log_stderr,
-            acc_log_handle: acc_file_handle,
-            err_log_handle: err_file_handle,
+            acc_log_handle: Mutex::new(acc_file_handle),
+            err_log_handle: Mutex::new(err_file_handle),
         })
     }
 
-    pub fn log_err(&mut self, msg: &str) {
+    pub fn log_err(&self, msg: &str) {
+        let mut log = match self.err_log_handle.lock() {
+            Ok(l) => l,
+            Err(_err) => {
+                return;
+            }
+        };
         let cur_msg = self.log_msg(msg);
-        let _ = self.err_log_handle.write(cur_msg.as_bytes());
+        let _ = log.write(cur_msg.as_bytes());
 
         if self.log_stderr {
             eprint!("{}", cur_msg);
         }
     }
 
-    pub fn log_acc(&mut self, msg: &str) {
+    pub fn log_acc(&self, msg: &str) {
+        let mut log = match self.acc_log_handle.lock() {
+            Ok(l) => l,
+            Err(_err) => {
+                return;
+            }
+        };
         let cur_msg = self.log_msg(msg);
-        let _ = self.acc_log_handle.write(cur_msg.as_bytes());
+        let _ = log.write(cur_msg.as_bytes());
 
         if self.log_stderr {
             eprint!("{}", cur_msg);
