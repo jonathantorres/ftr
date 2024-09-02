@@ -3,6 +3,7 @@ extern crate signal_hook;
 use signal_hook::consts::signal::*;
 use signal_hook::iterator::Signals;
 use std::convert::TryFrom;
+use std::sync::Arc;
 
 mod conf;
 mod ftr;
@@ -14,7 +15,7 @@ fn main() {
     let mut conf_file_opt = String::new();
     let mut prefix_path_opt = String::new();
     let mut run_daemon_opt = false;
-    let mut log_stderr = false;
+    // let mut log_stderr = false;
 
     parse_opts(
         &mut conf_file_opt,
@@ -45,7 +46,6 @@ fn main() {
     }
 
     loop {
-        // TODO: create server object (this might have to be global)
         let mut conf = ftr::Conf::new();
 
         // load and test the configuration file
@@ -55,7 +55,7 @@ fn main() {
         }
 
         // create logging object
-        let mut log = match ftr::Log::new(&prefix, &conf, true) {
+        let log = match ftr::Log::new(&prefix, &conf, true) {
             Ok(log) => log,
             Err(err) => {
                 eprintln!("error starting the logger: {}", err);
@@ -63,14 +63,25 @@ fn main() {
             }
         };
 
-        let mut server = ftr::Server::new(conf, log);
+        let server = match ftr::Server::new(conf, log) {
+            Ok(s) => s,
+            Err(err) => {
+                eprintln!("error initializing the server: {}", err);
+                std::process::exit(1);
+            }
+        };
+        let server = Arc::new(server);
+
+        if let Err(err) = handle_signals(server.clone()) {
+            eprintln!("error installing signals: {}", err);
+            std::process::exit(1);
+        }
+
         if let Err(err) = server.start() {
             eprintln!("error starting the server: {}", err);
             std::process::exit(1);
         }
 
-        // log.log_acc(&format!("prefix: {}", prefix));
-        // log.log_acc(&format!("conf file: {}", conf_file_loc));
         break;
     }
 }
