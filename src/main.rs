@@ -1,7 +1,7 @@
-extern crate libc;
-extern crate nix;
+extern crate signal_hook;
 
-use nix::sys::signal::{sigaction, SaFlags, SigAction, SigHandler, SigSet, Signal};
+use signal_hook::consts::signal::*;
+use signal_hook::iterator::Signals;
 use std::convert::TryFrom;
 
 mod conf;
@@ -43,9 +43,6 @@ fn main() {
         println!("Running as daemon....");
         std::process::exit(0);
     }
-
-    // install signals
-    handle_signals();
 
     loop {
         // TODO: create server object (this might have to be global)
@@ -112,57 +109,28 @@ fn parse_opts(conf_file_opt: &mut String, prefix_path_opt: &mut String, run_daem
     }
 }
 
-fn handle_signals() {
-    let action = SigAction::new(
-        SigHandler::Handler(sig_handler),
-        SaFlags::SA_RESTART,
-        SigSet::empty(),
-    );
+fn handle_signals(server: Arc<ftr::Server>) -> Result<(), std::io::Error> {
+    let mut signals = Signals::new(&[SIGTERM, SIGINT, SIGQUIT, SIGHUP])?;
 
-    unsafe {
-        if let Err(err) = sigaction(Signal::SIGTERM, &action) {
-            println!("error installing SIGINT signal: {}", err);
-            std::process::exit(1);
-        }
+    // TODO: do something with the handle of the signal
 
-        if let Err(err) = sigaction(Signal::SIGINT, &action) {
-            println!("error installing SIGINT signal: {}", err);
-            std::process::exit(1);
+    std::thread::spawn(move || {
+        for signal in signals.forever() {
+            match signal {
+                SIGTERM | SIGINT | SIGQUIT => {
+                    server.shutdown();
+                }
+                SIGHUP => {
+                    server.reload();
+                }
+                _ => {
+                    panic!("unknown signal catched: {}", signal);
+                }
+            }
         }
+    });
 
-        if let Err(err) = sigaction(Signal::SIGQUIT, &action) {
-            println!("error installing SIGQUIT signal: {}", err);
-            std::process::exit(1);
-        }
-
-        if let Err(err) = sigaction(Signal::SIGHUP, &action) {
-            println!("error installing SIGQUIT signal: {}", err);
-            std::process::exit(1);
-        }
-    }
-}
-
-extern "C" fn sig_handler(signum: libc::c_int) {
-    let sig = match Signal::try_from(signum) {
-        Ok(sig) => sig,
-        Err(err) => {
-            panic!("unknown signal found: {}", err);
-        }
-    };
-
-    match sig {
-        Signal::SIGTERM | Signal::SIGINT | Signal::SIGQUIT => {
-            println!("shutting down the server...");
-            std::process::exit(0);
-        }
-        Signal::SIGHUP => {
-            println!("reloading configuration file and restarting the server....");
-            std::process::exit(0);
-        }
-        _ => {
-            panic!("unknown signal catched: {}", sig);
-        }
-    }
+    Ok(())
 }
 
 fn test_conf() {
