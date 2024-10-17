@@ -9,6 +9,7 @@ mod conf;
 mod ftr;
 mod log;
 mod server;
+mod session;
 
 fn main() {
     let mut prefix = String::from("/home/jonathan/dev/ftrd/");
