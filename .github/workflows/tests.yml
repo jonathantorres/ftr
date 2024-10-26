@@ -1,6 +1,4 @@
 # https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
-
->>>>>>> upstream/master
 name: Tests
 
 on:
