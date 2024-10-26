@@ -1,9 +1,0 @@
-#ifndef config_hpp
-#define config_hpp
-
-#define FTR_VERSION "@CMAKE_PROJECT_VERSION@"
-#define FTR_PROG_NAME "@CMAKE_PROJECT_NAME@"
-#define FTR_BUILD "@CMAKE_BUILD_TYPE@"
-#define FTR_PREFIX "@CMAKE_INSTALL_PREFIX@"
-
-#endif
