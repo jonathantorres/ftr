@@ -1,27 +1,28 @@
-# ftrd
-[![Tests](https://github.com/jonathantorres/ftrd/actions/workflows/tests.yml/badge.svg)](https://github.com/jonathantorres/ftrd/actions/workflows/tests.yml)
+# ftr
+[![Tests](https://github.com/jonathantorres/ftr/actions/workflows/tests.yml/badge.svg)](https://github.com/jonathantorres/ftr/actions/workflows/tests.yml)
 
-ftrd is an FTP server daemon
+ftr (File Transfer) is an FTP server daemon.
 
-## Installing/Building from source
-In order to build a release from source, make sure to use `git` to clone the repository, once done you can use `cmake` and `make` to compile the source code. We recommend using the `CMAKE_INSTALL_PREFIX` to select the location in which to install, the suggested location is `/usr/local/ftrd`.
+## Installing
+Install the binary with `go get`:
 ```bash
-cmake -S . -B release -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local/ftrd
-cd release
-make ftrd
-sudo make install
+go get -u github.com/jonathantorres/ftr
 ```
 
-## Development build and running tests
-Use `cmake` to build the development version, for code changes and bugfixes, and also to build and run all of the tests.
+## Build from source
+In order to build from source, make sure to use `git` to clone the repository, once done you can use the `make` utility to compile the source code:
 ```bash
-cmake -S . -B build -DCMAKE_INSTALL_PREFIX={your git clone location}
-cd build
-cmake --build .
+make
+```
+
+## Running tests
+Use `make` to run all of the tests:
+```bash
+make test
 ```
 
 ## Configuration
-You can see an example configuration file in `ftrd.conf`, in here you can customize the users for the server along with their passwords and root directories. Every configuration option is explained below.
+You can see an example configuration file in `ftr.conf`, in here you can customize the users for the server along with their passwords and root directories. Every configuration option is explained below.
 
 - `server`: Specify an IP address or domain name in which the server will listen to requests from clients
 - `port`: Port in which to run the server
@@ -34,7 +35,7 @@ You can see an example configuration file in `ftrd.conf`, in here you can custom
 - `user.root`: Specify a root directory for the user. This directory will be relative to the location of the `root` of the server
 
 ## Command Line options
-You can use the `-h` option to see all of the command line options in which the server can run
+You can use the `-h` flag to see all of the command line options in which the server can run
 ```bash
-ftrd -h
+ftr -h
 ```
